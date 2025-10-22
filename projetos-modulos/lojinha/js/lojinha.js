@@ -889,7 +889,7 @@ function atualizarTabelaMovimentacoesCaixa(movimentacoes) {
     if (movimentacoes.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" style="text-align: center; color: #7f8c8d; padding: 40px;">
+                <td colspan="6" style="text-align: center; color: #7f8c8d; padding: 40px;">
                     <i class="fas fa-cash-register" style="font-size: 2rem; margin-bottom: 15px; display: block; opacity: 0.5;"></i>
                     Nenhuma movimentação encontrada.
                 </td>
@@ -901,9 +901,18 @@ function atualizarTabelaMovimentacoesCaixa(movimentacoes) {
     tbody.innerHTML = movimentacoes.map(mov => `
         <tr>
             <td>${formatarData(mov.data_movimentacao)}</td>
-            <td><span class="status-badge status-${mov.tipo}">${mov.tipo}</span></td>
-            <td>${formatarMoeda(mov.valor)}</td>
+            <td>
+                <span class="badge ${mov.tipo === 'entrada' ? 'badge-success' : 'badge-danger'}">
+                    ${mov.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+                </span>
+            </td>
+            <td class="${mov.tipo === 'entrada' ? 'text-success' : 'text-danger'}">
+                ${mov.tipo === 'entrada' ? '+' : '-'}${formatarMoeda(mov.valor)}
+            </td>
             <td>${mov.descricao}</td>
+            <td>
+                <span class="badge badge-info">${mov.categoria || 'Outros'}</span>
+            </td>
             <td>${mov.usuario_nome || '-'}</td>
         </tr>
     `).join('');
@@ -1499,6 +1508,121 @@ function salvarAjusteEstoque(event) {
 }
 
 function abrirModalMovimentacao() {
-    // Implementar modal de movimentação de caixa
-    mostrarSucesso('Movimentação de caixa será implementada em breve');
+    // Verificar se há caixa aberto
+    if (statusCaixa !== 'aberto') {
+        mostrarErro('É necessário ter um caixa aberto para registrar movimentações');
+        return;
+    }
+    
+    // Criar modal de movimentação
+    const modal = document.createElement('div');
+    modal.className = 'modal-produto';
+    modal.id = 'modal-movimentacao';
+    modal.innerHTML = `
+        <div class="modal-produto-content">
+            <div class="modal-produto-header">
+                <h3><i class="fas fa-plus-circle"></i> Nova Movimentação de Caixa</h3>
+                <button class="modal-produto-close" onclick="fecharModalMovimentacao()">&times;</button>
+            </div>
+            <form id="form-movimentacao" onsubmit="salvarMovimentacao(event)">
+                <div class="modal-produto-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tipo_movimentacao">Tipo de Movimentação *</label>
+                            <select id="tipo_movimentacao" name="tipo" required>
+                                <option value="">Selecione o tipo</option>
+                                <option value="entrada">Entrada (+)</option>
+                                <option value="saida">Saída (-)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="valor_movimentacao">Valor *</label>
+                            <input type="number" id="valor_movimentacao" name="valor" step="0.01" min="0.01" required placeholder="0,00">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="categoria_movimentacao">Categoria</label>
+                            <select id="categoria_movimentacao" name="categoria">
+                                <option value="">Selecione uma categoria</option>
+                                <option value="Vendas">Vendas</option>
+                                <option value="Despesas">Despesas</option>
+                                <option value="Troco">Troco</option>
+                                <option value="Ajuste">Ajuste</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="descricao_movimentacao">Descrição *</label>
+                            <input type="text" id="descricao_movimentacao" name="descricao" required placeholder="Ex: Troco para cliente, Despesa com material, etc.">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-produto-footer">
+                    <button type="button" class="btn-secondary" onclick="fecharModalMovimentacao()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Salvar Movimentação
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.style.display = 'flex';
+    
+    // Focar no primeiro campo
+    document.getElementById('tipo_movimentacao').focus();
+}
+
+function fecharModalMovimentacao() {
+    const modal = document.getElementById('modal-movimentacao');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function salvarMovimentacao(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    // Mostrar loading
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    submitBtn.disabled = true;
+    
+    fetch('ajax/salvar_movimentacao_caixa.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarSucesso(data.message);
+            fecharModalMovimentacao();
+            
+            // Atualizar saldo atual
+            document.getElementById('saldo-atual').textContent = formatarMoeda(data.novo_saldo);
+            
+            // Recarregar movimentações
+            carregarMovimentacoesCaixa();
+        } else {
+            mostrarErro(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erro ao salvar movimentação:', error);
+        mostrarErro('Erro interno do servidor');
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
 }

@@ -10,17 +10,32 @@ try {
     // Conexão direta com PDO
     $pdo = getConnection();
     
-    // Buscar movimentações do caixa de hoje
+    // Buscar movimentações do caixa de hoje (vendas + movimentações manuais)
     $stmt = $pdo->query("
         SELECT 
             'venda' as tipo,
             v.numero_venda as descricao,
             v.total as valor,
             v.data_venda as data_movimentacao,
-            'Admin' as usuario_nome
+            'Admin' as usuario_nome,
+            'Venda' as categoria
         FROM lojinha_vendas v
         WHERE DATE(v.data_venda) = CURDATE() AND v.status = 'finalizada'
-        ORDER BY v.data_venda DESC
+        
+        UNION ALL
+        
+        SELECT 
+            m.tipo,
+            m.descricao,
+            m.valor,
+            m.data_movimentacao,
+            'Admin' as usuario_nome,
+            COALESCE(m.categoria, 'Outros') as categoria
+        FROM lojinha_caixa_movimentacoes m
+        INNER JOIN lojinha_caixa c ON m.caixa_id = c.id
+        WHERE DATE(c.data_abertura) = CURDATE() AND c.status = 'aberto'
+        
+        ORDER BY data_movimentacao DESC
         LIMIT 50
     ");
     

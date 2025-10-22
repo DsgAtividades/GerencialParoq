@@ -341,19 +341,20 @@ $module_description = 'Sistema de controle de estoque, vendas e caixa para produ
                         </div>
 
                         <div class="table-container">
-                            <table class="table-module">
-                                <thead>
-                                    <tr>
-                                        <th>Data</th>
-                                        <th>Tipo</th>
-                                        <th>Valor</th>
-                                        <th>Descrição</th>
-                                        <th>Usuário</th>
-                                    </tr>
-                                </thead>
+                        <table class="table-module">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                    <th>Descrição</th>
+                                    <th>Categoria</th>
+                                    <th>Usuário</th>
+                                </tr>
+                            </thead>
                                 <tbody id="tabela-movimentacoes-caixa">
                                     <tr>
-                                        <td colspan="5" style="text-align: center; color: #7f8c8d; padding: 40px;">
+                                        <td colspan="6" style="text-align: center; color: #7f8c8d; padding: 40px;">
                                             <i class="fas fa-cash-register" style="font-size: 2rem; margin-bottom: 15px; display: block; opacity: 0.5;"></i>
                                             Carregando movimentações...
                                         </td>

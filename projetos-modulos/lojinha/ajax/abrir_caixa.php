@@ -35,14 +35,19 @@ try {
         exit;
     }
     
+    // Verificar se existe usuário válido
+    $stmt_user = $pdo->query("SELECT id FROM users LIMIT 1");
+    $usuario = $stmt_user->fetch();
+    $usuario_id = $usuario ? $usuario['id'] : null;
+    
     // Abrir novo caixa
     $stmt = $pdo->prepare("
         INSERT INTO lojinha_caixa 
-        (saldo_inicial, saldo_atual, status, usuario_id) 
-        VALUES (?, ?, 'aberto', 1)
+        (saldo_inicial, saldo_atual, status, usuario_id, observacoes) 
+        VALUES (?, ?, 'aberto', ?, 'Caixa aberto via sistema')
     ");
-    $stmt->execute([$saldo_inicial, $saldo_inicial]);
     
+    $stmt->execute([$saldo_inicial, $saldo_inicial, $usuario_id]);
     $caixa_id = $pdo->lastInsertId();
     
     echo json_encode([

@@ -163,19 +163,16 @@ try {
     $sql_caixa = "
     CREATE TABLE IF NOT EXISTS lojinha_caixa (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        data_abertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        data_fechamento TIMESTAMP NULL,
-        usuario_id INT NOT NULL,
         saldo_inicial DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-        saldo_final DECIMAL(10,2) NULL,
-        total_vendas DECIMAL(10,2) DEFAULT 0.00,
-        total_entradas DECIMAL(10,2) DEFAULT 0.00,
-        total_saidas DECIMAL(10,2) DEFAULT 0.00,
+        saldo_atual DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        saldo_final DECIMAL(10,2) NULL DEFAULT NULL,
         status ENUM('aberto', 'fechado') DEFAULT 'aberto',
+        usuario_id INT DEFAULT NULL,
+        data_abertura TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        data_fechamento TIMESTAMP NULL DEFAULT NULL,
         observacoes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (usuario_id) REFERENCES users(id)
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ";
 
