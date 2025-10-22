@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Função PDF</title>
+</head>
+<body>
+    <h2>Teste da Função gerarRelatorioCompleto</h2>
+    
+    <div>
+        <label for="data_inicio">Data Início:</label>
+        <input type="date" id="data_inicio" value="2025-01-01">
+    </div>
+    
+    <div>
+        <label for="data_fim">Data Fim:</label>
+        <input type="date" id="data_fim" value="2025-12-31">
+    </div>
+    
+    <div>
+        <button onclick="testarGerarPDF()">Testar Geração de PDF</button>
+    </div>
+    
+    <div id="resultado-relatorio" style="margin-top: 20px; padding: 20px; border: 1px solid #ccc;"></div>
+
+    <script>
+        function mostrarErro(mensagem) {
+            alert('Erro: ' + mensagem);
+        }
+
+        function mostrarSucesso(mensagem) {
+            alert('Sucesso: ' + mensagem);
+        }
+
+        function testarGerarPDF() {
+            gerarRelatorioCompleto('vendas');
+        }
+
+        function gerarRelatorioCompleto(tipo) {
+            const dataInicio = document.getElementById('data_inicio').value;
+            const dataFim = document.getElementById('data_fim').value;
+            
+            if (!dataInicio || !dataFim) {
+                mostrarErro('Por favor, selecione as datas de início e fim.');
+                return;
+            }
+            
+            if (new Date(dataInicio) > new Date(dataFim)) {
+                mostrarErro('A data de início deve ser anterior à data de fim.');
+                return;
+            }
+            
+            // Mostrar loading
+            const resultado = document.getElementById('resultado-relatorio');
+            resultado.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Gerando PDF...</div>';
+            
+            // Fazer requisição para gerar PDF
+            const formData = new FormData();
+            formData.append('tipo', tipo);
+            formData.append('data_inicio', dataInicio);
+            formData.append('data_fim', dataFim);
+            
+            fetch('ajax/gerar_pdf.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    resultado.innerHTML = `
+                        <div style="text-align: center; padding: 20px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; margin: 10px 0;">
+                            <h4 style="color: #155724; margin: 10px 0;">PDF Gerado com Sucesso!</h4>
+                            <p style="color: #155724; margin: 10px 0;">Arquivo: ${data.arquivo}</p>
+                            <a href="${data.url}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin-top: 10px;">
+                                📄 Baixar PDF
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    resultado.innerHTML = `
+                        <div style="text-align: center; padding: 20px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; margin: 10px 0;">
+                            <h4 style="color: #721c24; margin: 10px 0;">Erro ao Gerar PDF</h4>
+                            <p style="color: #721c24; margin: 10px 0;">${data.message}</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao gerar PDF:', error);
+                resultado.innerHTML = `
+                    <div style="text-align: center; padding: 20px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; margin: 10px 0;">
+                        <h4 style="color: #721c24; margin: 10px 0;">Erro de Conexão</h4>
+                        <p style="color: #721c24; margin: 10px 0;">Não foi possível gerar o PDF. Tente novamente.</p>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>

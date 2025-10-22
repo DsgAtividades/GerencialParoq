@@ -1,0 +1,15 @@
+#RewriteEngine On
+#RewriteCond %{HTTP_HOST} ^(www.)?festajuninatech.com.br$
+#RewriteRule ^(/)?$ festa [L]
+
+<IfModule mod_rewrite.c>  
+
+RewriteEngine On  
+
+RewriteRule ^index\.php$ - [L]  
+
+RewriteCond %{REQUEST_FILENAME} !-f  
+
+RewriteCond %{REQUEST_FILENAME} !-d  
+
+RewriteRule . /index.php [L] </IfModule>  

@@ -1,0 +1,422 @@
+--- REQUISIÇÃO INICIADA EM 2025-10-16 21:05:09 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => Juliao
+    [cliente_telefone] => 1
+    [forma_pagamento] => dinheiro
+    [desconto] => 0
+    [observacoes] => 1
+    [itens] => [{"id":"1","nome":"Biblia","preco":110,"quantidade":1,"estoque":99}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=110, Total=110
+6. Número da venda gerado: V000002
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 2
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-16 16:40:20 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => x
+    [cliente_telefone] => x
+    [forma_pagamento] => dinheiro
+    [desconto] => 12
+    [observacoes] => wdw
+    [itens] => [{"id":27,"nome":"Bíblia","preco":24,"quantidade":1,"estoque":42}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=24, Total=12
+6. Número da venda gerado: V000003
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 3
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-16 16:45:20 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => W
+    [cliente_telefone] => W
+    [forma_pagamento] => dinheiro
+    [desconto] => 0
+    [observacoes] => WW
+    [itens] => [{"id":8,"nome":"Gustavo Rodrigues","preco":99,"quantidade":1,"estoque":99}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=99, Total=99
+6. Número da venda gerado: V000004
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 4
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-16 16:45:30 ---
+--- REQUISIÇÃO INICIADA EM 2025-10-16 16:45:30 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => DW
+    [cliente_telefone] => DW
+    [forma_pagamento] => dinheiro
+    [desconto] => 0
+    [observacoes] => DWWD
+    [itens] => [{"id":8,"nome":"Gustavo Rodrigues","preco":99,"quantidade":1,"estoque":99}]
+)
+
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => DW
+    [cliente_telefone] => DW
+    [forma_pagamento] => dinheiro
+    [desconto] => 0
+    [observacoes] => DWWD
+    [itens] => [{"id":8,"nome":"Gustavo Rodrigues","preco":99,"quantidade":1,"estoque":99}]
+)
+
+1. Tentando conectar ao banco...
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+2. Conexão com banco OK.
+3. Iniciando transação...
+3. Iniciando transação...
+4. Transação iniciada.
+4. Transação iniciada.
+5. Totais calculados: Subtotal=99, Total=99
+5. Totais calculados: Subtotal=99, Total=99
+6. Número da venda gerado: V000005
+6. Número da venda gerado: V000005
+7. Inserindo na tabela 'lojinha_vendas'...
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 5
+9. Processando itens da venda...
+--- REQUISIÇÃO INICIADA EM 2025-10-16 16:45:31 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => DW
+    [cliente_telefone] => DW
+    [forma_pagamento] => dinheiro
+    [desconto] => 0
+    [observacoes] => DWWD
+    [itens] => [{"id":8,"nome":"Gustavo Rodrigues","preco":99,"quantidade":1,"estoque":99}]
+)
+
+1. Tentando conectar ao banco...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+!!! ERRO CAPTURADO: SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry 'V000005' for key 'numero_venda' na linha 66 !!!
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+Transação revertida (rollback).
+--- REQUISIÇÃO FINALIZADA ---
+
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=99, Total=99
+6. Número da venda gerado: V000006
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 7
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-16 16:48:31 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => Raissa Goncalves
+    [cliente_telefone] => 38987898787
+    [forma_pagamento] => pix
+    [desconto] => 5
+    [observacoes] => teste
+    [itens] => [{"id":3,"nome":"Pipoca","preco":5,"quantidade":1,"estoque":100},{"id":2,"nome":"Terço","preco":79,"quantidade":1,"estoque":20}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=84, Total=79
+6. Número da venda gerado: V000008
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 8
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-16 16:50:44 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => Jessika Lopes
+    [cliente_telefone] => 61987657253
+    [forma_pagamento] => pix
+    [desconto] => 0
+    [observacoes] => 
+    [itens] => [{"id":1,"nome":"Biblia","preco":110,"quantidade":1,"estoque":198},{"id":3,"nome":"Pipoca","preco":5,"quantidade":1,"estoque":99},{"id":26,"nome":"Bíblia","preco":21,"quantidade":1,"estoque":123},{"id":12,"nome":"Gustavo Rodrigues","preco":11,"quantidade":1,"estoque":11}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=147, Total=147
+6. Número da venda gerado: V000009
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 9
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-16 16:52:53 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => Roberto Carlos
+    [cliente_telefone] => 42940498394
+    [forma_pagamento] => cartao_credito
+    [desconto] => 8
+    [observacoes] => 
+    [itens] => [{"id":1,"nome":"Biblia","preco":110,"quantidade":2,"estoque":197},{"id":26,"nome":"Bíblia","preco":21,"quantidade":1,"estoque":122},{"id":12,"nome":"Gustavo Rodrigues","preco":11,"quantidade":1,"estoque":10},{"id":27,"nome":"Bíblia","preco":24,"quantidade":1,"estoque":41}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=276, Total=268
+6. Número da venda gerado: V000010
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 10
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-16 16:57:05 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => adaada
+    [cliente_telefone] => adaadada
+    [forma_pagamento] => dinheiro
+    [desconto] => 0
+    [observacoes] => 
+    [itens] => [{"id":26,"nome":"Bíblia","preco":21,"quantidade":2,"estoque":123}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=42, Total=42
+6. Número da venda gerado: V000011
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 11
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-17 16:15:20 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => dwaw
+    [cliente_telefone] => adwas
+    [forma_pagamento] => pix
+    [desconto] => 0
+    [observacoes] => 
+    [itens] => [{"id":27,"nome":"Bíblia","preco":24,"quantidade":1,"estoque":40}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=24, Total=24
+6. Número da venda gerado: V000012
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 12
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-17 16:18:51 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => 
+    [cliente_telefone] => 
+    [forma_pagamento] => cartao_credito
+    [desconto] => 0
+    [observacoes] => 
+    [itens] => [{"id":27,"nome":"Bíblia","preco":24,"quantidade":1,"estoque":77}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=24, Total=24
+6. Número da venda gerado: V000013
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 13
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-17 16:18:55 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => 
+    [cliente_telefone] => 
+    [forma_pagamento] => cartao_credito
+    [desconto] => 0
+    [observacoes] => 
+    [itens] => [{"id":1,"nome":"Biblia","preco":110,"quantidade":1,"estoque":195}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=110, Total=110
+6. Número da venda gerado: V000014
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 14
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-17 22:27:06 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => jó
+    [cliente_telefone] => 
+    [forma_pagamento] => dinheiro
+    [desconto] => 0
+    [observacoes] => 
+    [itens] => [{"id":1,"nome":"Biblia","preco":110,"quantidade":3,"estoque":194}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=330, Total=330
+6. Número da venda gerado: V000015
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 15
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-18 10:51:56 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => 
+    [cliente_telefone] => 
+    [forma_pagamento] => dinheiro
+    [desconto] => 0
+    [observacoes] => 
+    [itens] => [{"id":1,"nome":"Biblia","preco":110,"quantidade":1,"estoque":100},{"id":3,"nome":"Pipoca","preco":5,"quantidade":1,"estoque":100},{"id":2,"nome":"Terço","preco":79,"quantidade":1,"estoque":20}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=194, Total=194
+6. Número da venda gerado: V000016
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 16
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-18 10:55:00 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => 
+    [cliente_telefone] => 
+    [forma_pagamento] => pix
+    [desconto] => 0
+    [observacoes] => 
+    [itens] => [{"id":14,"nome":"bicicleta","preco":33,"quantidade":1,"estoque":1},{"id":20,"nome":"escavadeira","preco":44,"quantidade":1,"estoque":2}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=77, Total=77
+6. Número da venda gerado: V000017
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 17
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+
+--- REQUISIÇÃO INICIADA EM 2025-10-20 17:26:37 ---
+DADOS RECEBIDOS: Array
+(
+    [cliente_nome] => zapzin
+    [cliente_telefone] => 
+    [forma_pagamento] => cartao_credito
+    [desconto] => 0
+    [observacoes] => so de sacanagem
+    [itens] => [{"id":8,"nome":"ANEL","preco":99,"quantidade":2,"estoque":96}]
+)
+
+1. Tentando conectar ao banco...
+2. Conexão com banco OK.
+3. Iniciando transação...
+4. Transação iniciada.
+5. Totais calculados: Subtotal=198, Total=198
+6. Número da venda gerado: V000018
+7. Inserindo na tabela 'lojinha_vendas'...
+8. Venda inserida com ID: 18
+9. Processando itens da venda...
+10. Itens processados com sucesso.
+11. Comitando a transação...
+12. Transação comitada com sucesso.
+--- REQUISIÇÃO FINALIZADA ---
+

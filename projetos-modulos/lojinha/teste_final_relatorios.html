@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Final - Relatórios HTML</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #007bff; }
+        .teste { background: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #007bff; }
+        .sucesso { border-left-color: #28a745; background: #d4edda; }
+        .erro { border-left-color: #dc3545; background: #f8d7da; }
+        button { padding: 12px 24px; margin: 8px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #0056b3; }
+        .loading { color: #6c757d; font-style: italic; }
+        input, select { padding: 8px 12px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Teste Final - Relatórios HTML</h1>
+            <p>Sistema de relatórios convertido para HTML (mais confiável que PDF)</p>
+        </div>
+        
+        <div class="teste">
+            <h3>📋 Configuração do Teste</h3>
+            <div class="grid">
+                <div>
+                    <label for="tipo">Tipo de Relatório:</label>
+                    <select id="tipo">
+                        <option value="vendas">Vendas</option>
+                        <option value="estoque">Estoque</option>
+                        <option value="financeiro">Financeiro</option>
+                        <option value="produtos">Produtos</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="data_inicio">Data Início:</label>
+                    <input type="date" id="data_inicio" value="2025-01-01">
+                </div>
+                <div>
+                    <label for="data_fim">Data Fim:</label>
+                    <input type="date" id="data_fim" value="2025-12-31">
+                </div>
+            </div>
+        </div>
+        
+        <div class="teste">
+            <h3>🔧 Testes Disponíveis</h3>
+            <button onclick="testarRelatorioHTML()">Teste 1: Relatório HTML</button>
+            <button onclick="testarVisualizacao()">Teste 2: Visualização</button>
+            <button onclick="testarDebug()">Teste 3: Debug</button>
+            <button onclick="limparResultados()">Limpar Resultados</button>
+        </div>
+        
+        <div id="resultados"></div>
+    </div>
+
+    <script>
+        function mostrarResultado(titulo, mensagem, tipo = 'teste') {
+            const resultados = document.getElementById('resultados');
+            const div = document.createElement('div');
+            div.className = `teste ${tipo}`;
+            div.innerHTML = `
+                <h4>${titulo}</h4>
+                <div>${mensagem}</div>
+            `;
+            resultados.appendChild(div);
+        }
+        
+        function testarRelatorioHTML() {
+            const tipo = document.getElementById('tipo').value;
+            const dataInicio = document.getElementById('data_inicio').value;
+            const dataFim = document.getElementById('data_fim').value;
+            
+            mostrarResultado('🔄 Teste 1: Relatório HTML', 'Enviando requisição...', 'loading');
+            
+            const formData = new FormData();
+            formData.append('tipo', tipo);
+            formData.append('data_inicio', dataInicio);
+            formData.append('data_fim', dataFim);
+            
+            fetch('ajax/gerar_html.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarResultado(
+                        '✅ Teste 1: Relatório HTML - SUCESSO',
+                        `
+                        <p><strong>Arquivo gerado:</strong> ${data.arquivo}</p>
+                        <p><strong>URL:</strong> ${data.url}</p>
+                        <a href="${data.url}" target="_blank" style="display: inline-block; padding: 8px 16px; background: #28a745; color: white; text-decoration: none; border-radius: 4px; margin-top: 10px;">
+                            📄 Abrir Relatório HTML
+                        </a>
+                        <p style="margin-top: 10px; font-size: 12px; color: #6c757d;">
+                            💡 <strong>Dica:</strong> O relatório HTML pode ser impresso como PDF usando Ctrl+P no navegador!
+                        </p>
+                        `,
+                        'sucesso'
+                    );
+                } else {
+                    mostrarResultado(
+                        '❌ Teste 1: Relatório HTML - ERRO',
+                        `<p><strong>Erro:</strong> ${data.message}</p>`,
+                        'erro'
+                    );
+                }
+            })
+            .catch(error => {
+                mostrarResultado(
+                    '❌ Teste 1: Relatório HTML - ERRO DE CONEXÃO',
+                    `<p><strong>Erro:</strong> ${error.message}</p>`,
+                    'erro'
+                );
+            });
+        }
+        
+        function testarVisualizacao() {
+            const tipo = document.getElementById('tipo').value;
+            const dataInicio = document.getElementById('data_inicio').value;
+            const dataFim = document.getElementById('data_fim').value;
+            
+            mostrarResultado('🔄 Teste 2: Visualização', 'Carregando dados...', 'loading');
+            
+            fetch(`ajax/relatorio_${tipo}.php?data_inicio=${dataInicio}&data_fim=${dataFim}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarResultado(
+                        '✅ Teste 2: Visualização - SUCESSO',
+                        `
+                        <p><strong>Dados carregados com sucesso!</strong></p>
+                        <p><strong>Seções disponíveis:</strong> ${Object.keys(data).length}</p>
+                        <p><strong>Período:</strong> ${data.periodo ? data.periodo.inicio + ' a ' + data.periodo.fim : 'N/A'}</p>
+                        <p style="margin-top: 10px; font-size: 12px; color: #6c757d;">
+                            💡 Os dados estão prontos para exibição na interface!
+                        </p>
+                        `,
+                        'sucesso'
+                    );
+                } else {
+                    mostrarResultado(
+                        '❌ Teste 2: Visualização - ERRO',
+                        `<p><strong>Erro:</strong> ${data.message}</p>`,
+                        'erro'
+                    );
+                }
+            })
+            .catch(error => {
+                mostrarResultado(
+                    '❌ Teste 2: Visualização - ERRO DE CONEXÃO',
+                    `<p><strong>Erro:</strong> ${error.message}</p>`,
+                    'erro'
+                );
+            });
+        }
+        
+        function testarDebug() {
+            mostrarResultado('🔄 Teste 3: Debug', 'Abrindo página de debug...', 'loading');
+            
+            setTimeout(() => {
+                window.open('debug_pdf.php', '_blank');
+                mostrarResultado(
+                    'ℹ️ Teste 3: Debug',
+                    'Página de debug aberta em nova aba. Verifique se todos os componentes estão funcionando.',
+                    'teste'
+                );
+            }, 500);
+        }
+        
+        function limparResultados() {
+            document.getElementById('resultados').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

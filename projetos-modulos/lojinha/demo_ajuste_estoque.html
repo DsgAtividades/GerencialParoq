@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Modal Ajuste de Estoque</title>
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/module.css">
+    <link rel="stylesheet" href="css/lojinha.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: #f8fafc;
+            padding: 50px;
+        }
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .demo-button {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px auto;
+        }
+        .demo-button:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1 style="text-align: center; color: #374151; margin-bottom: 30px;">
+            <i class="fas fa-warehouse" style="color: #10b981; margin-right: 10px;"></i>
+            Demo - Modal Ajuste de Estoque
+        </h1>
+        
+        <p style="text-align: center; color: #6b7280; margin-bottom: 30px;">
+            Clique no botão abaixo para ver como ficou o modal de ajuste de estoque com o novo design.
+        </p>
+        
+        <button class="demo-button" onclick="abrirModalAjusteEstoque()">
+            <i class="fas fa-edit"></i>
+            Abrir Modal de Ajuste de Estoque
+        </button>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <h3 style="color: #374151; margin-bottom: 15px;">✨ Melhorias Implementadas:</h3>
+            <ul style="color: #6b7280; line-height: 1.6;">
+                <li><strong>Design Consistente:</strong> Usa as mesmas classes CSS do sistema</li>
+                <li><strong>Header Verde:</strong> Cor diferenciada para ajuste de estoque</li>
+                <li><strong>Layout Responsivo:</strong> Adapta-se a diferentes tamanhos de tela</li>
+                <li><strong>Display de Estoque:</strong> Mostra o estoque atual de forma destacada</li>
+                <li><strong>Campos Organizados:</strong> Layout em grid para melhor organização</li>
+                <li><strong>Animações Suaves:</strong> Transições e efeitos hover</li>
+                <li><strong>Ícones Intuitivos:</strong> FontAwesome para melhor UX</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal de Ajuste de Estoque -->
+    <div id="modal-ajuste-estoque" class="modal-produto" style="display: none;">
+        <div class="modal-produto-content">
+            <div class="modal-produto-header">
+                <h3><i class="fas fa-warehouse"></i> Ajuste de Estoque</h3>
+                <button class="modal-produto-close" onclick="fecharModalAjusteEstoque()">&times;</button>
+            </div>
+            <form id="form-ajuste-estoque" onsubmit="salvarAjusteEstoque(event)">
+                <div class="modal-produto-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="produto_ajuste">Produto *</label>
+                            <select id="produto_ajuste" name="produto_id" required>
+                                <option value="">Selecione um produto</option>
+                                <option value="1" data-estoque="100">Biblia (Estoque: 100)</option>
+                                <option value="2" data-estoque="20">Terço (Estoque: 20)</option>
+                                <option value="3" data-estoque="50">Pipoca (Estoque: 50)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipo_ajuste">Tipo de Ajuste *</label>
+                            <select id="produto_ajuste" name="tipo" required>
+                                <option value="">Selecione o tipo</option>
+                                <option value="entrada">Entrada (+)</option>
+                                <option value="saida">Saída (-)</option>
+                                <option value="ajuste">Ajuste Manual</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantidade_ajuste">Quantidade *</label>
+                            <input type="number" id="quantidade_ajuste" name="quantidade" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Estoque Atual</label>
+                            <div class="estoque-display">
+                                <span id="estoque-atual-display">-</span>
+                                <small>unidades</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="motivo_ajuste">Motivo do Ajuste *</label>
+                            <textarea id="motivo_ajuste" name="motivo" rows="3" required placeholder="Explique o motivo do ajuste (ex: Recebimento de mercadoria, Produto danificado, Contagem física, etc.)"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-produto-footer">
+                    <button type="button" class="btn-secondary" onclick="fecharModalAjusteEstoque()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Salvar Ajuste
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function abrirModalAjusteEstoque() {
+            const modal = document.getElementById('modal-ajuste-estoque');
+            modal.style.display = 'flex';
+            
+            // Adicionar evento para mostrar estoque quando produto for selecionado
+            const select = document.getElementById('produto_ajuste');
+            select.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const estoqueAtual = selectedOption.getAttribute('data-estoque') || '-';
+                const displayElement = document.getElementById('estoque-atual-display');
+                
+                if (estoqueAtual !== '-') {
+                    displayElement.textContent = estoqueAtual;
+                    displayElement.style.color = '#4f46e5';
+                    displayElement.style.fontWeight = '700';
+                } else {
+                    displayElement.textContent = '-';
+                    displayElement.style.color = '#6c757d';
+                    displayElement.style.fontWeight = '400';
+                }
+            });
+        }
+
+        function fecharModalAjusteEstoque() {
+            const modal = document.getElementById('modal-ajuste-estoque');
+            modal.style.display = 'none';
+            document.getElementById('form-ajuste-estoque').reset();
+            document.getElementById('estoque-atual-display').textContent = '-';
+        }
+
+        function salvarAjusteEstoque(event) {
+            event.preventDefault();
+            alert('Demo: Ajuste de estoque seria salvo aqui!');
+            fecharModalAjusteEstoque();
+        }
+
+        // Fechar modal clicando fora dele
+        document.getElementById('modal-ajuste-estoque').addEventListener('click', function(e) {
+            if (e.target === this) {
+                fecharModalAjusteEstoque();
+            }
+        });
+    </script>
+</body>
+</html>

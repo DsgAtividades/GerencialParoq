@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Layout - Módulo Atividades</title>
+    <link rel="stylesheet" href="../../assets/css/base.css">
+    <link rel="stylesheet" href="../../assets/css/module.css">
+    <link rel="stylesheet" href="atividades.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilos específicos para o teste */
+        .teste-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
+        }
+        
+        .teste-container .header-content,
+        .teste-container .module-nav ul,
+        .teste-container .module-main {
+            max-width: 1200px;
+        }
+        
+        .teste-container .header-content,
+        .teste-container .module-nav ul {
+            padding: 0 30px;
+        }
+        
+        .teste-container .module-main {
+            padding: 40px 30px;
+        }
+        
+        .teste-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="teste-container">
+        <div class="module-container">
+            <!-- Header do Módulo -->
+            <header class="module-header">
+                <div class="header-content">
+                    <div class="module-info">
+                        <h1>Atividades</h1>
+                        <p>Sistema de monitoramento e controle de atividades pastorais</p>
+                    </div>
+                    <div class="user-info">
+                        <span>Bem-vindo, admin_atividades!</span>
+                        <a href="#" class="btn-logout">
+                            <i class="fas fa-sign-out-alt"></i> Sair do Módulo
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Navegação do Módulo -->
+            <nav class="module-nav">
+                <ul>
+                    <li><a href="#" class="nav-link active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a></li>
+                    <li><a href="#" class="nav-link" data-section="criar-relatorio">
+                        <i class="fas fa-plus-circle"></i> Criar Relatório de Atividade
+                    </a></li>
+                    <li><a href="#" class="nav-link" data-section="relatorios">
+                        <i class="fas fa-file-alt"></i> Relatórios
+                    </a></li>
+                </ul>
+            </nav>
+
+            <!-- Conteúdo Principal -->
+            <main class="module-main">
+                <!-- Dashboard -->
+                <section id="dashboard" class="content-section active">
+                    <div class="section-header">
+                        <h2>Dashboard de Atividades</h2>
+                        <p>Visão geral das atividades em execução</p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">3</div>
+                                <div class="stat-label">Total de Relatórios</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">1</div>
+                                <div class="stat-label">Concluídos</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">1</div>
+                                <div class="stat-label">Em Andamento</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">1</div>
+                                <div class="stat-label">Pendentes</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3>Atividades Recentes</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="empty-state">
+                                <i class="fas fa-file-alt"></i>
+                                <h4>Nenhuma atividade cadastrada ainda</h4>
+                                <p>Comece criando seu primeiro relatório de atividade na aba "Criar Relatório de Atividade".</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Relatórios -->
+                <section id="relatorios" class="content-section">
+                    <div class="section-header">
+                        <h2>Relatórios de Atividades</h2>
+                        <p>Visualize e gerencie todos os relatórios criados</p>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="card-content">
+                            <div class="table-container">
+                                <table class="table-module">
+                                    <thead>
+                                        <tr>
+                                            <th>Título da Atividade</th>
+                                            <th>Setor</th>
+                                            <th>Responsável</th>
+                                            <th>Início</th>
+                                            <th>Previsão</th>
+                                            <th>Término</th>
+                                            <th>Status</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Preparação para Primeira Comunhão</td>
+                                            <td>Catequese</td>
+                                            <td>Maria Silva</td>
+                                            <td>2024-01-15</td>
+                                            <td>2024-06-15</td>
+                                            <td>-</td>
+                                            <td><span class="status-badge status-em-andamento">Em Andamento</span></td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button class="btn-action btn-view" title="Visualizar">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-edit" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-delete" title="Excluir">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Campanha de Arrecadação</td>
+                                            <td>Pastoral Social</td>
+                                            <td>João Santos</td>
+                                            <td>2024-02-01</td>
+                                            <td>2024-02-28</td>
+                                            <td>2024-02-28</td>
+                                            <td><span class="status-badge status-concluido">Concluído</span></td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button class="btn-action btn-view" title="Visualizar">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-edit" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-delete" title="Excluir">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Retiro de Jovens</td>
+                                            <td>Pastoral da Juventude</td>
+                                            <td>Ana Costa</td>
+                                            <td>2024-03-10</td>
+                                            <td>2024-03-12</td>
+                                            <td>-</td>
+                                            <td><span class="status-badge status-pendente">Pendente</span></td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button class="btn-action btn-view" title="Visualizar">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-edit" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn-action btn-delete" title="Excluir">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Simular navegação entre abas
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.content-section');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remover classe active de todos os links
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    // Adicionar classe active ao link clicado
+                    this.classList.add('active');
+                    
+                    // Esconder todas as seções
+                    sections.forEach(s => s.classList.remove('active'));
+                    
+                    // Mostrar a seção correspondente
+                    const targetSection = this.getAttribute('data-section');
+                    const section = document.getElementById(targetSection);
+                    if (section) {
+                        section.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

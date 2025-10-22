@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Cache JavaScript</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .teste { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h2>🧪 Teste de Cache JavaScript</h2>
+    
+    <div class="teste">
+        <h3>Teste 1: Verificar se a função existe</h3>
+        <button onclick="testarFuncao()">Testar Função gerarRelatorioCompleto</button>
+        <div id="resultado1"></div>
+    </div>
+    
+    <div class="teste">
+        <h3>Teste 2: Forçar reload do JavaScript</h3>
+        <button onclick="recarregarJS()">Recarregar JavaScript</button>
+        <div id="resultado2"></div>
+    </div>
+    
+    <div class="teste">
+        <h3>Teste 3: Verificar timestamp do arquivo</h3>
+        <button onclick="verificarTimestamp()">Verificar Timestamp</button>
+        <div id="resultado3"></div>
+    </div>
+
+    <script>
+        function testarFuncao() {
+            const resultado = document.getElementById('resultado1');
+            
+            if (typeof gerarRelatorioCompleto === 'function') {
+                resultado.innerHTML = '✅ Função gerarRelatorioCompleto existe!';
+                resultado.style.color = 'green';
+                
+                // Testar a função
+                try {
+                    gerarRelatorioCompleto('teste');
+                } catch (e) {
+                    resultado.innerHTML += '<br>❌ Erro ao executar: ' + e.message;
+                    resultado.style.color = 'red';
+                }
+            } else {
+                resultado.innerHTML = '❌ Função gerarRelatorioCompleto NÃO existe!';
+                resultado.style.color = 'red';
+            }
+        }
+        
+        function recarregarJS() {
+            const resultado = document.getElementById('resultado2');
+            resultado.innerHTML = '🔄 Recarregando JavaScript...';
+            
+            // Remover script existente
+            const existingScript = document.querySelector('script[src*="lojinha.js"]');
+            if (existingScript) {
+                existingScript.remove();
+            }
+            
+            // Adicionar novo script com timestamp
+            const script = document.createElement('script');
+            script.src = 'js/lojinha.js?v=' + Date.now();
+            script.onload = function() {
+                resultado.innerHTML = '✅ JavaScript recarregado com sucesso!';
+                resultado.style.color = 'green';
+            };
+            script.onerror = function() {
+                resultado.innerHTML = '❌ Erro ao carregar JavaScript!';
+                resultado.style.color = 'red';
+            };
+            document.head.appendChild(script);
+        }
+        
+        function verificarTimestamp() {
+            const resultado = document.getElementById('resultado3');
+            const timestamp = Date.now();
+            resultado.innerHTML = `🕐 Timestamp atual: ${timestamp}<br>📁 Arquivo: js/lojinha.js?v=${timestamp}`;
+        }
+    </script>
+    
+    <!-- Carregar o JavaScript original -->
+    <script src="js/lojinha.js?v=<?php echo time(); ?>"></script>
+</body>
+</html>

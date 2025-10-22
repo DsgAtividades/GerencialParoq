@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Gestão Paroquial</title>
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/paginas/login-principal.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container-login">
+        <div class="logo-sistema">
+            <i class="fas fa-church"></i>
+            <h1>Sistema de Gestão Paroquial</h1>
+            <p>Acesso Administrativo</p>
+        </div>
+
+        <div id="mensagemErro" class="mensagem-erro"></div>
+        <div id="mensagemSucesso" class="mensagem-sucesso"></div>
+
+        <form id="formularioLogin" onsubmit="return false;">
+            <div class="grupo-formulario">
+                <label for="campoUsuario">
+                    <i class="fas fa-user"></i> Usuário
+                </label>
+                <input type="text" id="campoUsuario" name="username" required 
+                       placeholder="Digite seu usuário" autocomplete="username">
+            </div>
+
+            <div class="grupo-formulario">
+                <label for="campoSenha">
+                    <i class="fas fa-lock"></i> Senha
+                </label>
+                <input type="password" id="campoSenha" name="password" required 
+                       placeholder="Digite sua senha" autocomplete="current-password">
+            </div>
+
+            <button type="button" class="botao-login" id="botaoLogin" onclick="processarLogin()">
+                <i class="fas fa-sign-in-alt"></i> Entrar no Sistema
+            </button>
+
+            <div class="carregando" id="carregando">
+                <div class="spinner"></div>
+                <p>Verificando credenciais...</p>
+            </div>
+        </form>
+
+        <div class="rodape">
+            <p>Desenvolvido para facilitar a gestão paroquial e pastoral</p>
+            <p><a href="#" onclick="mostrarAjuda()">Precisa de ajuda?</a></p>
+        </div>
+    </div>
+
+    <script src="assets/js/paginas/login-principal.js"></script>
+</body>
+</html>

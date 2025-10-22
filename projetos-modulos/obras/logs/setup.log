@@ -1,0 +1,12 @@
+[2025-04-15 18:43:29] ✓ Tabela servicos_arquivos criada com sucesso
+[2025-04-15 18:43:29] ✓ Migrado comprovante de pagamento do serviço 5
+[2025-04-15 18:43:29] ✓ Migrado comprovante de pagamento do serviço 6
+[2025-04-15 18:43:29] ✓ Colunas antigas removidas com sucesso
+[2025-04-15 18:43:29] 
+✓ Setup concluído com sucesso!
+[2025-04-15 19:05:22] ✓ Tabela servicos_arquivos criada com sucesso
+[2025-04-15 19:05:22] ✗ Erro durante o setup: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'comprovante_pagamento' in 'field list'
+[2025-04-15 19:07:43] ✓ Tabela servicos_arquivos criada com sucesso
+[2025-04-15 19:07:43] Nenhuma coluna antiga encontrada para migrar
+[2025-04-15 19:07:43] 
+✓ Setup concluído com sucesso!

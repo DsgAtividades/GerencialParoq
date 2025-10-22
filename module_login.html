@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login do Módulo - Sistema de Gestão Paroquial</title>
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/paginas/login-modulo.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <a href="dashboard.html" class="botao-voltar">
+        <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+    </a>
+
+    <div class="container-login">
+        <div class="cabecalho-modulo">
+            <div class="icone-modulo" id="iconeModulo" style="background: #667eea;">
+                <i class="fas fa-cog"></i>
+            </div>
+            <h1 id="nomeModulo">Carregando...</h1>
+            <p id="descricaoModulo">Acesse o módulo com suas credenciais</p>
+        </div>
+
+        <div id="mensagemErro" class="mensagem-erro"></div>
+        <div id="mensagemSucesso" class="mensagem-sucesso"></div>
+
+        <form id="formularioLogin" onsubmit="return false;">
+            <div class="grupo-formulario">
+                <label for="campoUsuario">
+                    <i class="fas fa-user"></i> Usuário do Módulo
+                </label>
+                <input type="text" id="campoUsuario" name="username" required 
+                       placeholder="Digite seu usuário do módulo" autocomplete="username">
+            </div>
+
+            <div class="grupo-formulario">
+                <label for="campoSenha">
+                    <i class="fas fa-lock"></i> Senha do Módulo
+                </label>
+                <input type="password" id="campoSenha" name="password" required 
+                       placeholder="Digite sua senha do módulo" autocomplete="current-password">
+            </div>
+
+            <button type="button" class="botao-login" id="botaoLogin" onclick="processarLogin()">
+                <i class="fas fa-sign-in-alt"></i> Entrar no Módulo
+            </button>
+
+            <div class="carregando" id="carregando">
+                <div class="spinner"></div>
+                <p>Verificando credenciais...</p>
+            </div>
+        </form>
+
+        <!-- Credenciais removidas da interface por segurança -->
+        <!-- Consulte o arquivo credentials.txt na raiz do projeto -->
+    </div>
+
+    <script src="assets/js/paginas/login-modulo.js"></script>
+</body>
+</html>

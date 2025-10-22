@@ -1,0 +1,252 @@
+/* Container principal do dashboard */
+.dashboard-container {
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Grid de cards */
+.dashboard-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Seções do dashboard */
+.dashboard-section {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.dashboard-section .card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.dashboard-section .card-body {
+    padding: 1.5rem;
+}
+
+/* Estilos para as tabelas do dashboard */
+.dashboard-table {
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Ajustes de largura das colunas */
+.dashboard-table {
+    table-layout: fixed !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 0 !important;
+    padding: 8px !important;
+    vertical-align: middle !important;
+    line-height: 1.2 !important;
+    height: 40px !important;
+}
+
+/* Coluna de Descrição */
+.dashboard-table th:first-child,
+.dashboard-table td:first-child {
+    width: 25% !important;
+}
+
+/* Coluna de Responsável */
+.dashboard-table th:nth-child(2),
+.dashboard-table td:nth-child(2) {
+    width: 15% !important;
+}
+
+/* Colunas de Valores */
+.dashboard-table th:nth-child(3),
+.dashboard-table td:nth-child(3),
+.dashboard-table th:nth-child(4),
+.dashboard-table td:nth-child(4),
+.dashboard-table th:nth-child(5),
+.dashboard-table td:nth-child(5) {
+    width: 13% !important;
+    text-align: right !important;
+}
+
+/* Colunas de Datas */
+.dashboard-table th:nth-child(6),
+.dashboard-table td:nth-child(6),
+.dashboard-table th:nth-child(7),
+.dashboard-table td:nth-child(7) {
+    width: 8% !important;
+    text-align: center !important;
+}
+
+/* Coluna de Ações */
+.dashboard-table th:last-child,
+.dashboard-table td:last-child {
+    width: 5% !important;
+    text-align: center !important;
+    padding: 4px !important;
+}
+
+/* Botões de ação */
+.dashboard-table .btn-sm {
+    padding: 0.25rem 0.5rem !important;
+    line-height: 1.2 !important;
+}
+
+/* Formatação dos valores */
+.dashboard-table .valor {
+    font-family: monospace !important;
+    font-size: 0.9rem !important;
+}
+
+/* Formatação das datas */
+.dashboard-table .data {
+    font-family: monospace !important;
+    font-size: 0.9rem !important;
+}
+
+/* Tooltip para texto completo */
+.dashboard-table td[title] {
+    cursor: help;
+}
+
+/* Forçar larguras fixas */
+.dashboard-table th {
+    font-weight: 600;
+    background-color: rgba(0,0,0,0.03);
+    border-bottom: 2px solid rgba(0,0,0,0.05);
+}
+
+.dashboard-table tr:hover td {
+    background-color: rgba(0,0,0,0.02);
+}
+
+/* Garantir que a tabela não quebre */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 0;
+    border-radius: 4px;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    padding: 8px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dashboard-table th {
+    background-color: rgba(0,0,0,0.05);
+    font-weight: 600;
+}
+
+.dashboard-table td.descricao {
+    width: 25%;
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dashboard-table td.responsavel {
+    width: 15%;
+}
+
+.dashboard-table td.valor {
+    width: 12%;
+    text-align: right;
+}
+
+.dashboard-table td.data {
+    width: 12%;
+    text-align: center;
+}
+
+.dashboard-table td.acoes {
+    width: 5%;
+    text-align: center;
+}
+
+/* Estilos para os cards de valores */
+.card-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.card-label {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+/* Estilos para os cards de status */
+.status-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.status-card:hover {
+    transform: translateY(-2px);
+}
+
+.status-card .card-body {
+    padding: 1.5rem;
+}
+
+.status-card .display-4 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+/* Tooltip para mostrar texto completo */
+.tooltip-text {
+    cursor: pointer;
+}
+
+/* Estilos para os valores totais */
+.total-row td {
+    font-weight: bold;
+    background-color: rgba(0,0,0,0.03);
+}
+
+/* Estilos para os cards de resumo */
+.summary-card {
+    height: 100%;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.summary-card .card-header {
+    border-bottom: none;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+}
+
+.summary-card .card-body {
+    padding: 1.5rem;
+}
+
+/* Estilos para os valores monetários */
+.money-value {
+    font-family: monospace;
+    font-size: 1rem;
+    white-space: nowrap;
+}
