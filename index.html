@@ -3,17 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecionando - Sistema de Gestão Paroquial</title>
-    <link rel="stylesheet" href="assets/css/base.css">
-    <link rel="stylesheet" href="assets/css/paginas/redirecionamento.css">
+    <title>Login - Sistema de Gestão Paroquial</title>
+    <link rel="stylesheet" href="assets/css/paginas/login-principal.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container-redirecionamento">
-        <div class="spinner"></div>
-        <h2>Redirecionando para o sistema...</h2>
-        <p>Você será direcionado para a página de login em instantes.</p>
+    <div class="background-image"></div>
+    
+    <div class="container-login">
+        <div class="login-card">
+            <div class="logo-sistema">
+                <i class="fas fa-church"></i>
+                <h1>Sistema de Gestão Paroquial</h1>
+                <p>Acesso Administrativo</p>
+            </div>
+
+            <div id="mensagemErro" class="mensagem-erro"></div>
+            <div id="mensagemSucesso" class="mensagem-sucesso"></div>
+
+            <form id="formularioLogin" onsubmit="return false;">
+                <div class="grupo-formulario">
+                    <div class="input-container">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="campoUsuario" name="username" required 
+                               placeholder="Digite seu usuário" autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="grupo-formulario">
+                    <div class="input-container">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="campoSenha" name="password" required 
+                               placeholder="Digite sua senha" autocomplete="current-password">
+                    </div>
+                </div>
+
+                <button type="button" class="botao-login" id="botaoLogin" onclick="processarLogin()">
+                    <span class="button-text">Entrar no Sistema</span>
+                    <i class="fas fa-arrow-right button-icon"></i>
+                </button>
+
+                <div class="carregando" id="carregando">
+                    <div class="spinner"></div>
+                    <p>Verificando credenciais...</p>
+                </div>
+            </form>
+
+            <div class="rodape">
+                <p>Desenvolvido para facilitar a gestão paroquial e pastoral</p>
+                <p><a href="#" onclick="mostrarAjuda()">Precisa de ajuda?</a></p>
+            </div>
+        </div>
     </div>
 
-    <script src="assets/js/paginas/redirecionamento.js"></script>
+    <script src="assets/js/paginas/login-principal.js"></script>
 </body>
 </html>

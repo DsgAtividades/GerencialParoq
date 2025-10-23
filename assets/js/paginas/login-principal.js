@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Tornar mostrarAjuda global para o onclick
+    // Tornar funções globais para o onclick
     window.mostrarAjuda = mostrarAjuda;
+    window.processarLogin = processarLogin;
 });

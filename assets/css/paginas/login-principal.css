@@ -1,134 +1,282 @@
-/* Estilos para página de login principal */
+/* Estilos para página de login principal com imagem de fundo */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Imagem de fundo */
+.background-image {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../../../jesus.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: -1;
+}
+
+/* Overlay sutil para melhorar legibilidade */
+.background-image::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.15);
+    z-index: 1;
+}
+
+/* Container principal */
+.container-login {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
     padding: 20px;
+    position: relative;
+    z-index: 2;
 }
 
-.container-login {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    padding: 40px;
-    width: 100%;
-    max-width: 400px;
+/* Card de login translúcido */
+.login-card {
+    background: rgba(255, 248, 220, 0.65);
+    backdrop-filter: blur(10px);
+    border-radius: 24px;
+    padding: 50px;
+    width: 600px;
+    height: 600px;
     text-align: center;
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    backdrop-filter: blur(10px);
 }
 
+/* Efeito de brilho sutil removido */
+
+/* Logo do sistema */
 .logo-sistema {
     margin-bottom: 30px;
+    position: relative;
+    z-index: 1;
 }
 
 .logo-sistema i {
-    font-size: 4rem;
-    color: #667eea;
-    margin-bottom: 15px;
+    font-size: 4.5rem;
+    color: #DAA520;
+    margin-bottom: 20px;
+    text-shadow: 0 4px 8px rgba(218, 165, 32, 0.3);
 }
 
 .logo-sistema h1 {
-    color: #333;
+    color: #8B4513;
     margin: 0;
-    font-size: 1.8rem;
+    font-size: 1.9rem;
     font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    letter-spacing: -0.5px;
 }
 
 .logo-sistema p {
-    color: #666;
-    margin: 5px 0 0 0;
-    font-size: 0.9rem;
+    color: #A0522D;
+    margin: 8px 0 0 0;
+    font-size: 0.95rem;
+    font-weight: 400;
+    opacity: 0.9;
 }
 
+/* Grupos de formulário */
 .grupo-formulario {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     text-align: left;
 }
 
-.grupo-formulario label {
-    display: block;
-    margin-bottom: 8px;
-    color: #333;
-    font-weight: 500;
+/* Container dos inputs com ícones */
+.input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
-.grupo-formulario input {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #e1e5e9;
-    border-radius: 10px;
-    font-size: 16px;
+.input-icon {
+    position: absolute;
+    left: 18px;
+    color: #DAA520;
+    font-size: 1.1rem;
+    z-index: 2;
     transition: all 0.3s ease;
-    box-sizing: border-box;
 }
 
-.grupo-formulario input:focus {
+.input-container input {
+    width: 100%;
+    padding: 16px 18px 16px 50px;
+    border: 2px solid rgba(218, 165, 32, 0.3);
+    border-radius: 16px;
+    font-size: 16px;
+    font-family: 'Poppins', sans-serif;
+    background: rgba(255, 255, 255, 0.9);
+    color: #8B4513;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.input-container input::placeholder {
+    color: #A0522D;
+    opacity: 0.7;
+}
+
+.input-container input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #DAA520;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 
+        0 0 0 4px rgba(218, 165, 32, 0.15),
+        0 8px 25px rgba(218, 165, 32, 0.1);
+    transform: translateY(-2px);
 }
 
+.input-container input:focus + .input-icon {
+    color: #B8860B;
+    transform: scale(1.1);
+}
+
+/* Botão de login moderno */
 .botao-login {
     width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #DAA520 0%, #B8860B 50%, #CD853F 100%);
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: 16px;
     font-size: 16px;
     font-weight: 600;
+    font-family: 'Poppins', sans-serif;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 10px;
+    margin-top: 15px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 
+        0 8px 25px rgba(218, 165, 32, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.botao-login::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
 }
 
 .botao-login:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    transform: translateY(-3px);
+    box-shadow: 
+        0 15px 35px rgba(218, 165, 32, 0.4),
+        0 8px 20px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, #E6B800 0%, #DAA520 50%, #B8860B 100%);
+}
+
+.botao-login:hover::before {
+    left: 100%;
+}
+
+.botao-login:active {
+    transform: translateY(-1px);
+    box-shadow: 
+        0 8px 20px rgba(218, 165, 32, 0.3),
+        0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .botao-login:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    box-shadow: 0 4px 12px rgba(218, 165, 32, 0.2);
 }
 
+.button-text {
+    position: relative;
+    z-index: 2;
+}
+
+.button-icon {
+    position: relative;
+    z-index: 2;
+    transition: transform 0.3s ease;
+}
+
+.botao-login:hover .button-icon {
+    transform: translateX(3px);
+}
+
+/* Mensagens de erro e sucesso */
 .mensagem-erro {
-    background: #fee;
-    color: #c33;
-    padding: 12px;
-    border-radius: 8px;
+    background: rgba(220, 53, 69, 0.1);
+    color: #721c24;
+    padding: 14px 18px;
+    border-radius: 12px;
     margin-bottom: 20px;
-    border: 1px solid #fcc;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    backdrop-filter: blur(10px);
     display: none;
+    font-weight: 500;
 }
 
 .mensagem-sucesso {
-    background: #efe;
-    color: #363;
-    padding: 12px;
-    border-radius: 8px;
+    background: rgba(40, 167, 69, 0.1);
+    color: #155724;
+    padding: 14px 18px;
+    border-radius: 12px;
     margin-bottom: 20px;
-    border: 1px solid #cfc;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    backdrop-filter: blur(10px);
     display: none;
+    font-weight: 500;
 }
 
+/* Loading */
 .carregando {
     display: none;
-    margin-top: 10px;
+    margin-top: 15px;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
 .spinner {
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #667eea;
+    border: 3px solid rgba(218, 165, 32, 0.2);
+    border-top: 3px solid #DAA520;
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     animation: girar 1s linear infinite;
-    margin: 0 auto;
 }
 
 @keyframes girar {
@@ -136,17 +284,118 @@ body {
     100% { transform: rotate(360deg); }
 }
 
+.carregando p {
+    color: #8B4513;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Rodapé */
 .rodape {
     margin-top: 30px;
-    color: #666;
+    color: #8B4513;
     font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.rodape p {
+    margin: 5px 0;
 }
 
 .rodape a {
-    color: #667eea;
+    color: #DAA520;
     text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.rodape a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #DAA520;
+    transition: width 0.3s ease;
+}
+
+.rodape a:hover::after {
+    width: 100%;
 }
 
 .rodape a:hover {
-    text-decoration: underline;
+    color: #B8860B;
+}
+
+/* Responsividade */
+@media (max-width: 900px) {
+    .login-card {
+        width: 90%;
+        max-width: 800px;
+        height: auto;
+        min-height: 500px;
+        padding: 40px 30px;
+        margin: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 35px 25px;
+        margin: 15px;
+        border-radius: 20px;
+        width: 95%;
+        min-height: 450px;
+    }
+    
+    .logo-sistema i {
+        font-size: 3.5rem;
+    }
+    
+    .logo-sistema h1 {
+        font-size: 1.6rem;
+    }
+    
+    .input-container input {
+        padding: 14px 16px 14px 45px;
+        font-size: 15px;
+    }
+    
+    .input-icon {
+        left: 16px;
+        font-size: 1rem;
+    }
+    
+    .botao-login {
+        padding: 16px 20px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 360px) {
+    .login-card {
+        padding: 30px 20px;
+        width: 98%;
+        min-height: 400px;
+    }
+    
+    .logo-sistema i {
+        font-size: 3rem;
+    }
+    
+    .logo-sistema h1 {
+        font-size: 1.4rem;
+    }
+}
+
+/* Animações de entrada removidas */
+
+/* Melhorias para acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+    .botao-login:hover,
+    .input-container input:focus {
+        transform: none;
+    }
 }
