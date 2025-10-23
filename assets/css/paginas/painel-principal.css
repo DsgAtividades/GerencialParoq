@@ -1,17 +1,23 @@
-/* Estilos para página do painel principal */
+/* Estilos para página do painel principal com paleta dourada */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #fcf9dc;
+    font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
     min-height: 100vh;
 }
 
 .cabecalho-painel {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: #faf3b9;
+    color: #000000;
     padding: 25px 0;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
 }
@@ -42,14 +48,22 @@ body {
     margin: 0;
     font-size: 2rem;
     font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-shadow: none;
+    color: #000000;
+}
+
+.secao-logo h1 i {
+    color: #000000;
+    margin-right: 10px;
+    text-shadow: none;
 }
 
 .secao-logo p {
     margin: 8px 0 0 0;
-    opacity: 0.9;
+    opacity: 0.7;
     font-size: 1rem;
     font-weight: 300;
+    color: #333333;
 }
 
 .secao-usuario {
@@ -60,30 +74,32 @@ body {
 
 .info-usuario {
     text-align: right;
-    background: rgba(255,255,255,0.1);
+    background: #fefef8;
     padding: 12px 20px;
     border-radius: 12px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .info-usuario .nome-usuario {
     font-weight: 600;
     font-size: 1.1rem;
     display: block;
+    color: #000000;
 }
 
 .info-usuario .modulo {
     font-size: 0.9rem;
-    opacity: 0.8;
+    opacity: 0.6;
     display: block;
     margin-top: 2px;
+    color: #666666;
 }
 
 .botao-sair {
-    background: rgba(255,255,255,0.15);
-    color: white;
-    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(0, 0, 0, 0.1);
+    color: #000000;
+    border: 2px solid rgba(0, 0, 0, 0.2);
     padding: 12px 24px;
     border-radius: 12px;
     text-decoration: none;
@@ -96,10 +112,11 @@ body {
 }
 
 .botao-sair:hover {
-    background: rgba(255,255,255,0.25);
-    border-color: rgba(255,255,255,0.5);
+    background: rgba(0, 0, 0, 0.15);
+    border-color: rgba(0, 0, 0, 0.3);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    color: #000000;
 }
 
 .container-painel {
@@ -109,12 +126,13 @@ body {
 }
 
 .secao-bem-vindo {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(15px);
     border-radius: 20px;
     padding: 40px;
     margin-bottom: 40px;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
 }
@@ -126,14 +144,14 @@ body {
     right: 0;
     width: 100px;
     height: 100px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #FFD700, #FFA500);
     border-radius: 50%;
     opacity: 0.1;
     transform: translate(30px, -30px);
 }
 
 .secao-bem-vindo h2 {
-    color: #2c3e50;
+    color: #000000;
     margin: 0 0 15px 0;
     font-size: 2rem;
     font-weight: 700;
@@ -142,7 +160,7 @@ body {
 }
 
 .secao-bem-vindo p {
-    color: #5a6c7d;
+    color: #333333;
     margin: 0;
     font-size: 1.2rem;
     line-height: 1.6;
@@ -158,13 +176,14 @@ body {
 }
 
 .cartao-modulo {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(15px);
     border-radius: 20px;
     padding: 30px;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.08);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
-    border: 2px solid transparent;
+    border: 2px solid rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
 }
@@ -176,15 +195,15 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #FFD700, #FFA500);
     transform: scaleX(0);
     transition: transform 0.3s ease;
 }
 
 .cartao-modulo:hover {
     transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
-    border-color: rgba(102, 126, 234, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-color: rgba(0, 0, 0, 0.2);
 }
 
 .cartao-modulo:hover::before {
@@ -206,18 +225,25 @@ body {
     justify-content: center;
     margin-right: 20px;
     font-size: 1.8rem;
-    color: white;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    transition: transform 0.3s ease;
+    color: #000000;
+    box-shadow: none !important;
+    transition: all 0.3s ease;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
 }
 
 .cartao-modulo:hover .icone-modulo {
+    color: #ffac00;
     transform: scale(1.1) rotate(5deg);
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
 }
 
 .info-modulo h3 {
     margin: 0;
-    color: #2c3e50;
+    color: #000000;
     font-size: 1.3rem;
     font-weight: 700;
     line-height: 1.2;
@@ -225,7 +251,7 @@ body {
 
 .info-modulo p {
     margin: 8px 0 0 0;
-    color: #7f8c8d;
+    color: #666666;
     font-size: 0.9rem;
     font-weight: 500;
     text-transform: uppercase;
@@ -233,7 +259,7 @@ body {
 }
 
 .descricao-modulo {
-    color: #5a6c7d;
+    color: #333333;
     line-height: 1.6;
     margin-bottom: 25px;
     font-size: 1rem;
@@ -246,7 +272,7 @@ body {
 }
 
 .botao-principal {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -258,18 +284,19 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 0.9rem;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
 }
 
 .botao-principal:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+    background: linear-gradient(135deg, #FFFF00 0%, #FFD700 50%, #FFA500 100%);
 }
 
 .botao-secundario {
-    background: #f8f9fa;
-    color: #5a6c7d;
-    border: 2px solid #e9ecef;
+    background: rgba(255, 255, 255, 0.8);
+    color: #000000;
+    border: 2px solid rgba(0, 0, 0, 0.2);
     padding: 12px 24px;
     border-radius: 12px;
     text-decoration: none;
@@ -279,24 +306,27 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 0.9rem;
+    backdrop-filter: blur(10px);
 }
 
 .botao-secundario:hover {
-    background: #e9ecef;
-    border-color: #dee2e6;
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.3);
     transform: translateY(-1px);
+    color: #000000;
 }
 
 .secao-estatisticas {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(15px);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .secao-estatisticas h3 {
-    color: #2c3e50;
+    color: #000000;
     margin: 0 0 30px 0;
     font-size: 1.8rem;
     font-weight: 700;
@@ -313,15 +343,16 @@ body {
     text-align: center;
     padding: 30px 20px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-    border: 2px solid rgba(102, 126, 234, 0.1);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
 .cartao-estatistica:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(102, 126, 234, 0.15);
-    border-color: rgba(102, 126, 234, 0.3);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    border-color: rgba(0, 0, 0, 0.2);
 }
 
 .icone-estatistica {
@@ -333,13 +364,13 @@ body {
 .numero-estatistica {
     font-size: 2.5rem;
     font-weight: 800;
-    color: #2c3e50;
+    color: #000000;
     margin: 0;
     line-height: 1;
 }
 
 .rotulo-estatistica {
-    color: #7f8c8d;
+    color: #666666;
     font-size: 1rem;
     margin: 10px 0 0 0;
     font-weight: 500;
@@ -348,12 +379,12 @@ body {
 .carregando {
     text-align: center;
     padding: 60px 20px;
-    color: #7f8c8d;
+    color: #666666;
 }
 
 .spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #000000;
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -411,7 +442,7 @@ body {
 }
 
 .botao-credenciais {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #DAA520 0%, #B8860B 50%, #CD853F 100%);
     color: white;
     border: none;
     padding: 15px 30px;
@@ -420,7 +451,7 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 25px rgba(218, 165, 32, 0.3);
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -428,7 +459,8 @@ body {
 
 .botao-credenciais:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 12px 35px rgba(218, 165, 32, 0.4);
+    background: linear-gradient(135deg, #E6B800 0%, #DAA520 50%, #B8860B 100%);
 }
 
 .botao-credenciais:active {
@@ -458,7 +490,8 @@ body {
 
 /* Popup Content */
 .popup-content {
-    background: white;
+    background: rgba(255, 248, 220, 0.95);
+    backdrop-filter: blur(20px);
     border-radius: 20px;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
     max-width: 90vw;
@@ -467,6 +500,7 @@ body {
     overflow: hidden;
     animation: slideIn 0.3s ease;
     position: relative;
+    border: 1px solid rgba(218, 165, 32, 0.2);
 }
 
 @keyframes slideIn {
@@ -482,7 +516,7 @@ body {
 
 /* Popup Header */
 .popup-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #DAA520 0%, #B8860B 50%, #CD853F 100%);
     color: white;
     padding: 25px 30px;
     display: flex;
@@ -535,7 +569,7 @@ body {
 }
 
 .credenciais-section h3 {
-    color: #2c3e50;
+    color: #8B4513;
     font-size: 1.4rem;
     font-weight: 700;
     margin: 0 0 20px 0;
@@ -543,7 +577,7 @@ body {
     align-items: center;
     gap: 10px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #ecf0f1;
+    border-bottom: 2px solid rgba(218, 165, 32, 0.2);
 }
 
 .credenciais-grid {
@@ -553,8 +587,9 @@ body {
 }
 
 .credencial-item {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(218, 165, 32, 0.2);
     border-radius: 12px;
     padding: 20px;
     display: grid;
@@ -573,27 +608,27 @@ body {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #DAA520, #B8860B);
 }
 
 .credencial-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-    border-color: #667eea;
+    box-shadow: 0 8px 25px rgba(218, 165, 32, 0.2);
+    border-color: #DAA520;
 }
 
 .credencial-item .modulo {
     font-weight: 700;
-    color: #2c3e50;
+    color: #8B4513;
     font-size: 1rem;
 }
 
 .credencial-item .usuario {
     font-family: 'Courier New', monospace;
-    background: #e3f2fd;
+    background: rgba(218, 165, 32, 0.1);
     padding: 8px 12px;
     border-radius: 6px;
-    color: #1976d2;
+    color: #8B4513;
     font-weight: 600;
     text-align: center;
     font-size: 0.9rem;
@@ -601,10 +636,10 @@ body {
 
 .credencial-item .senha {
     font-family: 'Courier New', monospace;
-    background: #f3e5f5;
+    background: rgba(184, 134, 11, 0.1);
     padding: 8px 12px;
     border-radius: 6px;
-    color: #7b1fa2;
+    color: #B8860B;
     font-weight: 600;
     text-align: center;
     font-size: 0.9rem;
@@ -612,12 +647,13 @@ body {
 
 /* Popup Footer */
 .popup-footer {
-    background: #f8f9fa;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
     padding: 20px 30px;
     display: flex;
     justify-content: flex-end;
     gap: 15px;
-    border-top: 1px solid #e9ecef;
+    border-top: 1px solid rgba(218, 165, 32, 0.2);
 }
 
 .botao-copiar {
@@ -640,7 +676,7 @@ body {
 }
 
 .botao-fechar {
-    background: #6c757d;
+    background: linear-gradient(135deg, #DAA520 0%, #B8860B 100%);
     color: white;
     border: none;
     padding: 12px 25px;
@@ -654,8 +690,9 @@ body {
 }
 
 .botao-fechar:hover {
-    background: #5a6268;
+    background: linear-gradient(135deg, #E6B800 0%, #DAA520 100%);
     transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(218, 165, 32, 0.3);
 }
 
 /* Responsividade do Popup */
