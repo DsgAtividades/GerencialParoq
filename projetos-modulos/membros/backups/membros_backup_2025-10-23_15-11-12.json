@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-10-23_15-11-12",
+  "date": "23/10/2025 15:11:19",
+  "tables": [
+    "membros_alocacoes",
+    "membros_anexos",
+    "membros_auditoria_logs",
+    "membros_candidaturas",
+    "membros_checkins",
+    "membros_comunicados",
+    "membros_consentimentos_lgpd",
+    "membros_contatos_membro",
+    "membros_documentos_membro",
+    "membros_enderecos_membro",
+    "membros_eventos",
+    "membros_formacoes",
+    "membros_funcoes",
+    "membros_habilidades_tags",
+    "membros_itens_escala",
+    "membros_membros",
+    "membros_membros_formacoes",
+    "membros_membros_pastorais",
+    "membros_pastorais",
+    "membros_requisitos_funcao",
+    "membros_vagas"
+  ],
+  "table_count": 21,
+  "file_size": 38725,
+  "file_size_formatted": "37.82 KB",
+  "version": "1.0",
+  "system": "GerencialParoq - Módulo de Membros"
+}

@@ -1,0 +1,1970 @@
+openapi: 3.0.3
+info:
+  title: API do Módulo de Membros
+  description: API REST para o sistema de cadastro e gestão de membros paroquiais
+  version: 1.0.0
+  contact:
+    name: Sistema de Gestão Paroquial
+    email: suporte@paroquia.com
+
+servers:
+  - url: http://localhost/projetos-modulos/membros/api
+    description: Servidor de desenvolvimento
+  - url: https://paroquia.com/api/membros
+    description: Servidor de produção
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # =====================================================
+  # MEMBROS
+  # =====================================================
+  /membros:
+    get:
+      summary: Listar membros
+      description: Lista todos os membros com filtros e paginação
+      tags: [Membros]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Busca por nome, email ou telefone
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ativo, afastado, em_discernimento, bloqueado]
+        - name: paroquiano
+          in: query
+          schema:
+            type: boolean
+        - name: pastoral_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: funcao_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [nome, data_entrada, data_cadastro]
+            default: nome
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+      responses:
+        '200':
+          description: Lista de membros
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Membro'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Criar membro
+      description: Cria um novo membro
+      tags: [Membros]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembroCreate'
+      responses:
+        '201':
+          description: Membro criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Membro'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /membros/{id}:
+    get:
+      summary: Obter membro
+      description: Obtém um membro específico por ID
+      tags: [Membros]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dados do membro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Membro'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      summary: Atualizar membro
+      description: Atualiza um membro existente
+      tags: [Membros]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembroUpdate'
+      responses:
+        '200':
+          description: Membro atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Membro'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      summary: Excluir membro
+      description: Exclui um membro (soft delete)
+      tags: [Membros]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Membro excluído com sucesso
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # =====================================================
+  # PASTORAIS
+  # =====================================================
+  /pastorais:
+    get:
+      summary: Listar pastorais
+      description: Lista todas as pastorais/movimentos
+      tags: [Pastorais]
+      parameters:
+        - name: tipo
+          in: query
+          schema:
+            type: string
+            enum: [pastoral, movimento, ministerio_liturgico, servico]
+        - name: ativo
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de pastorais
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pastoral'
+
+    post:
+      summary: Criar pastoral
+      description: Cria uma nova pastoral/movimento
+      tags: [Pastorais]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PastoralCreate'
+      responses:
+        '201':
+          description: Pastoral criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pastoral'
+
+  /pastorais/{id}:
+    get:
+      summary: Obter pastoral
+      description: Obtém uma pastoral específica
+      tags: [Pastorais]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dados da pastoral
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pastoral'
+
+    put:
+      summary: Atualizar pastoral
+      description: Atualiza uma pastoral existente
+      tags: [Pastorais]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PastoralUpdate'
+      responses:
+        '200':
+          description: Pastoral atualizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pastoral'
+
+  # =====================================================
+  # VÍNCULOS MEMBRO-PASTORAL
+  # =====================================================
+  /membros/{membro_id}/pastorais:
+    get:
+      summary: Listar vínculos do membro
+      description: Lista os vínculos de um membro com pastorais
+      tags: [Vínculos]
+      parameters:
+        - name: membro_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ativo, pausado, finalizado]
+      responses:
+        '200':
+          description: Lista de vínculos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VinculoMembroPastoral'
+
+    post:
+      summary: Criar vínculo
+      description: Cria um vínculo entre membro e pastoral
+      tags: [Vínculos]
+      parameters:
+        - name: membro_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VinculoCreate'
+      responses:
+        '201':
+          description: Vínculo criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VinculoMembroPastoral'
+
+  /membros/{membro_id}/pastorais/{vinculo_id}:
+    put:
+      summary: Atualizar vínculo
+      description: Atualiza um vínculo existente
+      tags: [Vínculos]
+      parameters:
+        - name: membro_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: vinculo_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VinculoUpdate'
+      responses:
+        '200':
+          description: Vínculo atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VinculoMembroPastoral'
+
+    delete:
+      summary: Remover vínculo
+      description: Remove um vínculo entre membro e pastoral
+      tags: [Vínculos]
+      parameters:
+        - name: membro_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: vinculo_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Vínculo removido com sucesso
+
+  # =====================================================
+  # EVENTOS E ESCALAS
+  # =====================================================
+  /eventos:
+    get:
+      summary: Listar eventos
+      description: Lista todos os eventos
+      tags: [Eventos]
+      parameters:
+        - name: data_inicio
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: data_fim
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: tipo
+          in: query
+          schema:
+            type: string
+            enum: [missa, reuniao, formacao, acao_social, feira, festa_patronal, outro]
+        - name: ativo
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Lista de eventos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Evento'
+
+    post:
+      summary: Criar evento
+      description: Cria um novo evento
+      tags: [Eventos]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventoCreate'
+      responses:
+        '201':
+          description: Evento criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evento'
+
+  /eventos/{id}/escala:
+    get:
+      summary: Obter escala do evento
+      description: Obtém a escala completa de um evento
+      tags: [Escalas]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Escala do evento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalaEvento'
+
+    post:
+      summary: Criar item de escala
+      description: Adiciona um item à escala do evento
+      tags: [Escalas]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemEscalaCreate'
+      responses:
+        '201':
+          description: Item de escala criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemEscala'
+
+  /eventos/{evento_id}/escala/{item_id}/alocar:
+    post:
+      summary: Alocar membro na escala
+      description: Aloca um membro em um item da escala
+      tags: [Escalas]
+      parameters:
+        - name: evento_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlocacaoCreate'
+      responses:
+        '201':
+          description: Membro alocado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alocacao'
+
+  # =====================================================
+  # CHECK-IN E FREQUÊNCIA
+  # =====================================================
+  /eventos/{evento_id}/checkin:
+    post:
+      summary: Realizar check-in
+      description: Registra a presença de um membro em um evento
+      tags: [Check-in]
+      parameters:
+        - name: evento_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckinCreate'
+      responses:
+        '201':
+          description: Check-in realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkin'
+
+  /eventos/{evento_id}/checkin/{membro_id}:
+    put:
+      summary: Atualizar check-in
+      description: Atualiza o status de check-in de um membro
+      tags: [Check-in]
+      parameters:
+        - name: evento_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: membro_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckinUpdate'
+      responses:
+        '200':
+          description: Check-in atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Checkin'
+
+  # =====================================================
+  # VAGAS E CANDIDATURAS
+  # =====================================================
+  /vagas:
+    get:
+      summary: Listar vagas
+      description: Lista vagas disponíveis
+      tags: [Vagas]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [aberta, fechada, preenchida]
+        - name: pastoral_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: funcao_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de vagas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vaga'
+
+    post:
+      summary: Criar vaga
+      description: Cria uma nova vaga
+      tags: [Vagas]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VagaCreate'
+      responses:
+        '201':
+          description: Vaga criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vaga'
+
+  /vagas/{id}/candidatar:
+    post:
+      summary: Candidatar-se à vaga
+      description: Candidata um membro a uma vaga
+      tags: [Vagas]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidaturaCreate'
+      responses:
+        '201':
+          description: Candidatura realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidatura'
+
+  # =====================================================
+  # DASHBOARDS E RELATÓRIOS
+  # =====================================================
+  /dashboard/geral:
+    get:
+      summary: Dashboard geral
+      description: Obtém métricas gerais do sistema
+      tags: [Dashboard]
+      responses:
+        '200':
+          description: Métricas do dashboard geral
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardGeral'
+
+  /dashboard/pastoral/{pastoral_id}:
+    get:
+      summary: Dashboard da pastoral
+      description: Obtém métricas específicas de uma pastoral
+      tags: [Dashboard]
+      parameters:
+        - name: pastoral_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Métricas da pastoral
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardPastoral'
+
+  /relatorios/membros:
+    get:
+      summary: Relatório de membros
+      description: Gera relatório de membros com filtros
+      tags: [Relatórios]
+      parameters:
+        - name: formato
+          in: query
+          schema:
+            type: string
+            enum: [json, pdf, excel]
+            default: json
+        - name: filtros
+          in: query
+          schema:
+            type: object
+      responses:
+        '200':
+          description: Relatório gerado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelatorioMembros'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  /relatorios/frequencia:
+    get:
+      summary: Relatório de frequência
+      description: Gera relatório de frequência dos membros
+      tags: [Relatórios]
+      parameters:
+        - name: data_inicio
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: data_fim
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: pastoral_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Relatório de frequência
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelatorioFrequencia'
+
+  # =====================================================
+  # LGPD E PRIVACIDADE
+  # =====================================================
+  /membros/{id}/dados-pessoais:
+    get:
+      summary: Exportar dados pessoais
+      description: Exporta todos os dados pessoais de um membro (LGPD)
+      tags: [LGPD]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Dados pessoais exportados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DadosPessoais'
+
+  /membros/{id}/retificar:
+    put:
+      summary: Retificar dados pessoais
+      description: Permite ao titular retificar seus dados (LGPD)
+      tags: [LGPD]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetificacaoDados'
+      responses:
+        '200':
+          description: Dados retificados com sucesso
+
+  /membros/{id}/excluir:
+    delete:
+      summary: Excluir dados pessoais
+      description: Exclui todos os dados pessoais de um membro (LGPD)
+      tags: [LGPD]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Dados excluídos com sucesso
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    # =====================================================
+    # SCHEMAS PRINCIPAIS
+    # =====================================================
+    Membro:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nome_completo:
+          type: string
+        apelido:
+          type: string
+        data_nascimento:
+          type: string
+          format: date
+        sexo:
+          type: string
+          enum: [M, F, Outro]
+        celular_whatsapp:
+          type: string
+        email:
+          type: string
+          format: email
+        telefone_fixo:
+          type: string
+        endereco:
+          $ref: '#/components/schemas/Endereco'
+        cpf:
+          type: string
+        rg:
+          type: string
+        paroquiano:
+          type: boolean
+        comunidade_ou_capelania:
+          type: string
+        data_entrada:
+          type: string
+          format: date
+        foto_url:
+          type: string
+        observacoes_pastorais:
+          type: string
+        preferencias_contato:
+          type: array
+          items:
+            type: string
+        dias_turnos:
+          type: array
+          items:
+            type: string
+        frequencia:
+          type: string
+          enum: [semanal, mensal, eventual]
+        periodo:
+          type: string
+          enum: [manha, tarde, noite]
+        habilidades:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [ativo, afastado, em_discernimento, bloqueado]
+        motivo_bloqueio:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MembroCreate:
+      type: object
+      required:
+        - nome_completo
+        - sexo
+      properties:
+        nome_completo:
+          type: string
+        apelido:
+          type: string
+        data_nascimento:
+          type: string
+          format: date
+        sexo:
+          type: string
+          enum: [M, F, Outro]
+        celular_whatsapp:
+          type: string
+        email:
+          type: string
+          format: email
+        telefone_fixo:
+          type: string
+        endereco:
+          $ref: '#/components/schemas/EnderecoCreate'
+        cpf:
+          type: string
+        rg:
+          type: string
+        paroquiano:
+          type: boolean
+          default: false
+        comunidade_ou_capelania:
+          type: string
+        data_entrada:
+          type: string
+          format: date
+        foto_url:
+          type: string
+        observacoes_pastorais:
+          type: string
+        preferencias_contato:
+          type: array
+          items:
+            type: string
+        dias_turnos:
+          type: array
+          items:
+            type: string
+        frequencia:
+          type: string
+          enum: [semanal, mensal, eventual]
+        periodo:
+          type: string
+          enum: [manha, tarde, noite]
+        habilidades:
+          type: array
+          items:
+            type: string
+
+    MembroUpdate:
+      type: object
+      properties:
+        nome_completo:
+          type: string
+        apelido:
+          type: string
+        data_nascimento:
+          type: string
+          format: date
+        sexo:
+          type: string
+          enum: [M, F, Outro]
+        celular_whatsapp:
+          type: string
+        email:
+          type: string
+          format: email
+        telefone_fixo:
+          type: string
+        endereco:
+          $ref: '#/components/schemas/EnderecoUpdate'
+        cpf:
+          type: string
+        rg:
+          type: string
+        paroquiano:
+          type: boolean
+        comunidade_ou_capelania:
+          type: string
+        data_entrada:
+          type: string
+          format: date
+        foto_url:
+          type: string
+        observacoes_pastorais:
+          type: string
+        preferencias_contato:
+          type: array
+          items:
+            type: string
+        dias_turnos:
+          type: array
+          items:
+            type: string
+        frequencia:
+          type: string
+          enum: [semanal, mensal, eventual]
+        periodo:
+          type: string
+          enum: [manha, tarde, noite]
+        habilidades:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [ativo, afastado, em_discernimento, bloqueado]
+        motivo_bloqueio:
+          type: string
+
+    Endereco:
+      type: object
+      properties:
+        rua:
+          type: string
+        numero:
+          type: string
+        bairro:
+          type: string
+        cidade:
+          type: string
+        uf:
+          type: string
+        cep:
+          type: string
+
+    EnderecoCreate:
+      type: object
+      properties:
+        rua:
+          type: string
+        numero:
+          type: string
+        bairro:
+          type: string
+        cidade:
+          type: string
+        uf:
+          type: string
+        cep:
+          type: string
+
+    EnderecoUpdate:
+      type: object
+      properties:
+        rua:
+          type: string
+        numero:
+          type: string
+        bairro:
+          type: string
+        cidade:
+          type: string
+        uf:
+          type: string
+        cep:
+          type: string
+
+    Pastoral:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nome:
+          type: string
+        tipo:
+          type: string
+          enum: [pastoral, movimento, ministerio_liturgico, servico]
+        coordenador:
+          $ref: '#/components/schemas/Membro'
+        vice_coordenador:
+          $ref: '#/components/schemas/Membro'
+        comunidade_capelania:
+          type: string
+        dia_semana:
+          type: string
+        horario:
+          type: string
+          format: time
+        local_reuniao:
+          type: string
+        finalidade_descricao:
+          type: string
+        whatsapp_grupo_link:
+          type: string
+        email_grupo:
+          type: string
+        ativo:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PastoralCreate:
+      type: object
+      required:
+        - nome
+        - tipo
+      properties:
+        nome:
+          type: string
+        tipo:
+          type: string
+          enum: [pastoral, movimento, ministerio_liturgico, servico]
+        coordenador_id:
+          type: string
+          format: uuid
+        vice_coordenador_id:
+          type: string
+          format: uuid
+        comunidade_capelania:
+          type: string
+        dia_semana:
+          type: string
+        horario:
+          type: string
+          format: time
+        local_reuniao:
+          type: string
+        finalidade_descricao:
+          type: string
+        whatsapp_grupo_link:
+          type: string
+        email_grupo:
+          type: string
+
+    PastoralUpdate:
+      type: object
+      properties:
+        nome:
+          type: string
+        tipo:
+          type: string
+          enum: [pastoral, movimento, ministerio_liturgico, servico]
+        coordenador_id:
+          type: string
+          format: uuid
+        vice_coordenador_id:
+          type: string
+          format: uuid
+        comunidade_capelania:
+          type: string
+        dia_semana:
+          type: string
+        horario:
+          type: string
+          format: time
+        local_reuniao:
+          type: string
+        finalidade_descricao:
+          type: string
+        whatsapp_grupo_link:
+          type: string
+        email_grupo:
+          type: string
+        ativo:
+          type: boolean
+
+    VinculoMembroPastoral:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        membro:
+          $ref: '#/components/schemas/Membro'
+        pastoral:
+          $ref: '#/components/schemas/Pastoral'
+        funcao:
+          $ref: '#/components/schemas/Funcao'
+        data_inicio:
+          type: string
+          format: date
+        data_fim:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [ativo, pausado, finalizado]
+        prioridade:
+          type: string
+          enum: [principal, secundaria]
+        carga_horaria_semana:
+          type: integer
+        preferencias:
+          type: string
+        observacoes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    VinculoCreate:
+      type: object
+      required:
+        - pastoral_id
+        - data_inicio
+      properties:
+        pastoral_id:
+          type: string
+          format: uuid
+        funcao_id:
+          type: string
+          format: uuid
+        data_inicio:
+          type: string
+          format: date
+        data_fim:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [ativo, pausado, finalizado]
+          default: ativo
+        prioridade:
+          type: string
+          enum: [principal, secundaria]
+          default: secundaria
+        carga_horaria_semana:
+          type: integer
+        preferencias:
+          type: string
+        observacoes:
+          type: string
+
+    VinculoUpdate:
+      type: object
+      properties:
+        funcao_id:
+          type: string
+          format: uuid
+        data_inicio:
+          type: string
+          format: date
+        data_fim:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [ativo, pausado, finalizado]
+        prioridade:
+          type: string
+          enum: [principal, secundaria]
+        carga_horaria_semana:
+          type: integer
+        preferencias:
+          type: string
+        observacoes:
+          type: string
+
+    Funcao:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nome:
+          type: string
+        descricao:
+          type: string
+        categoria:
+          type: string
+        ativo:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Evento:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        nome:
+          type: string
+        tipo:
+          type: string
+          enum: [missa, reuniao, formacao, acao_social, feira, festa_patronal, outro]
+        data_evento:
+          type: string
+          format: date
+        horario:
+          type: string
+          format: time
+        local:
+          type: string
+        responsavel:
+          $ref: '#/components/schemas/Membro'
+        descricao:
+          type: string
+        ativo:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    EventoCreate:
+      type: object
+      required:
+        - nome
+        - tipo
+        - data_evento
+      properties:
+        nome:
+          type: string
+        tipo:
+          type: string
+          enum: [missa, reuniao, formacao, acao_social, feira, festa_patronal, outro]
+        data_evento:
+          type: string
+          format: date
+        horario:
+          type: string
+          format: time
+        local:
+          type: string
+        responsavel_id:
+          type: string
+          format: uuid
+        descricao:
+          type: string
+
+    EscalaEvento:
+      type: object
+      properties:
+        evento:
+          $ref: '#/components/schemas/Evento'
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemEscala'
+
+    ItemEscala:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        funcao:
+          $ref: '#/components/schemas/Funcao'
+        quantidade_necessaria:
+          type: integer
+        quantidade_alocada:
+          type: integer
+        observacoes:
+          type: string
+        alocacoes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alocacao'
+
+    ItemEscalaCreate:
+      type: object
+      required:
+        - funcao_id
+        - quantidade_necessaria
+      properties:
+        funcao_id:
+          type: string
+          format: uuid
+        quantidade_necessaria:
+          type: integer
+        observacoes:
+          type: string
+
+    Alocacao:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        membro:
+          $ref: '#/components/schemas/Membro'
+        status:
+          type: string
+          enum: [convite, confirmado, faltou, substituido]
+        data_convite:
+          type: string
+          format: date-time
+        data_confirmacao:
+          type: string
+          format: date-time
+        observacoes:
+          type: string
+        substituto:
+          $ref: '#/components/schemas/Membro'
+        created_at:
+          type: string
+          format: date-time
+
+    AlocacaoCreate:
+      type: object
+      required:
+        - membro_id
+      properties:
+        membro_id:
+          type: string
+          format: uuid
+        observacoes:
+          type: string
+
+    Checkin:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        evento:
+          $ref: '#/components/schemas/Evento'
+        membro:
+          $ref: '#/components/schemas/Membro'
+        alocacao:
+          $ref: '#/components/schemas/Alocacao'
+        status:
+          type: string
+          enum: [presente, ausente_justificado, ausente, substituido]
+        data_checkin:
+          type: string
+          format: date-time
+        justificativa:
+          type: string
+        creditos_servico:
+          type: number
+          format: float
+        observacoes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CheckinCreate:
+      type: object
+      required:
+        - membro_id
+        - status
+      properties:
+        membro_id:
+          type: string
+          format: uuid
+        alocacao_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [presente, ausente_justificado, ausente, substituido]
+        justificativa:
+          type: string
+        creditos_servico:
+          type: number
+          format: float
+        observacoes:
+          type: string
+
+    CheckinUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [presente, ausente_justificado, ausente, substituido]
+        justificativa:
+          type: string
+        creditos_servico:
+          type: number
+          format: float
+        observacoes:
+          type: string
+
+    Vaga:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pastoral:
+          $ref: '#/components/schemas/Pastoral'
+        funcao:
+          $ref: '#/components/schemas/Funcao'
+        evento:
+          $ref: '#/components/schemas/Evento'
+        titulo:
+          type: string
+        descricao:
+          type: string
+        quantidade_vagas:
+          type: integer
+        data_limite_candidatura:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [aberta, fechada, preenchida]
+        created_by:
+          $ref: '#/components/schemas/Membro'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    VagaCreate:
+      type: object
+      required:
+        - pastoral_id
+        - funcao_id
+        - titulo
+        - quantidade_vagas
+      properties:
+        pastoral_id:
+          type: string
+          format: uuid
+        funcao_id:
+          type: string
+          format: uuid
+        evento_id:
+          type: string
+          format: uuid
+        titulo:
+          type: string
+        descricao:
+          type: string
+        quantidade_vagas:
+          type: integer
+        data_limite_candidatura:
+          type: string
+          format: date-time
+
+    Candidatura:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vaga:
+          $ref: '#/components/schemas/Vaga'
+        membro:
+          $ref: '#/components/schemas/Membro'
+        status:
+          type: string
+          enum: [pendente, aprovada, rejeitada, cancelada]
+        data_candidatura:
+          type: string
+          format: date-time
+        data_aprovacao:
+          type: string
+          format: date-time
+        aprovado_por:
+          $ref: '#/components/schemas/Membro'
+        observacoes:
+          type: string
+
+    CandidaturaCreate:
+      type: object
+      required:
+        - membro_id
+      properties:
+        membro_id:
+          type: string
+          format: uuid
+        observacoes:
+          type: string
+
+    # =====================================================
+    # DASHBOARDS E RELATÓRIOS
+    # =====================================================
+    DashboardGeral:
+      type: object
+      properties:
+        total_membros:
+          type: integer
+        membros_ativos:
+          type: integer
+        membros_por_pastoral:
+          type: array
+          items:
+            type: object
+            properties:
+              pastoral:
+                type: string
+              quantidade:
+                type: integer
+        novas_adesoes_30_dias:
+          type: integer
+        novas_adesoes_90_dias:
+          type: integer
+        taxa_presenca_media:
+          type: number
+          format: float
+        cobertura_escalas:
+          type: object
+          properties:
+            total_vagas:
+              type: integer
+            vagas_preenchidas:
+              type: integer
+            percentual_cobertura:
+              type: number
+              format: float
+        alertas:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo:
+                type: string
+              mensagem:
+                type: string
+              prioridade:
+                type: string
+                enum: [baixa, media, alta]
+
+    DashboardPastoral:
+      type: object
+      properties:
+        pastoral:
+          $ref: '#/components/schemas/Pastoral'
+        total_membros:
+          type: integer
+        membros_ativos:
+          type: integer
+        membros_afastados:
+          type: integer
+        cobertura_funcoes:
+          type: array
+          items:
+            type: object
+            properties:
+              funcao:
+                type: string
+              necessarios:
+                type: integer
+              disponiveis:
+                type: integer
+              percentual_cobertura:
+                type: number
+                format: float
+        presenca_media_mes:
+          type: number
+          format: float
+        vagas_abertas:
+          type: integer
+        tempo_medio_preenchimento:
+          type: integer
+        cumprimento_formacoes:
+          type: number
+          format: float
+
+    RelatorioMembros:
+      type: object
+      properties:
+        periodo:
+          type: object
+          properties:
+            inicio:
+              type: string
+              format: date
+            fim:
+              type: string
+              format: date
+        total_registros:
+          type: integer
+        membros:
+          type: array
+          items:
+            $ref: '#/components/schemas/Membro'
+        resumo:
+          type: object
+          properties:
+            por_status:
+              type: object
+            por_pastoral:
+              type: object
+            por_faixa_etaria:
+              type: object
+
+    RelatorioFrequencia:
+      type: object
+      properties:
+        periodo:
+          type: object
+          properties:
+            inicio:
+              type: string
+              format: date
+            fim:
+              type: string
+              format: date
+        membros:
+          type: array
+          items:
+            type: object
+            properties:
+              membro:
+                $ref: '#/components/schemas/Membro'
+              total_eventos:
+                type: integer
+              presencas:
+                type: integer
+              ausencias:
+                type: integer
+              taxa_presenca:
+                type: number
+                format: float
+              creditos_servico:
+                type: number
+                format: float
+
+    # =====================================================
+    # LGPD
+    # =====================================================
+    DadosPessoais:
+      type: object
+      properties:
+        membro:
+          $ref: '#/components/schemas/Membro'
+        enderecos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Endereco'
+        contatos:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo:
+                type: string
+              valor:
+                type: string
+              data_inicio:
+                type: string
+                format: date
+              data_fim:
+                type: string
+                format: date
+        documentos:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo_documento:
+                type: string
+              numero:
+                type: string
+              data_emissao:
+                type: string
+                format: date
+              data_vencimento:
+                type: string
+                format: date
+        consentimentos:
+          type: array
+          items:
+            type: object
+            properties:
+              finalidade:
+                type: string
+              consentimento:
+                type: boolean
+              data_consentimento:
+                type: string
+                format: date-time
+        formacoes:
+          type: array
+          items:
+            type: object
+            properties:
+              formacao:
+                type: string
+              data_conclusao:
+                type: string
+                format: date
+              data_validade:
+                type: string
+                format: date
+              instituicao:
+                type: string
+        vinculos:
+          type: array
+          items:
+            $ref: '#/components/schemas/VinculoMembroPastoral'
+        auditoria:
+          type: array
+          items:
+            type: object
+            properties:
+              acao:
+                type: string
+              data:
+                type: string
+                format: date-time
+              usuario:
+                type: string
+              campo_alterado:
+                type: string
+                value_anterior:
+                  type: string
+                valor_novo:
+                  type: string
+
+    RetificacaoDados:
+      type: object
+      properties:
+        campos_alterados:
+          type: object
+        justificativa:
+          type: string
+        data_solicitacao:
+          type: string
+          format: date-time
+
+    # =====================================================
+    # UTILITÁRIOS
+    # =====================================================
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          default: "Validation Error"
+        message:
+          type: string
+        validation_errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              value:
+                type: string
+
+  responses:
+    BadRequest:
+      description: Requisição inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Não autorizado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Acesso negado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Erro de validação
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    InternalServerError:
+      description: Erro interno do servidor
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Membros
+    description: Operações relacionadas aos membros
+  - name: Pastorais
+    description: Operações relacionadas às pastorais e movimentos
+  - name: Vínculos
+    description: Operações relacionadas aos vínculos membro-pastoral
+  - name: Eventos
+    description: Operações relacionadas aos eventos
+  - name: Escalas
+    description: Operações relacionadas às escalas de eventos
+  - name: Check-in
+    description: Operações de check-in e frequência
+  - name: Vagas
+    description: Operações relacionadas às vagas e candidaturas
+  - name: Dashboard
+    description: Dashboards e métricas
+  - name: Relatórios
+    description: Relatórios e exportações
+  - name: LGPD
+    description: Operações relacionadas à LGPD e privacidade
+

@@ -1,0 +1,9 @@
+# Requisitos Python para o Módulo de Membros
+# Sistema de Gestão Paroquial
+
+# Conector MySQL
+mysql-connector-python>=8.0.0
+
+# Utilitários adicionais (opcionais)
+colorama>=0.4.0
+tqdm>=4.60.0
