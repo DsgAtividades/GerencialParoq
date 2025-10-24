@@ -371,10 +371,10 @@ function inicializarTabelaMembros() {
             sortable: false,
             formatter: (value, item) => `
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="editarMembro('${item.id}')" title="Editar">
+                    <button class="btn btn-outline-primary" onclick="window.editarMembro('${item.id}')" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-outline-danger" onclick="excluirMembro('${item.id}')" title="Excluir">
+                    <button class="btn btn-outline-danger" onclick="window.excluirMembro('${item.id}')" title="Excluir">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -414,40 +414,8 @@ function exportarTabela() {
     mostrarNotificacao('Funcionalidade de exportação em desenvolvimento', 'info');
 }
 
-/**
- * Edita membro
- */
-function editarMembro(id) {
-    // Buscar dados do membro
-    const membro = tabelaMembros.data.find(m => m.id === id);
-    if (membro) {
-        abrirModalMembro(membro);
-    }
-}
-
-/**
- * Exclui membro
- */
-function excluirMembro(id) {
-    const membro = tabelaMembros.data.find(m => m.id === id);
-    if (!membro) return;
-    
-    abrirModalConfirmacao(
-        'Confirmar Exclusão',
-        `Tem certeza que deseja excluir o membro "${membro.nome_completo}"?`,
-        `confirmarExclusaoMembro('${id}')`
-    );
-}
-
-/**
- * Confirma exclusão do membro
- */
-function confirmarExclusaoMembro(id) {
-    // Implementar exclusão via API
-    console.log('Excluindo membro:', id);
-    mostrarNotificacao('Membro excluído com sucesso!', 'success');
-    carregarMembros(); // Recarregar lista
-}
+// Funções de ação dos membros foram movidas para membros.js
+// para evitar conflitos com tabelaMembros.data que pode ser null
 
 // =====================================================
 // EXPORTAR FUNÇÕES
@@ -457,6 +425,4 @@ function confirmarExclusaoMembro(id) {
 window.inicializarTabelaMembros = inicializarTabelaMembros;
 window.atualizarTabela = atualizarTabela;
 window.exportarTabela = exportarTabela;
-window.editarMembro = editarMembro;
-window.excluirMembro = excluirMembro;
-window.confirmarExclusaoMembro = confirmarExclusaoMembro;
+// Funções de ação dos membros foram movidas para membros.js

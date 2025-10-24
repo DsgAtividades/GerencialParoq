@@ -30,7 +30,6 @@ function abrirModal(titulo, conteudo, botoes = [], opcoes = {}) {
     
     const modalHTML = `
         <div id="${modalId}" class="modal fade show" style="display: block;">
-            <div class="modal-overlay" onclick="${fechavel ? 'fecharModal()' : ''}"></div>
             <div class="modal-dialog modal-${tamanho}">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -54,8 +53,20 @@ function abrirModal(titulo, conteudo, botoes = [], opcoes = {}) {
         </div>
     `;
     
-    document.querySelector(ModalConfig.container).innerHTML = modalHTML;
+    // Remover modal anterior se existir
+    fecharModal();
+    
+    // Adicionar modal ao body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
     document.body.classList.add('modal-open');
+    
+    // Focar no primeiro input do modal
+    setTimeout(() => {
+        const primeiroInput = document.querySelector(`#${modalId} input, #${modalId} select, #${modalId} textarea`);
+        if (primeiroInput) {
+            primeiroInput.focus();
+        }
+    }, 100);
 }
 
 /**
@@ -103,89 +114,245 @@ function abrirModalConfirmacao(titulo, mensagem, callbackSim, callbackNao = null
 /**
  * Modal de cadastro/edição de membro
  */
-function abrirModalMembro(membro = null) {
-    const titulo = membro ? 'Editar Membro' : 'Novo Membro';
-    const isEdicao = !!membro;
+function abrirModalMembro(membro = null, modo = 'editar') {
+    const titulo = membro ? (modo === 'visualizar' ? 'Visualizar Membro' : 'Editar Membro') : 'Novo Membro';
+    const isEdicao = !!membro && modo !== 'visualizar';
+    const isVisualizacao = modo === 'visualizar';
     
     const conteudo = `
         <form id="form-membro" class="needs-validation" novalidate>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="nome_completo" class="form-label">Nome Completo *</label>
-                        <input type="text" class="form-control" id="nome_completo" name="nome_completo" 
-                               value="${membro?.nome_completo || ''}" required>
-                        <div class="invalid-feedback">Nome é obrigatório</div>
+            <!-- Seção de Dados Pessoais -->
+            <div class="form-section">
+                <h6 class="section-title">
+                    <i class="fas fa-user"></i>
+                    Dados Pessoais
+                </h6>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="nome_completo" class="form-label">
+                                <i class="fas fa-user-circle"></i>
+                                Nome Completo *
+                            </label>
+                            <input type="text" class="form-control" id="nome_completo" name="nome_completo" 
+                                   value="${membro?.nome_completo || ''}" ${isVisualizacao ? 'disabled' : ''} required
+                                   placeholder="Digite o nome completo">
+                            <div class="invalid-feedback">Nome é obrigatório</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="apelido" class="form-label">
+                                <i class="fas fa-tag"></i>
+                                Apelido
+                            </label>
+                            <input type="text" class="form-control" id="apelido" name="apelido" 
+                                   value="${membro?.apelido || ''}" placeholder="Como prefere ser chamado">
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="apelido" class="form-label">Apelido</label>
-                        <input type="text" class="form-control" id="apelido" name="apelido" 
-                               value="${membro?.apelido || ''}">
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="data_nascimento" class="form-label">
+                                <i class="fas fa-calendar"></i>
+                                Data de Nascimento
+                            </label>
+                            <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" 
+                                   value="${membro?.data_nascimento || ''}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="sexo" class="form-label">
+                                <i class="fas fa-venus-mars"></i>
+                                Sexo
+                            </label>
+                            <select class="form-control" id="sexo" name="sexo" ${isVisualizacao ? 'disabled' : ''}>
+                                <option value="">Selecione</option>
+                                <option value="M" ${membro?.sexo === 'M' ? 'selected' : ''}>Masculino</option>
+                                <option value="F" ${membro?.sexo === 'F' ? 'selected' : ''}>Feminino</option>
+                                <option value="Outro" ${membro?.sexo === 'Outro' ? 'selected' : ''}>Outro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="cpf" class="form-label">
+                                <i class="fas fa-id-card"></i>
+                                CPF
+                            </label>
+                            <input type="text" class="form-control" id="cpf" name="cpf" 
+                                   value="${membro?.cpf || ''}" placeholder="000.000.000-00">
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="data_nascimento" class="form-label">Data de Nascimento</label>
-                        <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" 
-                               value="${membro?.data_nascimento || ''}">
+
+            <!-- Seção de Contato -->
+            <div class="form-section">
+                <h6 class="section-title">
+                    <i class="fas fa-phone"></i>
+                    Contato
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="celular_whatsapp" class="form-label">
+                                <i class="fab fa-whatsapp"></i>
+                                Celular/WhatsApp
+                            </label>
+                            <input type="tel" class="form-control" id="celular_whatsapp" name="celular_whatsapp" 
+                                   value="${membro?.celular_whatsapp || ''}" placeholder="(00) 00000-0000">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope"></i>
+                                E-mail
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="${membro?.email || ''}" placeholder="seu@email.com">
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="cpf" class="form-label">CPF</label>
-                        <input type="text" class="form-control" id="cpf" name="cpf" 
-                               value="${membro?.cpf || ''}" placeholder="000.000.000-00">
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="telefone_fixo" class="form-label">
+                                <i class="fas fa-phone"></i>
+                                Telefone Fixo
+                            </label>
+                            <input type="tel" class="form-control" id="telefone_fixo" name="telefone_fixo" 
+                                   value="${membro?.telefone_fixo || ''}" placeholder="(00) 0000-0000">
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="telefone" class="form-label">Telefone</label>
-                        <input type="tel" class="form-control" id="telefone" name="telefone" 
-                               value="${membro?.telefone || ''}" placeholder="(00) 00000-0000">
+
+            <!-- Seção de Endereço -->
+            <div class="form-section">
+                <h6 class="section-title">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Endereço
+                </h6>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="rua" class="form-label">Rua</label>
+                            <input type="text" class="form-control" id="rua" name="rua" 
+                                   value="${membro?.rua || ''}" placeholder="Nome da rua">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="numero" class="form-label">Número</label>
+                            <input type="text" class="form-control" id="numero" name="numero" 
+                                   value="${membro?.numero || ''}" placeholder="123">
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">E-mail</label>
-                        <input type="email" class="form-control" id="email" name="email" 
-                               value="${membro?.email || ''}">
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="bairro" class="form-label">Bairro</label>
+                            <input type="text" class="form-control" id="bairro" name="bairro" 
+                                   value="${membro?.bairro || ''}" placeholder="Nome do bairro">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="cidade" class="form-label">Cidade</label>
+                            <input type="text" class="form-control" id="cidade" name="cidade" 
+                                   value="${membro?.cidade || ''}" placeholder="Nome da cidade">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="uf" class="form-label">UF</label>
+                            <input type="text" class="form-control" id="uf" name="uf" 
+                                   value="${membro?.uf || ''}" placeholder="SP" maxlength="2">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="cep" class="form-label">CEP</label>
+                            <input type="text" class="form-control" id="cep" name="cep" 
+                                   value="${membro?.cep || ''}" placeholder="00000-000">
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="mb-3">
-                <label for="endereco" class="form-label">Endereço</label>
-                <textarea class="form-control" id="endereco" name="endereco" rows="2">${membro?.endereco || ''}</textarea>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="ativo" ${membro?.status === 'ativo' ? 'selected' : ''}>Ativo</option>
-                            <option value="inativo" ${membro?.status === 'inativo' ? 'selected' : ''}>Inativo</option>
-                            <option value="suspenso" ${membro?.status === 'suspenso' ? 'selected' : ''}>Suspenso</option>
-                        </select>
+
+            <!-- Seção Pastoral -->
+            <div class="form-section">
+                <h6 class="section-title">
+                    <i class="fas fa-church"></i>
+                    Situação Pastoral
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="status" class="form-label">
+                                <i class="fas fa-check-circle"></i>
+                                Status
+                            </label>
+                            <select class="form-control" id="status" name="status" ${isVisualizacao ? 'disabled' : ''}>
+                                <option value="ativo" ${membro?.status === 'ativo' ? 'selected' : ''}>Ativo</option>
+                                <option value="afastado" ${membro?.status === 'afastado' ? 'selected' : ''}>Afastado</option>
+                                <option value="em_discernimento" ${membro?.status === 'em_discernimento' ? 'selected' : ''}>Em Discernimento</option>
+                                <option value="bloqueado" ${membro?.status === 'bloqueado' ? 'selected' : ''}>Bloqueado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="comunidade_ou_capelania" class="form-label">
+                                <i class="fas fa-building"></i>
+                                Comunidade/Capelania
+                            </label>
+                            <input type="text" class="form-control" id="comunidade_ou_capelania" name="comunidade_ou_capelania" 
+                                   value="${membro?.comunidade_ou_capelania || ''}" placeholder="Nome da comunidade">
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="situacao_pastoral" class="form-label">Situação Pastoral</label>
-                        <select class="form-select" id="situacao_pastoral" name="situacao_pastoral">
-                            <option value="membro" ${membro?.situacao_pastoral === 'membro' ? 'selected' : ''}>Membro</option>
-                            <option value="catecumeno" ${membro?.situacao_pastoral === 'catecumeno' ? 'selected' : ''}>Catecúmeno</option>
-                            <option value="visitante" ${membro?.situacao_pastoral === 'visitante' ? 'selected' : ''}>Visitante</option>
-                        </select>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="data_entrada" class="form-label">
+                                <i class="fas fa-calendar-plus"></i>
+                                Data de Entrada
+                            </label>
+                            <input type="date" class="form-control" id="data_entrada" name="data_entrada" 
+                                   value="${membro?.data_entrada || ''}">
+                        </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="paroquiano" name="paroquiano" 
+                                       ${membro?.paroquiano ? 'checked' : ''} ${isVisualizacao ? 'disabled' : ''}>
+                                <label class="form-check-label" for="paroquiano">
+                                    <i class="fas fa-home"></i>
+                                    Paroquiano
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="observacoes_pastorais" class="form-label">
+                        <i class="fas fa-sticky-note"></i>
+                        Observações Pastorais
+                    </label>
+                    <textarea class="form-control" id="observacoes_pastorais" name="observacoes_pastorais" 
+                              rows="3" placeholder="Observações importantes sobre o membro...">${membro?.observacoes_pastorais || ''}</textarea>
                 </div>
             </div>
         </form>
@@ -205,6 +372,20 @@ function abrirModalMembro(membro = null) {
     ];
     
     abrirModal(titulo, conteudo, botoes, { tamanho: 'lg' });
+    
+    // Se for visualização, desabilitar todos os campos do formulário
+    if (isVisualizacao) {
+        setTimeout(() => {
+            const form = document.getElementById('form-membro');
+            if (form) {
+                const inputs = form.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    input.disabled = true;
+                    input.classList.add('bg-light');
+                });
+            }
+        }, 100);
+    }
 }
 
 /**

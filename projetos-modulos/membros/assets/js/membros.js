@@ -204,14 +204,20 @@ async function carregarDadosIniciais() {
 
 async function carregarDashboard() {
     try {
+        console.log('Carregando dashboard...');
         const response = await carregarDashboardAPI();
+        console.log('Resposta da API dashboard:', response);
         
         if (response && response.success) {
             // A API retorna: { success: true, data: {...} }
             const dashboardData = response.data || response;
+            console.log('Dados do dashboard extraídos:', dashboardData);
+            
             atualizarCardsEstatisticas(dashboardData);
             atualizarGraficos(dashboardData);
             atualizarAlertas(dashboardData.alertas || []);
+        } else {
+            console.warn('Resposta da API não é válida:', response);
         }
     } catch (error) {
         console.error('Erro ao carregar dashboard:', error);
@@ -307,10 +313,48 @@ async function carregarEscalas() {
 // DASHBOARD
 // =====================================================
 function atualizarCardsEstatisticas(dados) {
-    document.getElementById('total-membros').textContent = dados.total_membros || 0;
-    document.getElementById('membros-ativos').textContent = dados.membros_ativos || 0;
-    document.getElementById('total-pastorais').textContent = dados.total_pastorais || 0;
-    document.getElementById('eventos-mes').textContent = dados.eventos_mes || 0;
+    console.log('Dados recebidos para cards:', dados);
+    
+    // A API retorna: totalMembros, membrosAtivos, pastoraisAtivas, eventosHoje
+    const totalMembros = dados.totalMembros || dados.total_membros || 0;
+    const membrosAtivos = dados.membrosAtivos || dados.membros_ativos || 0;
+    const totalPastorais = dados.pastoraisAtivas || dados.total_pastorais || 0;
+    const eventosMes = dados.eventosHoje || dados.eventos_mes || 0;
+    
+    console.log('Valores extraídos:', { totalMembros, membrosAtivos, totalPastorais, eventosMes });
+    
+    const totalMembrosEl = document.getElementById('total-membros');
+    const membrosAtivosEl = document.getElementById('membros-ativos');
+    const totalPastoraisEl = document.getElementById('total-pastorais');
+    const eventosMesEl = document.getElementById('eventos-mes');
+    
+    if (totalMembrosEl) {
+        totalMembrosEl.textContent = totalMembros;
+        console.log('Atualizado total-membros:', totalMembros);
+    } else {
+        console.error('Elemento total-membros não encontrado');
+    }
+    
+    if (membrosAtivosEl) {
+        membrosAtivosEl.textContent = membrosAtivos;
+        console.log('Atualizado membros-ativos:', membrosAtivos);
+    } else {
+        console.error('Elemento membros-ativos não encontrado');
+    }
+    
+    if (totalPastoraisEl) {
+        totalPastoraisEl.textContent = totalPastorais;
+        console.log('Atualizado total-pastorais:', totalPastorais);
+    } else {
+        console.error('Elemento total-pastorais não encontrado');
+    }
+    
+    if (eventosMesEl) {
+        eventosMesEl.textContent = eventosMes;
+        console.log('Atualizado eventos-mes:', eventosMes);
+    } else {
+        console.error('Elemento eventos-mes não encontrado');
+    }
 }
 
 function atualizarGraficos(dados) {
@@ -497,13 +541,13 @@ function atualizarTabelaMembros() {
             </td>
             <td>
                 <div class="d-flex gap-1">
-                    <button class="btn btn-sm btn-secondary" onclick="visualizarMembro('${membro.id}')" title="Visualizar">
+                    <button class="btn btn-sm btn-secondary" onclick="window.visualizarMembro('${membro.id}')" title="Visualizar">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-primary" onclick="editarMembro('${membro.id}')" title="Editar">
+                    <button class="btn btn-sm btn-primary" onclick="window.editarMembro('${membro.id}')" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="excluirMembro('${membro.id}')" title="Excluir">
+                    <button class="btn btn-sm btn-danger" onclick="window.excluirMembro('${membro.id}')" title="Excluir">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -517,6 +561,64 @@ function atualizarTabelaMembros() {
         totalRegistros.textContent = `${AppState.paginacao.total} registros`;
     }
 }
+
+// =====================================================
+// FUNÇÕES DE AÇÃO DOS MEMBROS
+// =====================================================
+
+/**
+ * Visualiza membro
+ */
+function visualizarMembro(id) {
+    const membro = AppState.membros.find(m => m.id === id);
+    if (membro) {
+        // Usar a função do modals.js com modo visualizar
+        abrirModalMembro(membro, 'visualizar');
+    } else {
+        mostrarNotificacao('Membro não encontrado', 'error');
+    }
+}
+
+/**
+ * Edita membro
+ */
+function editarMembro(id) {
+    const membro = AppState.membros.find(m => m.id === id);
+    if (membro) {
+        // Usar a função do modals.js com modo editar
+        abrirModalMembro(membro, 'editar');
+    } else {
+        mostrarNotificacao('Membro não encontrado', 'error');
+    }
+}
+
+/**
+ * Exclui membro
+ */
+function excluirMembro(id) {
+    const membro = AppState.membros.find(m => m.id === id);
+    if (membro) {
+        if (confirm(`Tem certeza que deseja excluir o membro "${membro.nome_completo}"?`)) {
+            excluirMembroAPI(id)
+                .then(response => {
+                    if (response.success) {
+                        mostrarNotificacao('Membro excluído com sucesso', 'success');
+                        carregarMembros(); // Recarregar lista
+                    } else {
+                        mostrarNotificacao('Erro ao excluir membro', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao excluir membro:', error);
+                    mostrarNotificacao('Erro ao excluir membro', 'error');
+                });
+        }
+    } else {
+        mostrarNotificacao('Membro não encontrado', 'error');
+    }
+}
+
+// Função abrirModalMembro está definida em modals.js
 
 function atualizarPaginacao() {
     const infoPaginacao = document.getElementById('info-paginacao');
@@ -681,29 +783,10 @@ function gerarRelatorio(tipo) {
 }
 
 // =====================================================
-// AÇÕES DE MEMBROS
+// AÇÕES DE MEMBROS (FUNÇÕES DUPLICADAS REMOVIDAS)
 // =====================================================
-function abrirModalMembro() {
-    // Implementar modal de membro
-    console.log('Abrir modal de membro');
-}
-
-function visualizarMembro(id) {
-    // Implementar visualização de membro
-    console.log('Visualizar membro:', id);
-}
-
-function editarMembro(id) {
-    // Implementar edição de membro
-    console.log('Editar membro:', id);
-}
-
-function excluirMembro(id) {
-    if (confirm('Tem certeza que deseja excluir este membro?')) {
-        // Implementar exclusão de membro
-        console.log('Excluir membro:', id);
-    }
-}
+// As funções de ação dos membros estão definidas acima
+// nas linhas 572-626 para evitar conflitos
 
 // =====================================================
 // AÇÕES DE PASTORAIS
@@ -795,4 +878,13 @@ function exportarMembros() {
     
     window.open(`${CONFIG.apiBaseUrl}relatorios/membros?${params}`, '_blank');
 }
+
+// =====================================================
+// EXPORTAÇÃO DE FUNÇÕES GLOBAIS
+// =====================================================
+
+// Exportar funções de ação dos membros para uso global
+window.visualizarMembro = visualizarMembro;
+window.editarMembro = editarMembro;
+window.excluirMembro = excluirMembro;
 

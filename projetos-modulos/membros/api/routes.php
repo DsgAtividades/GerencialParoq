@@ -124,7 +124,21 @@ switch ($path) {
         break;
         
     default:
-        Response::error('Endpoint não encontrado', 404);
+        // Verificar se é uma rota de membro específico (GET, PUT, DELETE)
+        if (preg_match('/^membros\/([a-f0-9\-]{36})$/', $path, $matches)) {
+            $membro_id = $matches[1];
+            if ($method === 'GET') {
+                include 'endpoints/membros_visualizar.php';
+            } elseif ($method === 'PUT') {
+                include 'endpoints/membros_atualizar.php';
+            } elseif ($method === 'DELETE') {
+                include 'endpoints/membros_excluir.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        } else {
+            Response::error('Endpoint não encontrado', 404);
+        }
         break;
 }
 ?>

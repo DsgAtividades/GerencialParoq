@@ -358,6 +358,18 @@ async function carregarDashboardAPI() {
     }
 }
 
+/**
+ * Exclui membro
+ */
+async function excluirMembroAPI(id) {
+    try {
+        return await MembrosAPI.excluir(id);
+    } catch (error) {
+        console.error('Erro ao excluir membro:', error);
+        throw error;
+    }
+}
+
 // =====================================================
 // UTILITÁRIOS
 // =====================================================
