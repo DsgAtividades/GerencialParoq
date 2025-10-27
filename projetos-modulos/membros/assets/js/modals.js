@@ -28,6 +28,9 @@ function abrirModal(titulo, conteudo, botoes = [], opcoes = {}) {
     const tamanho = opcoes.tamanho || 'md';
     const fechavel = opcoes.fechavel !== false;
     
+    // Remover modal anterior se existir
+    fecharModal();
+    
     const modalHTML = `
         <div id="${modalId}" class="modal fade show" style="display: block;">
             <div class="modal-dialog modal-${tamanho}">
@@ -53,20 +56,15 @@ function abrirModal(titulo, conteudo, botoes = [], opcoes = {}) {
         </div>
     `;
     
-    // Remover modal anterior se existir
-    fecharModal();
-    
     // Adicionar modal ao body
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     document.body.classList.add('modal-open');
     
-    // Focar no primeiro input do modal
-    setTimeout(() => {
-        const primeiroInput = document.querySelector(`#${modalId} input, #${modalId} select, #${modalId} textarea`);
-        if (primeiroInput) {
-            primeiroInput.focus();
-        }
-    }, 100);
+    // Focar no primeiro input do modal (sem delay)
+    const primeiroInput = document.querySelector(`#${modalId} input, #${modalId} select, #${modalId} textarea`);
+    if (primeiroInput) {
+        primeiroInput.focus();
+    }
 }
 
 /**
@@ -119,246 +117,15 @@ function abrirModalMembro(membro = null, modo = 'editar') {
     const isEdicao = !!membro && modo !== 'visualizar';
     const isVisualizacao = modo === 'visualizar';
     
-    const conteudo = `
-        <form id="form-membro" class="needs-validation" novalidate>
-            <!-- Seção de Dados Pessoais -->
-            <div class="form-section">
-                <h6 class="section-title">
-                    <i class="fas fa-user"></i>
-                    Dados Pessoais
-                </h6>
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="form-group">
-                            <label for="nome_completo" class="form-label">
-                                <i class="fas fa-user-circle"></i>
-                                Nome Completo *
-                            </label>
-                            <input type="text" class="form-control" id="nome_completo" name="nome_completo" 
-                                   value="${membro?.nome_completo || ''}" ${isVisualizacao ? 'disabled' : ''} required
-                                   placeholder="Digite o nome completo">
-                            <div class="invalid-feedback">Nome é obrigatório</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="apelido" class="form-label">
-                                <i class="fas fa-tag"></i>
-                                Apelido
-                            </label>
-                            <input type="text" class="form-control" id="apelido" name="apelido" 
-                                   value="${membro?.apelido || ''}" placeholder="Como prefere ser chamado">
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="data_nascimento" class="form-label">
-                                <i class="fas fa-calendar"></i>
-                                Data de Nascimento
-                            </label>
-                            <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" 
-                                   value="${membro?.data_nascimento || ''}">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="sexo" class="form-label">
-                                <i class="fas fa-venus-mars"></i>
-                                Sexo
-                            </label>
-                            <select class="form-control" id="sexo" name="sexo" ${isVisualizacao ? 'disabled' : ''}>
-                                <option value="">Selecione</option>
-                                <option value="M" ${membro?.sexo === 'M' ? 'selected' : ''}>Masculino</option>
-                                <option value="F" ${membro?.sexo === 'F' ? 'selected' : ''}>Feminino</option>
-                                <option value="Outro" ${membro?.sexo === 'Outro' ? 'selected' : ''}>Outro</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="cpf" class="form-label">
-                                <i class="fas fa-id-card"></i>
-                                CPF
-                            </label>
-                            <input type="text" class="form-control" id="cpf" name="cpf" 
-                                   value="${membro?.cpf || ''}" placeholder="000.000.000-00">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Seção de Contato -->
-            <div class="form-section">
-                <h6 class="section-title">
-                    <i class="fas fa-phone"></i>
-                    Contato
-                </h6>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="celular_whatsapp" class="form-label">
-                                <i class="fab fa-whatsapp"></i>
-                                Celular/WhatsApp
-                            </label>
-                            <input type="tel" class="form-control" id="celular_whatsapp" name="celular_whatsapp" 
-                                   value="${membro?.celular_whatsapp || ''}" placeholder="(00) 00000-0000">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="email" class="form-label">
-                                <i class="fas fa-envelope"></i>
-                                E-mail
-                            </label>
-                            <input type="email" class="form-control" id="email" name="email" 
-                                   value="${membro?.email || ''}" placeholder="seu@email.com">
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="telefone_fixo" class="form-label">
-                                <i class="fas fa-phone"></i>
-                                Telefone Fixo
-                            </label>
-                            <input type="tel" class="form-control" id="telefone_fixo" name="telefone_fixo" 
-                                   value="${membro?.telefone_fixo || ''}" placeholder="(00) 0000-0000">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Seção de Endereço -->
-            <div class="form-section">
-                <h6 class="section-title">
-                    <i class="fas fa-map-marker-alt"></i>
-                    Endereço
-                </h6>
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="form-group">
-                            <label for="rua" class="form-label">Rua</label>
-                            <input type="text" class="form-control" id="rua" name="rua" 
-                                   value="${membro?.rua || ''}" placeholder="Nome da rua">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="numero" class="form-label">Número</label>
-                            <input type="text" class="form-control" id="numero" name="numero" 
-                                   value="${membro?.numero || ''}" placeholder="123">
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="bairro" class="form-label">Bairro</label>
-                            <input type="text" class="form-control" id="bairro" name="bairro" 
-                                   value="${membro?.bairro || ''}" placeholder="Nome do bairro">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label for="cidade" class="form-label">Cidade</label>
-                            <input type="text" class="form-control" id="cidade" name="cidade" 
-                                   value="${membro?.cidade || ''}" placeholder="Nome da cidade">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label for="uf" class="form-label">UF</label>
-                            <input type="text" class="form-control" id="uf" name="uf" 
-                                   value="${membro?.uf || ''}" placeholder="SP" maxlength="2">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label for="cep" class="form-label">CEP</label>
-                            <input type="text" class="form-control" id="cep" name="cep" 
-                                   value="${membro?.cep || ''}" placeholder="00000-000">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Seção Pastoral -->
-            <div class="form-section">
-                <h6 class="section-title">
-                    <i class="fas fa-church"></i>
-                    Situação Pastoral
-                </h6>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="status" class="form-label">
-                                <i class="fas fa-check-circle"></i>
-                                Status
-                            </label>
-                            <select class="form-control" id="status" name="status" ${isVisualizacao ? 'disabled' : ''}>
-                                <option value="ativo" ${membro?.status === 'ativo' ? 'selected' : ''}>Ativo</option>
-                                <option value="afastado" ${membro?.status === 'afastado' ? 'selected' : ''}>Afastado</option>
-                                <option value="em_discernimento" ${membro?.status === 'em_discernimento' ? 'selected' : ''}>Em Discernimento</option>
-                                <option value="bloqueado" ${membro?.status === 'bloqueado' ? 'selected' : ''}>Bloqueado</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="comunidade_ou_capelania" class="form-label">
-                                <i class="fas fa-building"></i>
-                                Comunidade/Capelania
-                            </label>
-                            <input type="text" class="form-control" id="comunidade_ou_capelania" name="comunidade_ou_capelania" 
-                                   value="${membro?.comunidade_ou_capelania || ''}" placeholder="Nome da comunidade">
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="data_entrada" class="form-label">
-                                <i class="fas fa-calendar-plus"></i>
-                                Data de Entrada
-                            </label>
-                            <input type="date" class="form-control" id="data_entrada" name="data_entrada" 
-                                   value="${membro?.data_entrada || ''}">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="paroquiano" name="paroquiano" 
-                                       ${membro?.paroquiano ? 'checked' : ''} ${isVisualizacao ? 'disabled' : ''}>
-                                <label class="form-check-label" for="paroquiano">
-                                    <i class="fas fa-home"></i>
-                                    Paroquiano
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="observacoes_pastorais" class="form-label">
-                        <i class="fas fa-sticky-note"></i>
-                        Observações Pastorais
-                    </label>
-                    <textarea class="form-control" id="observacoes_pastorais" name="observacoes_pastorais" 
-                              rows="3" placeholder="Observações importantes sobre o membro...">${membro?.observacoes_pastorais || ''}</textarea>
-                </div>
-            </div>
-        </form>
-    `;
+    // Garantir que membro é um objeto válido
+    const dadosMembro = (membro && typeof membro === 'object') ? membro : {};
     
-    const botoes = [
+    // Criar formulário de forma mais eficiente
+    const formId = 'form-membro-' + Date.now();
+    const conteudo = criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId);
+    
+    // Se for visualização: sem botões no footer (fechar pelo X do header)
+    const botoes = isVisualizacao ? [] : [
         {
             texto: 'Cancelar',
             classe: 'btn-secondary',
@@ -384,8 +151,198 @@ function abrirModalMembro(membro = null, modo = 'editar') {
                     input.classList.add('bg-light');
                 });
             }
-        }, 100);
+        }, 10);
     }
+}
+
+function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
+    // Garantir que dadosMembro é um objeto válido
+    if (!dadosMembro || typeof dadosMembro !== 'object') {
+        dadosMembro = {};
+    }
+    
+    return `
+        <form id="form-membro" class="needs-validation" novalidate>
+            ${isEdicao ? `<input type="hidden" id="membro-id" value="${dadosMembro.id || ''}">` : ''}
+            
+            <!-- Dados Pessoais -->
+            <div class="form-section">
+                <h6 class="section-title"><i class="fas fa-user"></i> Dados Pessoais</h6>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="nome_completo" class="form-label"><i class="fas fa-user-circle"></i> Nome Completo *</label>
+                            <input type="text" class="form-control" id="nome_completo" name="nome_completo" 
+                                   value="${dadosMembro.nome_completo || ''}" ${isVisualizacao ? 'disabled' : ''} required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="apelido" class="form-label"><i class="fas fa-tag"></i> Apelido</label>
+                            <input type="text" class="form-control" id="apelido" name="apelido" 
+                                   value="${dadosMembro.apelido || ''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="data_nascimento" class="form-label"><i class="fas fa-calendar"></i> Data de Nascimento</label>
+                            <input type="date" class="form-control" id="data_nascimento" name="data_nascimento" 
+                                   value="${dadosMembro.data_nascimento || ''}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="sexo" class="form-label"><i class="fas fa-venus-mars"></i> Sexo</label>
+                            <select class="form-control" id="sexo" name="sexo" ${isVisualizacao ? 'disabled' : ''}>
+                                <option value="">Selecione</option>
+                                <option value="M" ${dadosMembro.sexo === 'M' ? 'selected' : ''}>Masculino</option>
+                                <option value="F" ${dadosMembro.sexo === 'F' ? 'selected' : ''}>Feminino</option>
+                                <option value="Outro" ${dadosMembro.sexo === 'Outro' ? 'selected' : ''}>Outro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="cpf" class="form-label"><i class="fas fa-id-card"></i> CPF</label>
+                            <input type="text" class="form-control" id="cpf" name="cpf" 
+                                   value="${dadosMembro.cpf || ''}" placeholder="000.000.000-00">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contato -->
+            <div class="form-section">
+                <h6 class="section-title"><i class="fas fa-phone"></i> Contato</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="celular_whatsapp" class="form-label"><i class="fab fa-whatsapp"></i> Celular/WhatsApp</label>
+                            <input type="tel" class="form-control" id="celular_whatsapp" name="celular_whatsapp" 
+                                   value="${dadosMembro.celular_whatsapp || ''}" placeholder="(00) 00000-0000">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="email" class="form-label"><i class="fas fa-envelope"></i> E-mail</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="${dadosMembro.email || ''}" placeholder="seu@email.com">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="telefone_fixo" class="form-label"><i class="fas fa-phone"></i> Telefone Fixo</label>
+                            <input type="tel" class="form-control" id="telefone_fixo" name="telefone_fixo" 
+                                   value="${dadosMembro.telefone_fixo || ''}" placeholder="(00) 0000-0000">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Endereço -->
+            <div class="form-section">
+                <h6 class="section-title"><i class="fas fa-map-marker-alt"></i> Endereço</h6>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group">
+                            <label for="rua" class="form-label">Rua</label>
+                            <input type="text" class="form-control" id="rua" name="rua" 
+                                   value="${dadosMembro.rua || ''}" placeholder="Nome da rua">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="numero" class="form-label">Número</label>
+                            <input type="text" class="form-control" id="numero" name="numero" 
+                                   value="${dadosMembro.numero || ''}" placeholder="123">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="bairro" class="form-label">Bairro</label>
+                            <input type="text" class="form-control" id="bairro" name="bairro" 
+                                   value="${dadosMembro.bairro || ''}" placeholder="Nome do bairro">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="cidade" class="form-label">Cidade</label>
+                            <input type="text" class="form-control" id="cidade" name="cidade" 
+                                   value="${dadosMembro.cidade || ''}" placeholder="Nome da cidade">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="uf" class="form-label">UF</label>
+                            <input type="text" class="form-control" id="uf" name="uf" 
+                                   value="${dadosMembro.uf || ''}" placeholder="SP" maxlength="2">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="cep" class="form-label">CEP</label>
+                            <input type="text" class="form-control" id="cep" name="cep" 
+                                   value="${dadosMembro.cep || ''}" placeholder="00000-000">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Situação Pastoral -->
+            <div class="form-section">
+                <h6 class="section-title"><i class="fas fa-church"></i> Situação Pastoral</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="status" class="form-label"><i class="fas fa-check-circle"></i> Status</label>
+                            <select class="form-control" id="status" name="status" ${isVisualizacao ? 'disabled' : ''}>
+                                <option value="ativo" ${dadosMembro.status === 'ativo' ? 'selected' : ''}>Ativo</option>
+                                <option value="afastado" ${dadosMembro.status === 'afastado' ? 'selected' : ''}>Afastado</option>
+                                <option value="em_discernimento" ${dadosMembro.status === 'em_discernimento' ? 'selected' : ''}>Em Discernimento</option>
+                                <option value="bloqueado" ${dadosMembro.status === 'bloqueado' ? 'selected' : ''}>Bloqueado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="comunidade_ou_capelania" class="form-label"><i class="fas fa-building"></i> Comunidade/Capelania</label>
+                            <input type="text" class="form-control" id="comunidade_ou_capelania" name="comunidade_ou_capelania" 
+                                   value="${dadosMembro.comunidade_ou_capelania || ''}" placeholder="Nome da comunidade">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="data_entrada" class="form-label"><i class="fas fa-calendar-plus"></i> Data de Entrada</label>
+                            <input type="date" class="form-control" id="data_entrada" name="data_entrada" 
+                                   value="${dadosMembro.data_entrada || ''}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="paroquiano" name="paroquiano" 
+                                       ${dadosMembro.paroquiano ? 'checked' : ''} ${isVisualizacao ? 'disabled' : ''}>
+                                <label class="form-check-label" for="paroquiano"><i class="fas fa-home"></i> Paroquiano</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="observacoes_pastorais" class="form-label"><i class="fas fa-sticky-note"></i> Observações Pastorais</label>
+                    <textarea class="form-control" id="observacoes_pastorais" name="observacoes_pastorais" 
+                              rows="3" placeholder="Observações importantes sobre o membro...">${dadosMembro.observacoes_pastorais || ''}</textarea>
+                </div>
+            </div>
+        </form>
+    `;
 }
 
 /**
@@ -475,38 +432,136 @@ function validarFormulario(formId) {
 /**
  * Salva membro (criação)
  */
-function criarMembro() {
+async function criarMembro() {
     if (!validarFormulario('form-membro')) return;
     
     const formData = new FormData(document.getElementById('form-membro'));
     const dados = Object.fromEntries(formData.entries());
     
-    // Simular salvamento
-    console.log('Criando membro:', dados);
-    mostrarNotificacao('Membro criado com sucesso!', 'success');
-    fecharModal();
-    carregarMembros(); // Recarregar lista
+    // Processar dados específicos
+    const dadosProcessados = processarDadosMembro(dados);
+    
+    try {
+        // Chamar API real
+        const response = await MembrosAPI.criar(dadosProcessados);
+        
+        if (response && response.success) {
+            mostrarNotificacao('Membro criado com sucesso!', 'success');
+            fecharModal();
+            carregarMembros(); // Recarregar lista
+            // Limpar cache para garantir dados atualizados
+            if (typeof limparCacheMembros === 'function') {
+                limparCacheMembros();
+            }
+        } else {
+            const errorMessage = response?.error || 'Erro desconhecido';
+            
+            // Tratar erros específicos
+            if (errorMessage.includes('CPF já cadastrado')) {
+                mostrarNotificacao('Este CPF já está sendo usado por outro membro. Por favor, use um CPF diferente ou deixe o campo vazio.', 'error');
+            } else if (errorMessage.includes('Email já cadastrado')) {
+                mostrarNotificacao('Este email já está sendo usado por outro membro. Por favor, use um email diferente ou deixe o campo vazio.', 'error');
+            } else if (errorMessage.includes('CPF inválido')) {
+                mostrarNotificacao('CPF inválido. Por favor, verifique o número digitado.', 'error');
+            } else if (errorMessage.includes('Email inválido')) {
+                mostrarNotificacao('Email inválido. Por favor, verifique o endereço digitado.', 'error');
+            } else {
+                mostrarNotificacao('Erro ao criar membro: ' + errorMessage, 'error');
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao criar membro:', error);
+        mostrarNotificacao('Erro ao criar membro: ' + error.message, 'error');
+    }
 }
 
 /**
  * Salva membro (edição)
  */
-function salvarMembro() {
+async function salvarMembro() {
     if (!validarFormulario('form-membro')) return;
     
     const formData = new FormData(document.getElementById('form-membro'));
     const dados = Object.fromEntries(formData.entries());
     
-    // Simular salvamento
-    console.log('Atualizando membro:', dados);
-    mostrarNotificacao('Membro atualizado com sucesso!', 'success');
-    fecharModal();
-    carregarMembros(); // Recarregar lista
+    // Obter ID do membro (deve estar armazenado no modal)
+    const membroId = document.getElementById('membro-id')?.value;
+    if (!membroId) {
+        mostrarNotificacao('ID do membro não encontrado', 'error');
+        return;
+    }
+    
+    // Processar dados específicos
+    const dadosProcessados = processarDadosMembro(dados);
+    
+    try {
+        // Chamar API real
+        const response = await MembrosAPI.atualizar(membroId, dadosProcessados);
+        
+        if (response && response.success) {
+            mostrarNotificacao('Membro atualizado com sucesso!', 'success');
+            fecharModal();
+            carregarMembros(); // Recarregar lista
+            // Invalidar cache do membro específico
+            if (typeof invalidarCacheMembro === 'function') {
+                invalidarCacheMembro(membroId);
+            }
+        } else {
+            const errorMessage = response?.error || 'Erro desconhecido';
+            
+            // Tratar erros específicos
+            if (errorMessage.includes('CPF já cadastrado')) {
+                mostrarNotificacao('Este CPF já está sendo usado por outro membro. Por favor, use um CPF diferente ou deixe o campo vazio.', 'error');
+            } else if (errorMessage.includes('Email já cadastrado')) {
+                mostrarNotificacao('Este email já está sendo usado por outro membro. Por favor, use um email diferente ou deixe o campo vazio.', 'error');
+            } else if (errorMessage.includes('CPF inválido')) {
+                mostrarNotificacao('CPF inválido. Por favor, verifique o número digitado.', 'error');
+            } else if (errorMessage.includes('Email inválido')) {
+                mostrarNotificacao('Email inválido. Por favor, verifique o endereço digitado.', 'error');
+            } else {
+                mostrarNotificacao('Erro ao atualizar membro: ' + errorMessage, 'error');
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar membro:', error);
+        mostrarNotificacao('Erro ao atualizar membro: ' + error.message, 'error');
+    }
 }
 
 // =====================================================
 // UTILITÁRIOS
 // =====================================================
+
+/**
+ * Processa dados do formulário de membro (simplificado)
+ */
+function processarDadosMembro(dados) {
+    const dadosProcessados = { ...dados };
+    
+    // Converter checkbox para boolean
+    dadosProcessados.paroquiano = dadosProcessados.paroquiano === 'on';
+    
+    // Adicionar campos obrigatórios se não existirem
+    if (!dadosProcessados.status) {
+        dadosProcessados.status = 'ativo';
+    }
+    
+    // Garantir que paroquiano seja boolean
+    if (dadosProcessados.paroquiano === undefined) {
+        dadosProcessados.paroquiano = false;
+    }
+    
+    // Apenas converter strings vazias para null para campos opcionais
+    const camposOpcionais = ['apelido', 'data_nascimento', 'sexo', 'celular_whatsapp', 'email', 'telefone_fixo', 'rua', 'numero', 'bairro', 'cidade', 'uf', 'cep', 'cpf', 'rg', 'comunidade_ou_capelania', 'data_entrada', 'observacoes_pastorais', 'foto_url', 'motivo_bloqueio'];
+    
+    camposOpcionais.forEach(campo => {
+        if (dadosProcessados[campo] === '') {
+            dadosProcessados[campo] = null;
+        }
+    });
+    
+    return dadosProcessados;
+}
 
 /**
  * Mostra notificação

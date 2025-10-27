@@ -394,11 +394,11 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="assets/js/membros.js"></script>
+    <script src="assets/js/api.js"></script>
     <script src="assets/js/modals.js"></script>
     <script src="assets/js/dashboard.js"></script>
     <script src="assets/js/table.js"></script>
-    <script src="assets/js/api.js"></script>
+    <script src="assets/js/membros.js"></script>
 </body>
 </html>
 

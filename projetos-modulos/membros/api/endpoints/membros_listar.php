@@ -7,12 +7,15 @@
 require_once '../config/database.php';
 
 try {
+    error_log("membros_listar.php: Iniciando execução");
     $db = new MembrosDatabase();
+    error_log("membros_listar.php: Conexão com banco estabelecida");
     
     // Parâmetros de paginação
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
     $offset = ($page - 1) * $limit;
+    error_log("membros_listar.php: Parâmetros - page: $page, limit: $limit, offset: $offset");
     
     // Parâmetros de filtro
     $busca = isset($_GET['busca']) ? trim($_GET['busca']) : '';
@@ -20,7 +23,7 @@ try {
     $pastoral = isset($_GET['pastoral']) ? trim($_GET['pastoral']) : '';
     $funcao = isset($_GET['funcao']) ? trim($_GET['funcao']) : '';
     
-    // Query base simples
+    // Query base simples - sem JOINs para evitar perda de registros
     $query = "
         SELECT 
             m.id,
@@ -31,11 +34,10 @@ try {
             m.status,
             m.paroquiano,
             m.comunidade_ou_capelania,
+            m.foto_url,
             m.created_at,
-            GROUP_CONCAT(DISTINCT p.nome SEPARATOR ', ') as pastorais
+            '' as pastorais
         FROM membros_membros m
-        LEFT JOIN membros_membros_pastorais mp ON m.id = mp.membro_id
-        LEFT JOIN membros_pastorais p ON mp.pastoral_id = p.id
         WHERE 1=1
     ";
     
@@ -54,29 +56,30 @@ try {
         $params[] = $status;
     }
     
+    // Filtros de pastoral e função removidos temporariamente
+    // (serão implementados em versão futura com query separada)
     if (!empty($pastoral)) {
-        $query .= " AND mp.pastoral_id = ?";
-        $params[] = $pastoral;
+        // TODO: Implementar filtro de pastoral com query separada
     }
     
     if (!empty($funcao)) {
-        $query .= " AND mp.funcao_id = ?";
-        $params[] = $funcao;
+        // TODO: Implementar filtro de função com query separada
     }
     
-    $query .= " GROUP BY m.id ORDER BY m.nome_completo LIMIT ? OFFSET ?";
+    $query .= " ORDER BY m.nome_completo LIMIT ? OFFSET ?";
     $params[] = $limit;
     $params[] = $offset;
     
+    error_log("membros_listar.php: Executando query principal");
     $stmt = $db->prepare($query);
     $stmt->execute($params);
     $membros = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    error_log("membros_listar.php: Query executada - " . count($membros) . " membros encontrados");
     
-    // Contar total
+    // Contar total - query simplificada
     $countQuery = "
-        SELECT COUNT(DISTINCT m.id) as total
+        SELECT COUNT(*) as total
         FROM membros_membros m
-        LEFT JOIN membros_membros_pastorais mp ON m.id = mp.membro_id
         WHERE 1=1
     ";
     
@@ -94,20 +97,15 @@ try {
         $countParams[] = $status;
     }
     
-    if (!empty($pastoral)) {
-        $countQuery .= " AND mp.pastoral_id = ?";
-        $countParams[] = $pastoral;
-    }
+    // Filtros de pastoral e função removidos temporariamente
+    // (serão implementados em versão futura)
     
-    if (!empty($funcao)) {
-        $countQuery .= " AND mp.funcao_id = ?";
-        $countParams[] = $funcao;
-    }
-    
+    error_log("membros_listar.php: Executando query de contagem");
     $countStmt = $db->prepare($countQuery);
     $countStmt->execute($countParams);
     $total = $countStmt->fetch()['total'];
     $totalPages = ceil($total / $limit);
+    error_log("membros_listar.php: Contagem - total: $total, pages: $totalPages");
     
     Response::success([
         'data' => $membros,

@@ -36,7 +36,10 @@ const AppState = {
     charts: {
         pastorais: null,
         adesoes: null
-    }
+    },
+    // Cache de dados completos dos membros para edição rápida
+    cacheMembros: new Map(),
+    ultimaAtualizacaoCache: 0
 };
 
 // =====================================================
@@ -150,7 +153,8 @@ function criarOuAtualizarGrafico(canvasId, chartKey, config) {
     
     // Destruir gráfico existente se houver
     if (AppState.charts[chartKey]) {
-        destruirGrafico(AppState.charts[chartKey]);
+        const oldChart = AppState.charts[chartKey];
+        destruirGrafico(oldChart);
     }
     
     // Garantir que o canvas tenha dimensões adequadas
@@ -194,7 +198,8 @@ async function carregarDadosIniciais() {
     try {
         await Promise.all([
             carregarPastorais(),
-            carregarDashboard()
+            carregarDashboard(),
+            carregarMembros() // Carregar membros na inicialização
         ]);
     } catch (error) {
         console.error('Erro ao carregar dados iniciais:', error);
@@ -359,7 +364,7 @@ function atualizarCardsEstatisticas(dados) {
 
 function atualizarGraficos(dados) {
     // Gráfico de membros por pastoral
-    criarOuAtualizarGrafico('chart-pastorais', 'pastorais', {
+    const chart = criarOuAtualizarGrafico('chart-pastorais', 'pastorais', {
         type: 'doughnut',
         data: {
             labels: dados.membros_por_pastoral?.map(p => p.pastoral) || [],
@@ -384,6 +389,44 @@ function atualizarGraficos(dados) {
             }
         }
     });
+    
+    // Adicionar evento de click no canvas após criar o gráfico (apenas uma vez)
+    const canvasElement = document.getElementById('chart-pastorais');
+    if (chart && canvasElement && !canvasElement.dataset.clickListenerAdded) {
+        if (canvasElement) {
+            canvasElement.dataset.clickListenerAdded = 'true';
+            canvasElement.addEventListener('click', async (evt) => {
+                const points = chart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                
+                if (points.length > 0) {
+                    const index = points[0].index;
+                    const pastoralNome = dados.membros_por_pastoral[index].pastoral;
+                    
+                    console.log('Clicando na pastoral:', pastoralNome);
+                    
+                    // Buscar ID da pastoral pelo nome
+                    try {
+                        const response = await fetch('api/pastorais');
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            const pastorais = Array.isArray(data.data) ? data.data : (data.data?.data || []);
+                            const pastoral = pastorais.find(p => p.nome === pastoralNome);
+                            
+                            if (pastoral) {
+                                console.log('Redirecionando para pastoral:', pastoral.id);
+                                window.location.href = `pastoral_detalhes.php?id=${pastoral.id}`;
+                            } else {
+                                console.warn('Pastoral não encontrada:', pastoralNome);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Erro ao buscar pastoral:', error);
+                    }
+                }
+            });
+        }
+    }
     
     // Gráfico de novas adesões
     criarOuAtualizarGrafico('chart-adesoes', 'adesoes', {
@@ -530,7 +573,7 @@ function atualizarTabelaMembros() {
             </td>
             <td>
                 <div class="d-flex flex-wrap gap-1">
-                    ${membro.pastorais?.map(p => `<span class="badge badge-info">${p.nome}</span>`).join('') || '<span class="text-muted">Nenhuma</span>'}
+                    ${formatarPastorais(membro.pastorais)}
                 </div>
             </td>
             <td>
@@ -541,6 +584,9 @@ function atualizarTabelaMembros() {
             </td>
             <td>
                 <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-info" onclick="window.visualizarFoto('${membro.id}')" title="Visualizar Foto" ${!membro.foto_url ? 'disabled' : ''}>
+                        <i class="fas fa-image"></i>
+                    </button>
                     <button class="btn btn-sm btn-secondary" onclick="window.visualizarMembro('${membro.id}')" title="Visualizar">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -569,33 +615,94 @@ function atualizarTabelaMembros() {
 /**
  * Visualiza membro
  */
-function visualizarMembro(id) {
-    const membro = AppState.membros.find(m => m.id === id);
-    if (membro) {
-        // Usar a função do modals.js com modo visualizar
-        abrirModalMembro(membro, 'visualizar');
-    } else {
-        mostrarNotificacao('Membro não encontrado', 'error');
+async function visualizarMembro(id) {
+    try {
+        // Verificar cache primeiro (mais rápido)
+        const dadosCache = obterDadosDoCache(id);
+        if (dadosCache) {
+            console.log('Usando dados do cache para visualização rápida');
+            abrirModalMembro(dadosCache, 'visualizar');
+            return;
+        }
+        
+        // Se não estiver no cache, mostrar indicador de carregamento
+        mostrarIndicadorCarregamento('Carregando dados do membro...');
+        
+        // Buscar da API para garantir dados completos
+        console.log('Buscando dados completos da API...');
+        const response = await MembrosAPI.buscar(id);
+        
+        // Ocultar indicador
+        ocultarIndicadorCarregamento();
+        
+        if (response && response.success) {
+            // Salvar no cache para próximas visualizações
+            salvarDadosNoCache(id, response.data);
+            abrirModalMembro(response.data, 'visualizar');
+        } else {
+            mostrarNotificacao('Erro ao carregar dados do membro: ' + (response?.error || 'Erro desconhecido'), 'error');
+        }
+    } catch (error) {
+        ocultarIndicadorCarregamento();
+        console.error('Erro ao visualizar membro:', error);
+        mostrarNotificacao('Erro ao carregar dados do membro: ' + error.message, 'error');
     }
 }
 
 /**
  * Edita membro
  */
-function editarMembro(id) {
-    const membro = AppState.membros.find(m => m.id === id);
-    if (membro) {
-        // Usar a função do modals.js com modo editar
-        abrirModalMembro(membro, 'editar');
-    } else {
-        mostrarNotificacao('Membro não encontrado', 'error');
+async function editarMembro(id) {
+    try {
+        // Verificar cache primeiro (mais rápido)
+        const dadosCache = obterDadosDoCache(id);
+        if (dadosCache) {
+            console.log('Usando dados do cache para edição rápida');
+            abrirModalMembro(dadosCache, 'editar');
+            return;
+        }
+        
+        // Se não estiver no cache, mostrar indicador de carregamento
+        mostrarIndicadorCarregamento('Carregando dados do membro...');
+        
+        // Buscar da API
+        console.log('Buscando dados da API...');
+        const response = await MembrosAPI.buscar(id);
+        
+        // Ocultar indicador
+        ocultarIndicadorCarregamento();
+        
+        if (response && response.success) {
+            // Salvar no cache para próximas edições
+            salvarDadosNoCache(id, response.data);
+            abrirModalMembro(response.data, 'editar');
+        } else {
+            mostrarNotificacao('Erro ao carregar dados do membro: ' + (response?.error || 'Erro desconhecido'), 'error');
+        }
+    } catch (error) {
+        ocultarIndicadorCarregamento();
+        console.error('Erro ao editar membro:', error);
+        mostrarNotificacao('Erro ao carregar dados do membro: ' + error.message, 'error');
     }
 }
+
 
 /**
  * Exclui membro
  */
 function excluirMembro(id) {
+    console.log('excluirMembro chamado com ID:', id);
+    console.log('Tipo do ID:', typeof id);
+    console.log('ID é undefined?', id === undefined);
+    console.log('ID é null?', id === null);
+    console.log('ID é string vazia?', id === '');
+    
+    if (!id) {
+        console.error('ID inválido para exclusão:', id);
+        mostrarNotificacao('ID inválido para exclusão', 'error');
+        return;
+    }
+    
     const membro = AppState.membros.find(m => m.id === id);
     if (membro) {
         if (confirm(`Tem certeza que deseja excluir o membro "${membro.nome_completo}"?`)) {
@@ -614,11 +721,96 @@ function excluirMembro(id) {
                 });
         }
     } else {
+        console.error('Membro não encontrado no AppState para ID:', id);
         mostrarNotificacao('Membro não encontrado', 'error');
     }
 }
 
 // Função abrirModalMembro está definida em modals.js
+
+/**
+ * Visualiza foto do membro
+ */
+function visualizarFoto(id) {
+    const membro = AppState.membros.find(m => m.id === id);
+    
+    if (!membro) {
+        mostrarNotificacao('Membro não encontrado', 'error');
+        return;
+    }
+    
+    if (!membro.foto_url) {
+        mostrarNotificacao('Este membro não possui foto cadastrada', 'info');
+        return;
+    }
+    
+    // Criar modal para exibir a foto
+    const modalId = 'modal-foto-' + Date.now();
+    const modalHtml = `
+        <div class="modal" id="${modalId}" style="display: flex;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Foto - ${membro.nome_completo}</h5>
+                        <button type="button" class="btn-close" onclick="fecharModalFoto('${modalId}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img src="${membro.foto_url}" alt="Foto de ${membro.nome_completo}" 
+                             style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);" 
+                             onerror="this.src='https://via.placeholder.com/400x400?text=Erro+ao+carregar+imagem'">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalFoto('${modalId}')">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Adicionar modal ao body
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = modalHtml;
+    document.body.appendChild(tempDiv.firstElementChild);
+    
+    // Adicionar overlay de fundo
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040;';
+    overlay.onclick = () => fecharModalFoto(modalId);
+    document.body.appendChild(overlay);
+    
+    // Adicionar animação de entrada
+    setTimeout(() => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.opacity = '1';
+        }
+    }, 10);
+}
+
+/**
+ * Fechar modal de foto
+ */
+function fecharModalFoto(modalId) {
+    const modal = document.getElementById(modalId);
+    const overlay = document.querySelector('.modal-overlay');
+    
+    if (modal) {
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.remove();
+            if (overlay) overlay.remove();
+        }, 300);
+    }
+}
+
+// Exportar para o escopo global
+window.visualizarFoto = visualizarFoto;
+window.fecharModalFoto = fecharModalFoto;
 
 function atualizarPaginacao() {
     const infoPaginacao = document.getElementById('info-paginacao');
@@ -709,11 +901,8 @@ function atualizarCardsPastorais() {
                 <p><strong>Local:</strong> ${pastoral.local_reuniao || 'Não definido'}</p>
             </div>
             <div class="card-footer">
-                <button class="btn btn-sm btn-primary" onclick="editarPastoral('${pastoral.id}')">
-                    <i class="fas fa-edit"></i> Editar
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="excluirPastoral('${pastoral.id}')">
-                    <i class="fas fa-trash"></i> Excluir
+                <button class="btn btn-sm btn-success" onclick="visualizarPastoral('${pastoral.id}')" title="Ver Detalhes">
+                    <i class="fas fa-eye"></i> Mais
                 </button>
             </div>
         </div>
@@ -808,6 +997,98 @@ function excluirPastoral(id) {
     }
 }
 
+function visualizarPastoral(id) {
+    // Redirecionar para a página de detalhes da pastoral
+    window.location.href = `pastoral_detalhes.php?id=${id}`;
+}
+
+// =====================================================
+// SISTEMA DE CACHE
+// =====================================================
+
+/**
+ * Obtém dados do cache se ainda forem válidos
+ */
+function obterDadosDoCache(id) {
+    const agora = Date.now();
+    const dadosCache = AppState.cacheMembros.get(id);
+    
+    if (dadosCache) {
+        // Verificar se os dados não estão muito antigos (5 minutos)
+        const tempoLimite = 5 * 60 * 1000; // 5 minutos em ms
+        if (agora - dadosCache.timestamp < tempoLimite) {
+            return dadosCache.dados;
+        } else {
+            // Remover dados antigos do cache
+            AppState.cacheMembros.delete(id);
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Salva dados no cache
+ */
+function salvarDadosNoCache(id, dados) {
+    AppState.cacheMembros.set(id, {
+        dados: dados,
+        timestamp: Date.now()
+    });
+    
+    // Limitar tamanho do cache (máximo 50 membros)
+    if (AppState.cacheMembros.size > 50) {
+        const primeiroId = AppState.cacheMembros.keys().next().value;
+        AppState.cacheMembros.delete(primeiroId);
+    }
+}
+
+/**
+ * Limpa o cache de membros
+ */
+function limparCacheMembros() {
+    AppState.cacheMembros.clear();
+    AppState.ultimaAtualizacaoCache = 0;
+}
+
+/**
+ * Invalida dados específicos do cache (após atualização)
+ */
+function invalidarCacheMembro(id) {
+    AppState.cacheMembros.delete(id);
+}
+
+/**
+ * Mostra indicador de carregamento
+ */
+function mostrarIndicadorCarregamento(mensagem = 'Carregando...') {
+    // Remover indicador anterior se existir
+    ocultarIndicadorCarregamento();
+    
+    const indicador = document.createElement('div');
+    indicador.id = 'loading-indicator';
+    indicador.innerHTML = `
+        <div class="loading-overlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>${mensagem}</p>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(indicador);
+}
+
+/**
+ * Oculta indicador de carregamento
+ */
+function ocultarIndicadorCarregamento() {
+    const indicador = document.getElementById('loading-indicator');
+    if (indicador) {
+        indicador.remove();
+    }
+}
+
 // =====================================================
 // UTILITÁRIOS
 // =====================================================
@@ -833,6 +1114,28 @@ function getStatusText(status) {
 
 function formatarData(data) {
     return new Date(data).toLocaleDateString('pt-BR');
+}
+
+function formatarPastorais(pastorais) {
+    // Se pastorais é um array de objetos
+    if (Array.isArray(pastorais)) {
+        if (pastorais.length === 0) {
+            return '<span class="text-muted">Nenhuma</span>';
+        }
+        return pastorais.map(p => `<span class="badge badge-info">${p.nome || p}</span>`).join('');
+    }
+    
+    // Se pastorais é uma string (separada por vírgulas)
+    if (typeof pastorais === 'string' && pastorais.trim() !== '') {
+        const lista = pastorais.split(',').map(p => p.trim()).filter(p => p);
+        if (lista.length === 0) {
+            return '<span class="text-muted">Nenhuma</span>';
+        }
+        return lista.map(p => `<span class="badge badge-info">${p}</span>`).join('');
+    }
+    
+    // Se pastorais é null, undefined ou string vazia
+    return '<span class="text-muted">Nenhuma</span>';
 }
 
 function mostrarNotificacao(mensagem, tipo = 'info') {
@@ -887,4 +1190,5 @@ function exportarMembros() {
 window.visualizarMembro = visualizarMembro;
 window.editarMembro = editarMembro;
 window.excluirMembro = excluirMembro;
+window.carregarMembros = carregarMembros;
 

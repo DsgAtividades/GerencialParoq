@@ -87,8 +87,10 @@ switch ($path) {
         
     case 'membros':
         if ($method === 'GET') {
+            error_log("Rota membros: Incluindo endpoints/membros_listar.php");
             include 'endpoints/membros_listar.php';
         } elseif ($method === 'POST') {
+            error_log("Rota membros: Incluindo endpoints/membros_criar.php");
             include 'endpoints/membros_criar.php';
         } else {
             Response::error('Método não permitido', 405);
@@ -124,8 +126,41 @@ switch ($path) {
         break;
         
     default:
+        // Verificar se é uma rota de detalhes da pastoral
+        if (preg_match('/^pastorais\/([a-f0-9\-]{36})\/(membros|eventos|coordenadores)$/', $path, $matches)) {
+            $pastoral_id = $matches[1];
+            $resource = $matches[2];
+            
+            if ($method === 'GET') {
+                include "endpoints/pastoral_{$resource}.php";
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
+        // Verificar se é uma rota de pastoral específico
+        elseif (preg_match('/^pastorais\/([a-f0-9\-]{36})$/', $path, $matches)) {
+            $pastoral_id = $matches[1];
+            if ($method === 'GET') {
+                include 'endpoints/pastoral_detalhes.php';
+            } elseif ($method === 'PUT') {
+                include 'endpoints/pastoral_atualizar.php';
+            } elseif ($method === 'DELETE') {
+                include 'endpoints/pastoral_excluir.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
+        // Verificar se é uma rota de pastorais de membro específico
+        elseif (preg_match('/^membros\/([a-f0-9\-]{36})\/pastorais$/', $path, $matches)) {
+            $membro_id = $matches[1];
+            if ($method === 'GET') {
+                include 'endpoints/membros_pastorais.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
         // Verificar se é uma rota de membro específico (GET, PUT, DELETE)
-        if (preg_match('/^membros\/([a-f0-9\-]{36})$/', $path, $matches)) {
+        elseif (preg_match('/^membros\/([a-f0-9\-]{36})$/', $path, $matches)) {
             $membro_id = $matches[1];
             if ($method === 'GET') {
                 include 'endpoints/membros_visualizar.php';

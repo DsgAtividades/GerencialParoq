@@ -49,12 +49,30 @@ try {
         if (!$validation->isValidEmail($input['email'])) {
             Response::error('Email inválido', 400);
         }
+        
+        // Verificar se email já existe em outro membro
+        $stmt = $db->prepare("SELECT id FROM membros_membros WHERE email = ? AND id != ?");
+        $stmt->execute([$input['email'], $membro_id]);
+        $email_existente = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($email_existente) {
+            Response::error('Email já cadastrado para outro membro', 400);
+        }
     }
     
     // Validar CPF se fornecido
     if (isset($input['cpf']) && !empty($input['cpf'])) {
         if (!$validation->isValidCPF($input['cpf'])) {
             Response::error('CPF inválido', 400);
+        }
+        
+        // Verificar se CPF já existe em outro membro
+        $stmt = $db->prepare("SELECT id FROM membros_membros WHERE cpf = ? AND id != ?");
+        $stmt->execute([$input['cpf'], $membro_id]);
+        $cpf_existente = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($cpf_existente) {
+            Response::error('CPF já cadastrado para outro membro', 400);
         }
     }
     

@@ -25,7 +25,10 @@ class APIClient {
     }
     
     async request(endpoint, options = {}) {
-        const url = `${this.baseUrl}${endpoint}`;
+        // Garantir que não há barras duplicadas
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+        const url = `${this.baseUrl}${cleanEndpoint}`;
+        
         const config = {
             method: 'GET',
             headers: {
@@ -34,6 +37,11 @@ class APIClient {
             },
             ...options
         };
+        
+        // Garantir que o Content-Type seja definido para métodos que enviam dados
+        if (options.body && !config.headers['Content-Type']) {
+            config.headers['Content-Type'] = 'application/json';
+        }
         
         try {
             const response = await fetch(url, config);
@@ -318,7 +326,9 @@ async function carregarMembrosAPI(params = {}) {
         return await MembrosAPI.listar(params);
     } catch (error) {
         console.error('Erro ao carregar membros:', error);
-        return await usarDadosMockados('membros');
+        // Desabilitar fallback temporariamente para debug
+        throw error;
+        // return await usarDadosMockados('membros');
     }
 }
 
