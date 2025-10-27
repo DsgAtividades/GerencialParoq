@@ -39,7 +39,10 @@ const AppState = {
     },
     // Cache de dados completos dos membros para edição rápida
     cacheMembros: new Map(),
-    ultimaAtualizacaoCache: 0
+    ultimaAtualizacaoCache: 0,
+    // Cache de API para evitar chamadas duplicadas
+    apiCache: new Map(),
+    cacheValidoPor: 5 * 60 * 1000 // 5 minutos
 };
 
 // =====================================================
@@ -51,6 +54,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function inicializarAplicacao() {
     configurarNavegacao();
+    
+    // Limpar cache expirado ao iniciar
+    limparCacheExpirado();
+    
+    // Configurar limpeza automática do cache a cada 10 minutos
+    setInterval(limparCacheExpirado, 10 * 60 * 1000);
+    
     carregarDadosIniciais();
     configurarEventos();
 }
@@ -132,6 +142,85 @@ function carregarDadosSecao(sectionId) {
 }
 
 // =====================================================
+// SISTEMA DE CACHE E OTIMIZAÇÕES
+// =====================================================
+
+/**
+ * Verifica se há dados em cache válidos
+ */
+function obterDoCache(url) {
+    const cached = AppState.apiCache.get(url);
+    if (!cached) return null;
+    
+    const agora = Date.now();
+    if (agora - cached.timestamp > AppState.cacheValidoPor) {
+        AppState.apiCache.delete(url);
+        return null;
+    }
+    
+    return cached.data;
+}
+
+/**
+ * Salva dados no cache
+ */
+function salvarNoCache(url, data) {
+    AppState.apiCache.set(url, {
+        data: data,
+        timestamp: Date.now()
+    });
+}
+
+/**
+ * Limpa o cache expirado
+ */
+function limparCacheExpirado() {
+    const agora = Date.now();
+    for (const [url, cached] of AppState.apiCache.entries()) {
+        if (agora - cached.timestamp > AppState.cacheValidoPor) {
+            AppState.apiCache.delete(url);
+        }
+    }
+}
+
+/**
+ * Função debounce para otimizar filtros
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * Carregar com cache inteligente
+ */
+async function fetchComCache(url, options = {}) {
+    // Verificar cache
+    const cached = obterDoCache(url);
+    if (cached) {
+        return cached;
+    }
+    
+    // Fazer requisição
+    const response = await fetch(url, options);
+    const data = await response.json();
+    
+    // Salvar no cache se for GET
+    if (!options.method || options.method === 'GET') {
+        salvarNoCache(url, data);
+    }
+    
+    return data;
+}
+
+// =====================================================
 // FUNÇÕES AUXILIARES
 // =====================================================
 
@@ -210,20 +299,42 @@ async function carregarDadosIniciais() {
 async function carregarDashboard() {
     try {
         console.log('Carregando dashboard...');
-        const response = await carregarDashboardAPI();
-        console.log('Resposta da API dashboard:', response);
         
-        if (response && response.success) {
-            // A API retorna: { success: true, data: {...} }
-            const dashboardData = response.data || response;
-            console.log('Dados do dashboard extraídos:', dashboardData);
-            
-            atualizarCardsEstatisticas(dashboardData);
-            atualizarGraficos(dashboardData);
-            atualizarAlertas(dashboardData.alertas || []);
-        } else {
-            console.warn('Resposta da API não é válida:', response);
+        // Verificar cache primeiro
+        const cacheKey = 'dashboard-data';
+        const cached = obterDoCache(cacheKey);
+        
+        if (cached) {
+            console.log('Usando dados do cache');
+            atualizarCardsEstatisticas(cached);
+            atualizarGraficos(cached);
+            atualizarAlertas(cached.alertas || []);
+            return;
         }
+        
+        // Carregar dados principais em paralelo
+        const [statsResponse, pastoralResponse] = await Promise.all([
+            carregarDashboardAPI(),
+            DashboardAPI.membrosPorPastoral()
+        ]);
+        
+        // Dados de adesões mockados (até criar endpoint específico)
+        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+        const quantidades = [2, 5, 3, 7, 4, 6];
+        
+        // Combinar todos os dados
+        const dashboardData = {
+            ...(statsResponse?.data || statsResponse || {}),
+            membros_por_pastoral: pastoralResponse?.data || pastoralResponse || { labels: [], data: [] },
+            adesoes_mensais: { labels: meses, data: quantidades }
+        };
+        
+        // Salvar no cache
+        salvarNoCache(cacheKey, dashboardData);
+        
+        atualizarCardsEstatisticas(dashboardData);
+        atualizarGraficos(dashboardData);
+        atualizarAlertas(dashboardData.alertas || []);
     } catch (error) {
         console.error('Erro ao carregar dashboard:', error);
     }
@@ -239,7 +350,21 @@ async function carregarMembros() {
             ...AppState.filtros
         };
 
-        const response = await carregarMembrosAPI(params);
+        // Criar chave de cache baseada nos parâmetros
+        const cacheKey = 'membros-' + JSON.stringify(params);
+        const cached = obterDoCache(cacheKey);
+        
+        let response;
+        if (cached) {
+            console.log('Usando membros do cache');
+            response = cached;
+        } else {
+            response = await carregarMembrosAPI(params);
+            // Salvar no cache apenas se não houver busca/filtros
+            if (!AppState.filtros.busca && !AppState.filtros.status && !AppState.filtros.pastoral) {
+                salvarNoCache(cacheKey, response);
+            }
+        }
 
         if (response && response.success) {
             // A API retorna: { success: true, data: { data: [...], paginacao: {...} } }
@@ -261,7 +386,19 @@ async function carregarMembros() {
 
 async function carregarPastorais() {
     try {
-        const response = await carregarPastoraisAPI();
+        // Verificar cache
+        const cached = obterDoCache('pastorais');
+        let response;
+        
+        if (cached) {
+            console.log('Usando pastorais do cache');
+            response = cached;
+        } else {
+            response = await carregarPastoraisAPI();
+            if (response && response.success) {
+                salvarNoCache('pastorais', response);
+            }
+        }
         
         if (response && response.success) {
             // A API retorna: { success: true, data: { data: [...] } }
@@ -363,19 +500,30 @@ function atualizarCardsEstatisticas(dados) {
 }
 
 function atualizarGraficos(dados) {
+    console.log('Atualizando gráficos com dados:', dados);
+    
+    // A API retorna { labels: [...], data: [...] }
+    const pastoralLabels = dados.membros_por_pastoral?.labels || [];
+    const pastoralData = dados.membros_por_pastoral?.data || [];
+    
+    console.log('Dados para gráfico pastoral:', { pastoralLabels, pastoralData });
+    
     // Gráfico de membros por pastoral
     const chart = criarOuAtualizarGrafico('chart-pastorais', 'pastorais', {
         type: 'doughnut',
         data: {
-            labels: dados.membros_por_pastoral?.map(p => p.pastoral) || [],
+            labels: pastoralLabels,
             datasets: [{
-                data: dados.membros_por_pastoral?.map(p => p.quantidade) || [],
+                data: pastoralData,
                 backgroundColor: [
                     '#2c5aa0',
                     '#4a7bc8',
                     '#6b9bd2',
                     '#8bb3dc',
-                    '#abcddf'
+                    '#abcddf',
+                    '#c0d6e8',
+                    '#d4e0f0',
+                    '#e8ebf3'
                 ]
             }]
         },
@@ -400,7 +548,7 @@ function atualizarGraficos(dados) {
                 
                 if (points.length > 0) {
                     const index = points[0].index;
-                    const pastoralNome = dados.membros_por_pastoral[index].pastoral;
+                    const pastoralNome = pastoralLabels[index];
                     
                     console.log('Clicando na pastoral:', pastoralNome);
                     
@@ -428,14 +576,31 @@ function atualizarGraficos(dados) {
         }
     }
     
+    // Ajustar dados de adesões - pode vir em formato diferente
+    // Verificar se é array (formato antigo) ou objeto com labels/data
+    let adesoesMes = [];
+    let adesoesQuantidade = [];
+    
+    if (Array.isArray(dados.adesoes_mensais)) {
+        // Formato array: [{ mes: 'Jan', quantidade: 2 }, ...]
+        adesoesMes = dados.adesoes_mensais.map(a => a.mes);
+        adesoesQuantidade = dados.adesoes_mensais.map(a => a.quantidade);
+    } else if (dados.adesoes_mensais && typeof dados.adesoes_mensais === 'object') {
+        // Formato objeto: { labels: [...], data: [...] }
+        adesoesMes = dados.adesoes_mensais.labels || [];
+        adesoesQuantidade = dados.adesoes_mensais.data || [];
+    }
+    
+    console.log('Dados para gráfico de adesões:', { adesoesMes, adesoesQuantidade });
+    
     // Gráfico de novas adesões
     criarOuAtualizarGrafico('chart-adesoes', 'adesoes', {
         type: 'line',
         data: {
-            labels: dados.adesoes_mensais?.map(a => a.mes) || [],
+            labels: adesoesMes,
             datasets: [{
                 label: 'Novas Adesões',
-                data: dados.adesoes_mensais?.map(a => a.quantidade) || [],
+                data: adesoesQuantidade,
                 borderColor: '#2c5aa0',
                 backgroundColor: 'rgba(44, 90, 160, 0.1)',
                 tension: 0.4,
@@ -503,6 +668,13 @@ function atualizarAlertas(alertas) {
 }
 
 function atualizarDashboard() {
+    // Limpar cache antes de atualizar
+    limparCacheExpirado();
+    
+    // Invalidar caches específicos
+    AppState.apiCache.delete('dashboard-data');
+    AppState.apiCache.delete('pastorais');
+    
     carregarDashboard();
     mostrarNotificacao('Dashboard atualizado', 'success');
 }
@@ -853,8 +1025,14 @@ function aplicarFiltros() {
     AppState.filtros.pastoral = document.getElementById('filtro-pastoral').value;
     AppState.paginacao.page = 1;
     
+    // Invalidar cache ao aplicar filtros
+    limparCacheExpirado();
+    
     carregarMembros();
 }
+
+// Versão com debounce para busca
+const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
 
 function atualizarSelectPastorais() {
     const select = document.getElementById('filtro-pastoral');
@@ -1150,8 +1328,15 @@ function configurarEventos() {
     // Eventos de filtros
     const filtroBusca = document.getElementById('filtro-busca');
     if (filtroBusca) {
+        // Busca com debounce enquanto digita
+        filtroBusca.addEventListener('input', function() {
+            aplicarFiltrosDebounce();
+        });
+        
+        // Enter aplica imediatamente
         filtroBusca.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 aplicarFiltros();
             }
         });

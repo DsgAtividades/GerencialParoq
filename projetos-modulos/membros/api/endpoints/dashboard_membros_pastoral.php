@@ -14,9 +14,11 @@ try {
             p.nome as pastoral,
             COUNT(mp.membro_id) as total
         FROM membros_pastorais p
-        LEFT JOIN membros_membros_pastorais mp ON p.id = mp.pastoral_id
+        LEFT JOIN membros_membros_pastorais mp ON p.id = mp.pastoral_id 
+            AND mp.status = 'ativo'
         WHERE p.ativo = 1
         GROUP BY p.id, p.nome
+        HAVING total > 0
         ORDER BY total DESC
         LIMIT 10
     ")->fetchAll();

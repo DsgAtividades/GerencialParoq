@@ -8,14 +8,20 @@
 require_once '../config/database.php';
 
 try {
-    $db = new MembrosDatabase();
+    // A variável $pastoral_id é definida pelo routes.php
+    global $pastoral_id;
     
     // Verificar se o ID foi fornecido
     if (!isset($pastoral_id) || empty($pastoral_id)) {
+        error_log("pastoral_coordenadores.php: ID da pastoral não fornecido");
         Response::error('ID da pastoral é obrigatório', 400);
     }
     
-    // Buscar coordenadores da pastoral
+    error_log("pastoral_coordenadores.php: Buscando coordenadores para pastoral_id = " . $pastoral_id);
+    
+    $db = new MembrosDatabase();
+    
+    // Buscar coordenadores da pastoral (membros com prioridade >= 5)
     $query = "
         SELECT 
             m.id,
@@ -24,7 +30,7 @@ try {
             m.email,
             COALESCE(m.celular_whatsapp, m.telefone_fixo) as telefone,
             m.foto_url,
-            f.nome as funcao,
+            COALESCE(f.nome, 'Membro') as funcao,
             mp.data_inicio,
             mp.prioridade
         FROM membros_membros_pastorais mp
@@ -32,7 +38,7 @@ try {
         LEFT JOIN membros_funcoes f ON mp.funcao_id = f.id
         WHERE mp.pastoral_id = ? 
         AND mp.status = 'ativo'
-        AND (mp.prioridade >= 5 OR f.tipo = 'coordenacao')
+        AND mp.prioridade >= 5
         ORDER BY mp.prioridade DESC, m.nome_completo
     ";
     

@@ -126,8 +126,9 @@ switch ($path) {
         break;
         
     default:
-        // Verificar se é uma rota de detalhes da pastoral
-        if (preg_match('/^pastorais\/([a-f0-9\-]{36})\/(membros|eventos|coordenadores)$/', $path, $matches)) {
+        // Verificar se é uma rota de detalhes da pastoral com sub-recursos
+        // Aceita UUIDs, IDs numéricos ou IDs com prefixo (ex: pastoral-2)
+        if (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)\/(membros|eventos|coordenadores)$/', $path, $matches)) {
             $pastoral_id = $matches[1];
             $resource = $matches[2];
             
@@ -138,7 +139,8 @@ switch ($path) {
             }
         }
         // Verificar se é uma rota de pastoral específico
-        elseif (preg_match('/^pastorais\/([a-f0-9\-]{36})$/', $path, $matches)) {
+        // Aceita UUIDs, IDs numéricos ou IDs com prefixo (ex: pastoral-2)
+        elseif (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)$/', $path, $matches)) {
             $pastoral_id = $matches[1];
             if ($method === 'GET') {
                 include 'endpoints/pastoral_detalhes.php';

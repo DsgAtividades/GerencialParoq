@@ -8,12 +8,18 @@
 require_once '../config/database.php';
 
 try {
-    $db = new MembrosDatabase();
+    // A variável $pastoral_id é definida pelo routes.php
+    global $pastoral_id;
     
     // Verificar se o ID foi fornecido
     if (!isset($pastoral_id) || empty($pastoral_id)) {
+        error_log("pastoral_membros.php: ID da pastoral não fornecido");
         Response::error('ID da pastoral é obrigatório', 400);
     }
+    
+    error_log("pastoral_membros.php: Buscando membros para pastoral_id = " . $pastoral_id);
+    
+    $db = new MembrosDatabase();
     
     // Buscar membros da pastoral
     $query = "

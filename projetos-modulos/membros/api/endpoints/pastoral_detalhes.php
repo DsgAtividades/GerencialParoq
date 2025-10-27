@@ -8,15 +8,19 @@
 require_once '../config/database.php';
 
 try {
-    $db = new MembrosDatabase();
+    // A variável $pastoral_id é definida pelo routes.php
+    global $pastoral_id;
     
     // Verificar se o ID foi fornecido
     if (!isset($pastoral_id) || empty($pastoral_id)) {
+        error_log("pastoral_detalhes.php: ID da pastoral não fornecido");
         Response::error('ID da pastoral é obrigatório', 400);
     }
     
-    // Validar formato do UUID
-    if (!preg_match('/^[a-f0-9\-]{36}$/', $pastoral_id)) {
+    $db = new MembrosDatabase();
+    
+    // Aceita UUIDs, IDs numéricos ou IDs com prefixo (ex: pastoral-2)
+    if (!preg_match('/^[a-f0-9\-]{36}$/', $pastoral_id) && !is_numeric($pastoral_id) && !preg_match('/^[a-z]+\-\d+$/', $pastoral_id)) {
         Response::error('ID inválido', 400);
     }
     

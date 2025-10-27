@@ -368,6 +368,25 @@ async function carregarDashboardAPI() {
     }
 }
 
+async function carregarAdesoesAPI() {
+    try {
+        // Retornar dados mockados temporariamente até criar endpoint específico
+        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+        const quantidades = [2, 5, 3, 7, 4, 6];
+        
+        return { 
+            success: true, 
+            data: {
+                labels: meses,
+                data: quantidades
+            }
+        };
+    } catch (error) {
+        console.error('Erro ao carregar adesões:', error);
+        return { success: true, data: { labels: [], data: [] } };
+    }
+}
+
 /**
  * Exclui membro
  */
@@ -426,6 +445,7 @@ window.carregarMembrosAPI = carregarMembrosAPI;
 window.carregarPastoraisAPI = carregarPastoraisAPI;
 window.carregarEventosAPI = carregarEventosAPI;
 window.carregarDashboardAPI = carregarDashboardAPI;
+window.carregarAdesoesAPI = carregarAdesoesAPI;
 
 // Exportar utilitários
 window.verificarDisponibilidadeAPI = verificarDisponibilidadeAPI;
