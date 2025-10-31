@@ -142,6 +142,9 @@ $module_description = 'Informações completas da pastoral';
                 <button class="tab" onclick="mostrarAba('eventos')">
                     <i class="fas fa-calendar"></i> Eventos
                 </button>
+                <button class="tab" onclick="mostrarAba('escalas')">
+                    <i class="fas fa-clipboard-list"></i> Escalas
+                </button>
                 <button class="tab" onclick="mostrarAba('editar')">
                     <i class="fas fa-edit"></i> Editar Pastoral
                 </button>
@@ -150,6 +153,11 @@ $module_description = 'Informações completas da pastoral';
             <!-- Conteúdo das Abas -->
             <!-- Aba Membros -->
             <div id="aba-membros" class="tab-content active">
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" onclick="adicionarMembroPastoral()">
+                        <i class="fas fa-user-plus"></i> Adicionar Membro à Pastoral
+                    </button>
+                </div>
                 <div class="data-table-wrapper">
                     <table class="data-table">
                         <thead>
@@ -171,15 +179,20 @@ $module_description = 'Informações completas da pastoral';
 
             <!-- Aba Eventos -->
             <div id="aba-eventos" class="tab-content">
+                <div style="margin-bottom: 1rem;">
+                    <button class="btn btn-primary" onclick="abrirModalEvento()">
+                        <i class="fas fa-plus"></i> Novo Evento
+                    </button>
+                </div>
                 <div class="data-table-wrapper">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Data</th>
                                 <th>Nome</th>
+                                <th>Tipo</th>
                                 <th>Horário</th>
                                 <th>Local</th>
-                                <th>Inscritos</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -187,6 +200,19 @@ $module_description = 'Informações completas da pastoral';
                             <!-- Eventos serão preenchidos via JS -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Aba Escalas -->
+            <div id="aba-escalas" class="tab-content">
+                <div class="escala-header" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;">
+                    <h3 style="margin:0;">Semana Corrente</h3>
+                    <button class="btn btn-primary" onclick="escalasAbrirModalEvento()">
+                        <i class="fas fa-plus"></i> Adicionar evento
+                    </button>
+                </div>
+                <div id="escala-semana" class="calendar-week">
+                    <!-- calendário semanal será preenchido via JS -->
                 </div>
             </div>
 
@@ -209,8 +235,8 @@ $module_description = 'Informações completas da pastoral';
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="edit-comunidade">Comunidade</label>
-                            <input type="text" id="edit-comunidade" name="comunidade" placeholder="Ex: Matriz, Capela São José">
+                            <label for="edit-comunidade">Comunidade/Capelania</label>
+                            <input type="text" id="edit-comunidade" name="comunidade_capelania" placeholder="Ex: Matriz, Capela São José">
                         </div>
                     </div>
 
@@ -223,19 +249,30 @@ $module_description = 'Informações completas da pastoral';
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="edit-contato_whatsapp">WhatsApp</label>
-                            <input type="text" id="edit-contato_whatsapp" name="contato_whatsapp" placeholder="(11) 98765-4321">
+                            <label for="edit-whatsapp">Link do WhatsApp</label>
+                            <input type="text" id="edit-whatsapp" name="whatsapp_grupo_link" placeholder="Link do grupo do WhatsApp">
                         </div>
                         <div class="form-group">
-                            <label for="edit-contato_email">E-mail</label>
-                            <input type="email" id="edit-contato_email" name="contato_email" placeholder="contato@pastoral.com">
+                            <label for="edit-email">E-mail do Grupo</label>
+                            <input type="email" id="edit-email" name="email_grupo" placeholder="contato@pastoral.com">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="edit-responsavel">Responsável</label>
-                            <input type="text" id="edit-responsavel" name="responsavel" placeholder="Nome do responsável">
+                            <label for="edit-dia-semana">Dia da Semana</label>
+                            <input type="text" id="edit-dia-semana" name="dia_semana" placeholder="Ex: Segunda-feira">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-horario">Horário</label>
+                            <input type="time" id="edit-horario" name="horario" placeholder="HH:MM">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-local">Local de Reunião</label>
+                            <input type="text" id="edit-local" name="local_reuniao" placeholder="Local onde se reúne">
                         </div>
                         <div class="form-group">
                             <label for="edit-ativo">Status</label>
@@ -248,15 +285,28 @@ $module_description = 'Informações completas da pastoral';
 
                     <!-- Seção de Coordenadores -->
                     <div class="form-row full-width">
-                        <div class="form-group full-width">
-                            <label>Coordenadores da Pastoral</label>
-                            <div class="coordinators-manager">
-                                <div id="coordenadores-lista" class="coordinators-list-edit">
-                                    <!-- Lista de coordenadores será preenchida via JS -->
+                        <div class="form-group">
+                            <label>Coordenador</label>
+                            <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Selecione um membro da pastoral para ser o coordenador</p>
+                            <div class="coordinator-selector">
+                                <div id="coordenador-atual" class="coordinator-selected">
+                                    <span class="coordinator-name">Nenhum selecionado</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarCoordenador('coordenador')">
+                                        <i class="fas fa-user-edit"></i> Selecionar
+                                    </button>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="adicionarCoordenador()">
-                                    <i class="fas fa-plus"></i> Adicionar Coordenador
-                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Vice-Coordenador</label>
+                            <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.5rem;">Selecione um membro da pastoral para ser o vice-coordenador</p>
+                            <div class="coordinator-selector">
+                                <div id="vice-coordenador-atual" class="coordinator-selected">
+                                    <span class="coordinator-name">Nenhum selecionado</span>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarCoordenador('vice_coordenador')">
+                                        <i class="fas fa-user-edit"></i> Selecionar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -275,11 +325,14 @@ $module_description = 'Informações completas da pastoral';
         </main>
     </div>
 
+    <!-- Container para Modais -->
+    <div id="modal-container"></div>
+
     <!-- Modal de Seleção de Coordenadores -->
     <div id="modal-selecionar-membro" class="member-selector-modal">
         <div class="member-selector-content">
             <div class="member-selector-header">
-                <h3>Selecionar Coordenador</h3>
+                <h3 id="modal-titulo">Selecionar Coordenador</h3>
                 <button type="button" class="btn btn-sm btn-secondary" onclick="fecharModalMembro()">
                     <i class="fas fa-times"></i>
                 </button>
@@ -291,8 +344,33 @@ $module_description = 'Informações completas da pastoral';
                 </div>
             </div>
             <div class="member-selector-footer">
+                <input type="hidden" id="tipo-coordenador-selecionando" value="">
                 <button type="button" class="btn btn-secondary" onclick="fecharModalMembro()">Cancelar</button>
                 <button type="button" class="btn btn-primary" onclick="adicionarCoordenadorSelecionado()">
+                    <i class="fas fa-check"></i> Adicionar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Seleção de Membro para Pastoral -->
+    <div id="modal-adicionar-membro-pastoral" class="member-selector-modal">
+        <div class="member-selector-content">
+            <div class="member-selector-header">
+                <h3>Adicionar Membro à Pastoral</h3>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="fecharModalAdicionarMembro()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="member-selector-body">
+                <input type="text" id="busca-membro-pastoral" class="member-search-input" placeholder="Buscar membro..." onkeyup="filtrarMembrosPastoral()">
+                <div id="lista-membros-pastoral" class="member-list">
+                    <!-- Lista será preenchida via JS -->
+                </div>
+            </div>
+            <div class="member-selector-footer">
+                <button type="button" class="btn btn-secondary" onclick="fecharModalAdicionarMembro()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="adicionarMembroSelecionado()">
                     <i class="fas fa-check"></i> Adicionar
                 </button>
             </div>
@@ -302,11 +380,16 @@ $module_description = 'Informações completas da pastoral';
     <!-- Scripts -->
     <script src="assets/js/api.js"></script>
     <script src="assets/js/pastoral_detalhes.js"></script>
+    <script src="assets/js/escalas.js"></script>
     <script>
         // Inicializar página
         const pastoralId = '<?php echo $pastoral_id; ?>';
+        // Disponibilizar no escopo global para outros scripts
+        window.pastoralId = pastoralId;
         window.addEventListener('DOMContentLoaded', () => {
             carregarDadosPastoral(pastoralId);
+            // carregar semana de escalas de imediato
+            escalasCarregarSemana(pastoralId);
         });
     </script>
 </body>

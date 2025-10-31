@@ -21,8 +21,7 @@ try {
     
     $db = new MembrosDatabase();
     
-    // Buscar eventos futuros (já que a tabela não tem coluna pastoral_id)
-    // Retornando eventos gerais para exibição
+    // Buscar eventos específicos da pastoral da nova tabela
     $query = "
         SELECT 
             e.id,
@@ -31,18 +30,21 @@ try {
             e.horario,
             COALESCE(e.local, 'A definir') as local,
             COALESCE(e.descricao, '') as descricao,
+            e.tipo,
+            e.responsavel_id,
+            m.nome_completo as responsavel_nome,
             0 as total_inscritos
-        FROM membros_eventos e
-        WHERE e.data_evento >= CURDATE()
+        FROM membros_eventos_pastorais e
+        LEFT JOIN membros_membros m ON e.responsavel_id = m.id
+        WHERE e.pastoral_id = ? AND e.ativo = 1
         ORDER BY e.data_evento ASC
-        LIMIT 20
     ";
     
     $stmt = $db->prepare($query);
-    $stmt->execute();
+    $stmt->execute([$pastoral_id]);
     $eventos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    error_log("pastoral_eventos.php: " . count($eventos) . " eventos encontrados");
+    error_log("pastoral_eventos.php: " . count($eventos) . " eventos encontrados para a pastoral");
     
     Response::success($eventos);
     

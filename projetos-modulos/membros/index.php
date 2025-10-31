@@ -35,6 +35,7 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
     <link rel="stylesheet" href="../../assets/css/base.css">
     <link rel="stylesheet" href="../../assets/css/module.css">
     <link rel="stylesheet" href="assets/css/membros.css">
+    <link rel="stylesheet" href="assets/css/calendario_eventos.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -76,11 +77,6 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                 <li class="nav-item">
                     <a href="#eventos" class="nav-link" data-section="eventos">
                         <i class="fas fa-calendar-alt"></i> Eventos
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#escalas" class="nav-link" data-section="escalas">
-                        <i class="fas fa-clipboard-list"></i> Escalas
                     </a>
                 </li>
                 <li class="nav-item">

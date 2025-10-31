@@ -140,6 +140,14 @@ function abrirModalMembro(membro = null, modo = 'editar') {
     
     abrirModal(titulo, conteudo, botoes, { tamanho: 'lg' });
     
+    // Armazenar ID do membro no modal para carregar pastorais
+    setTimeout(() => {
+        const modal = document.querySelector('.modal.show');
+        if (modal && membro && membro.id) {
+            modal.dataset.membroId = membro.id;
+        }
+    }, 10);
+    
     // Se for visualização, desabilitar todos os campos do formulário
     if (isVisualizacao) {
         setTimeout(() => {
@@ -243,6 +251,55 @@ function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
                 </div>
             </div>
 
+            ${!isVisualizacao ? `
+            <!-- Status e Observações -->
+            <div class="form-section">
+                <h6 class="section-title"><i class="fas fa-info-circle"></i> Status e Observações</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="status" class="form-label"><i class="fas fa-check-circle"></i> Status</label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="ativo" ${dadosMembro.status === 'ativo' ? 'selected' : ''}>Ativo</option>
+                                <option value="afastado" ${dadosMembro.status === 'afastado' ? 'selected' : ''}>Afastado</option>
+                                <option value="em_discernimento" ${dadosMembro.status === 'em_discernimento' ? 'selected' : ''}>Em Discernimento</option>
+                                <option value="bloqueado" ${dadosMembro.status === 'bloqueado' ? 'selected' : ''}>Bloqueado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="comunidade_ou_capelania" class="form-label"><i class="fas fa-building"></i> Comunidade/Capelania</label>
+                            <input type="text" class="form-control" id="comunidade_ou_capelania" name="comunidade_ou_capelania" 
+                                   value="${dadosMembro.comunidade_ou_capelania || ''}" placeholder="Nome da comunidade">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="data_entrada" class="form-label"><i class="fas fa-calendar-plus"></i> Data de Entrada</label>
+                            <input type="date" class="form-control" id="data_entrada" name="data_entrada" 
+                                   value="${dadosMembro.data_entrada || ''}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" id="paroquiano" name="paroquiano" ${dadosMembro.paroquiano ? 'checked' : ''}>
+                                <label class="form-check-label" for="paroquiano"><i class="fas fa-home"></i> Paroquiano</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="observacoes_pastorais" class="form-label"><i class="fas fa-sticky-note"></i> Observações Pastorais</label>
+                    <textarea class="form-control" id="observacoes_pastorais" name="observacoes_pastorais" 
+                              rows="3" placeholder="Observações importantes sobre o membro...">${dadosMembro.observacoes_pastorais || ''}</textarea>
+                </div>
+            </div>
+            ` : ''}
+
             <!-- Endereço -->
             <div class="form-section">
                 <h6 class="section-title"><i class="fas fa-map-marker-alt"></i> Endereço</h6>
@@ -294,53 +351,40 @@ function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
                 </div>
             </div>
 
-            <!-- Situação Pastoral -->
+            <!-- Situação Paroquial (Apenas Visualização) -->
+            ${isVisualizacao ? `
             <div class="form-section">
-                <h6 class="section-title"><i class="fas fa-church"></i> Situação Pastoral</h6>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="status" class="form-label"><i class="fas fa-check-circle"></i> Status</label>
-                            <select class="form-control" id="status" name="status" ${isVisualizacao ? 'disabled' : ''}>
-                                <option value="ativo" ${dadosMembro.status === 'ativo' ? 'selected' : ''}>Ativo</option>
-                                <option value="afastado" ${dadosMembro.status === 'afastado' ? 'selected' : ''}>Afastado</option>
-                                <option value="em_discernimento" ${dadosMembro.status === 'em_discernimento' ? 'selected' : ''}>Em Discernimento</option>
-                                <option value="bloqueado" ${dadosMembro.status === 'bloqueado' ? 'selected' : ''}>Bloqueado</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="comunidade_ou_capelania" class="form-label"><i class="fas fa-building"></i> Comunidade/Capelania</label>
-                            <input type="text" class="form-control" id="comunidade_ou_capelania" name="comunidade_ou_capelania" 
-                                   value="${dadosMembro.comunidade_ou_capelania || ''}" placeholder="Nome da comunidade">
-                        </div>
-                    </div>
+                <div class="section-header">
+                    <h6 class="section-title"><i class="fas fa-church"></i> Pastorais</h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleSecaoPastoral()">
+                        <i class="fas fa-chevron-down" id="icone-secao-pastoral"></i> Ver Pastorais
+                    </button>
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="data_entrada" class="form-label"><i class="fas fa-calendar-plus"></i> Data de Entrada</label>
-                            <input type="date" class="form-control" id="data_entrada" name="data_entrada" 
-                                   value="${dadosMembro.data_entrada || ''}">
-                        </div>
+                
+                <!-- Seção expandível com tabela de pastorais -->
+                <div id="detalhes-situacao-pastoral" class="collapse">
+                    <div id="tabela-pastorais-membro" class="table-responsive">
+                        <table class="table table-sm table-hover" style="width: 100% !important;">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Status</th>
+                                    <th>Data Entrada</th>
+                                    <th>Função</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="4" class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> Carregando pastorais...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <div class="form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="paroquiano" name="paroquiano" 
-                                       ${dadosMembro.paroquiano ? 'checked' : ''} ${isVisualizacao ? 'disabled' : ''}>
-                                <label class="form-check-label" for="paroquiano"><i class="fas fa-home"></i> Paroquiano</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="observacoes_pastorais" class="form-label"><i class="fas fa-sticky-note"></i> Observações Pastorais</label>
-                    <textarea class="form-control" id="observacoes_pastorais" name="observacoes_pastorais" 
-                              rows="3" placeholder="Observações importantes sobre o membro...">${dadosMembro.observacoes_pastorais || ''}</textarea>
                 </div>
             </div>
+            ` : ''}
         </form>
     `;
 }
@@ -602,3 +646,136 @@ document.addEventListener('click', function(e) {
         fecharModal();
     }
 });
+
+// =====================================================
+// FUNÇÕES PARA SITUAÇÃO PAROQUIAL
+// =====================================================
+
+/**
+ * Alterna a exibição da seção de situação paroquial
+ */
+function toggleSecaoPastoral() {
+    const detalhes = document.getElementById('detalhes-situacao-pastoral');
+    const icone = document.getElementById('icone-secao-pastoral');
+    
+    if (detalhes.classList.contains('show')) {
+        detalhes.classList.remove('show');
+        icone.classList.remove('fa-chevron-up');
+        icone.classList.add('fa-chevron-down');
+    } else {
+        detalhes.classList.add('show');
+        icone.classList.remove('fa-chevron-down');
+        icone.classList.add('fa-chevron-up');
+        
+        // Carregar pastorais do membro se ainda não foram carregadas
+        if (!detalhes.dataset.pastoraisCarregadas) {
+            carregarPastoraisMembro();
+        }
+    }
+}
+
+/**
+ * Carrega as pastorais de um membro específico
+ */
+async function carregarPastoraisMembro() {
+    const detalhes = document.getElementById('detalhes-situacao-pastoral');
+    if (!detalhes) return;
+    
+    // Obter ID do membro do modal
+    const modalAtual = document.querySelector('.modal.show');
+    if (!modalAtual) return;
+    
+    const membroId = modalAtual.dataset.membroId;
+    if (!membroId) return;
+    
+    try {
+        const response = await fetch(`api/membros/${membroId}/pastorais`);
+        const result = await response.json();
+        
+        let pastorais = [];
+        if (result.success && result.data) {
+            pastorais = Array.isArray(result.data) ? result.data : [];
+        }
+        
+        console.log('Pastorais do membro:', pastorais);
+        atualizarTabelaPastorais(pastorais);
+        detalhes.dataset.pastoraisCarregadas = 'true';
+    } catch (error) {
+        console.error('Erro ao carregar pastorais:', error);
+        atualizarTabelaPastorais([]);
+    }
+}
+
+/**
+ * Atualiza a tabela de pastorais
+ */
+function atualizarTabelaPastorais(pastorais) {
+    const tbody = document.querySelector('#tabela-pastorais-membro tbody');
+    if (!tbody) return;
+    
+    if (pastorais.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-muted">
+                    <i class="fas fa-info-circle"></i> Nenhuma pastoral vinculada
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = pastorais.map(p => `
+        <tr>
+            <td>${p.nome || '-'}</td>
+            <td>
+                <span class="badge badge-${p.status_vinculo === 'ativo' ? 'success' : 'secondary'}">
+                    ${p.status_vinculo === 'ativo' ? 'Ativo' : 'Inativo'}
+                </span>
+            </td>
+            <td>${p.data_inicio ? formatarData(p.data_inicio) : '-'}</td>
+            <td>${p.funcao || 'Membro'}</td>
+        </tr>
+    `).join('');
+}
+
+/**
+ * Formata data para exibição
+ */
+function formatarData(data) {
+    if (!data) return '-';
+    try {
+        const date = new Date(data);
+        return date.toLocaleDateString('pt-BR');
+    } catch (e) {
+        return data;
+    }
+}
+
+/**
+ * Retorna a classe do badge de status
+ */
+function getStatusBadgeClass(status) {
+    const classes = {
+        'ativo': 'success',
+        'afastado': 'warning',
+        'em_discernimento': 'info',
+        'bloqueado': 'danger'
+    };
+    return classes[status] || 'secondary';
+}
+
+/**
+ * Retorna o texto do status
+ */
+function getStatusText(status) {
+    const texts = {
+        'ativo': 'Ativo',
+        'afastado': 'Afastado',
+        'em_discernimento': 'Em Discernimento',
+        'bloqueado': 'Bloqueado'
+    };
+    return texts[status] || status;
+}
+
+// Exportar funções para o escopo global
+window.toggleSecaoPastoral = toggleSecaoPastoral;

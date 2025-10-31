@@ -1,10 +1,14 @@
 <?php
 /**
  * Configuração do banco de dados para o módulo Membros
- * Utiliza a conexão centralizada do sistema principal
+ * Utiliza conexão isolada específica para este módulo
+ * 
+ * AMBIENTE: LOCAL ou REMOTO
+ * Para alternar entre ambientes, edite: config/config.php
  */
 
-require_once 'C:/xampp/htdocs/PROJETOS/GerencialParoq/config/database_connection.php';
+// Carregar conexão específica do módulo
+require_once __DIR__ . '/database_connection.php';
 
 /**
  * Classe específica para operações do módulo Membros
@@ -13,7 +17,7 @@ class MembrosDatabase {
     private $db;
     
     public function __construct() {
-        $this->db = getDatabase();
+        $this->db = getMembrosDatabase();
         $this->ensureConnection();
     }
     
@@ -25,7 +29,7 @@ class MembrosDatabase {
             $this->db->getConnection()->query('SELECT 1');
         } catch (Exception $e) {
             // Reconectar se necessário
-            $this->db = getDatabase();
+            $this->db = getMembrosDatabase();
         }
     }
     

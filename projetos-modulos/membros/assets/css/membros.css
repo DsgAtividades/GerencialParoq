@@ -470,6 +470,9 @@
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
 }
+td {
+    text-align: center;
+}
 
 .data-table tbody tr:hover {
     background-color: #f8f9fa;
@@ -1633,60 +1636,30 @@
 }
 
 /* Gerenciador de Coordenadores */
-.coordinators-manager {
+.coordinator-selector {
     margin-top: 1rem;
 }
 
-.coordinators-list-edit {
+.coordinator-selected {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.coordinator-item-edit {
+    justify-content: space-between;
+    align-items: center;
     background: #f8f9fa;
-    border: 1px solid var(--border-color);
+    border: 2px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
     transition: var(--transition);
 }
 
-.coordinator-item-edit:hover {
+.coordinator-selected:hover {
+    border-color: var(--primary-color);
     background: #e9ecef;
-    box-shadow: var(--shadow);
 }
 
-.coordinator-item-edit .coordinator-info {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.5rem;
-}
-
-.coordinator-item-edit .coordinator-info strong {
+.coordinator-selected .coordinator-name {
+    font-weight: 600;
     color: var(--dark-color);
-    font-size: 0.85rem;
-}
-
-.coordinator-item-edit .coordinator-info span {
-    color: #6c757d;
-    font-size: 0.85rem;
-}
-
-.coordinator-item-edit .coordinator-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.coordinator-item-edit .btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
+    flex: 1;
 }
 
 .pastoral-form .btn-outline-primary {
@@ -1800,3 +1773,153 @@
     gap: 1rem;
     justify-content: flex-end;
 }
+
+/* =====================================================
+   SEÇÃO SITUAÇÃO PAROQUIAL
+   ===================================================== */
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.section-header .section-title {
+    margin-bottom: 0;
+}
+
+.info-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.info-label i {
+    margin-right: 0.25rem;
+}
+
+.info-box span {
+    color: var(--dark-color);
+}
+
+.info-box .badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.collapse {
+    display: none;
+}
+
+.collapse.show {
+    display: block;
+}
+
+#tabela-pastorais-membro .table {
+    margin-bottom: 0;
+}
+
+#tabela-pastorais-membro .table thead th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--dark-color);
+}
+
+#tabela-pastorais-membro .table tbody td {
+    font-size: 0.85rem;
+vertical-align: middle;
+}
+
+/* =====================================================
+   AUTCOMPLETE
+   ===================================================== */
+.autocomplete-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.autocomplete-input {
+    width: 100%;
+}
+
+.autocomplete-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: -1px;
+}
+
+.autocomplete-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.autocomplete-item:hover {
+    background-color: #f8f9fa;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item strong {
+    color: #333;
+    font-weight: 500;
+}
+
+.autocomplete-item:hover strong {
+    color: var(--primary-color);
+}
+
+/* ===== Escalas - Semana (estilo similar ao calendário de eventos) ===== */
+.esc-week-table { width: 100%; border-collapse: collapse; table-layout: fixed; background: #fff; border-radius: 8px; overflow: hidden; }
+.esc-week-table thead th { background: #f8f9fa; color: #666; font-weight: 600; text-align: center; padding: 10px; border-bottom: 2px solid #e9ecef; }
+.esc-week-table tbody td.esc-td { vertical-align: top; border: 1px solid #e9ecef; height: 140px; padding: 8px; }
+.esc-day-number { font-weight: 700; color: var(--primary-color); margin-bottom: 6px; }
+.esc-day-events { display: flex; flex-direction: column; gap: 6px; }
+.esc-empty { color: #c0c4cc; font-size: .85rem; }
+.esc-chip {
+    background: #f1f5ff;
+    border: 1px solid #dbe5ff;
+    color: #274690;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* Container da semana: ocupar largura total e permitir scroll horizontal em telas estreitas */
+#aba-escalas .calendar-week { width: 100%; overflow-x: auto; }
+
+.esc-flex { display:flex; gap:16px; }
+.esc-col { flex:1; background:#fff; border:1px solid #e9ecef; border-radius:6px; padding:12px; }
+.col-title { font-weight:600; margin-bottom:8px; }
+.membros-lista { max-height:420px; overflow:auto; display:flex; flex-direction:column; gap:6px; }
+.membro-item { background:#f8f9fa; border:1px solid #e9ecef; border-radius:4px; padding:6px; cursor:grab; }
+.funcao-bloco { border:1px dashed #d0d7ff; border-radius:6px; padding:8px; margin-bottom:10px; }
+.funcao-titulo { font-weight:600; margin-bottom:6px; }
+.drop-area { min-height:42px; background:#fbfcff; border:1px solid #eef2ff; border-radius:4px; padding:6px; display:flex; flex-wrap:wrap; gap:6px; }
+.tag-membro { background:#eef5ff; border:1px solid #cfe0ff; border-radius:16px; padding:2px 8px; display:inline-flex; align-items:center; gap:6px; }
+.tag-membro i { cursor:pointer; font-style:normal; color:#c00; margin-left:4px; }

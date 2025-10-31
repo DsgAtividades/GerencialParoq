@@ -17,11 +17,14 @@ try {
             p.comunidade_capelania,
             p.dia_semana,
             p.horario,
+            p.local_reuniao,
+            p.coordenador_id,
+            p.vice_coordenador_id,
             p.created_at,
             COUNT(mp.membro_id) as total_membros
         FROM membros_pastorais p
         LEFT JOIN membros_membros_pastorais mp ON p.id = mp.pastoral_id
-        GROUP BY p.id
+        GROUP BY p.id, p.nome, p.tipo, p.comunidade_capelania, p.dia_semana, p.horario, p.local_reuniao, p.coordenador_id, p.vice_coordenador_id, p.created_at
         ORDER BY p.nome
     ";
     
@@ -29,8 +32,40 @@ try {
     $stmt->execute();
     $pastorais = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // Buscar nomes dos coordenadores de uma vez para melhor performance
+    $coordenadoresIds = array_values(array_filter(array_unique(array_map('trim', array_merge(
+        array_column($pastorais, 'coordenador_id'),
+        array_column($pastorais, 'vice_coordenador_id')
+    )))));
+    $coordenadoresMap = [];
+    if (!empty($coordenadoresIds)) {
+        error_log("pastorais_listar.php: Buscando coordenadores para IDs: " . implode(', ', $coordenadoresIds));
+        $placeholders = implode(',', array_fill(0, count($coordenadoresIds), '?'));
+        $coordQuery = "SELECT id, nome_completo, apelido FROM membros_membros WHERE id IN ($placeholders)";
+        $coordStmt = $db->prepare($coordQuery);
+        $coordStmt->execute($coordenadoresIds);
+        $coordenadores = $coordStmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($coordenadores as $coord) {
+            $coordId = trim($coord['id']);
+            $coordenadoresMap[$coordId] = $coord['nome_completo'] ?: $coord['apelido'];
+            error_log("pastorais_listar.php: Mapeando coordenador ID '$coordId' -> '{$coordenadoresMap[$coordId]}'");
+        }
+    }
+    
     // Formatar dados para incluir informações adicionais
-    $pastoraisFormatadas = array_map(function($pastoral) {
+    $pastoraisFormatadas = array_map(function($pastoral) use ($coordenadoresMap) {
+        $coordenadorNome = null;
+        $coordenadorId = trim($pastoral['coordenador_id'] ?? '');
+        
+        if (!empty($coordenadorId)) {
+            if (isset($coordenadoresMap[$coordenadorId])) {
+                $coordenadorNome = $coordenadoresMap[$coordenadorId];
+            } else {
+                error_log("pastorais_listar.php: Coordenador ID '$coordenadorId' não encontrado no mapa para pastoral '{$pastoral['nome']}'");
+                error_log("pastorais_listar.php: Chaves disponíveis no mapa: " . implode(', ', array_keys($coordenadoresMap)));
+            }
+        }
+        
         return [
             'id' => $pastoral['id'],
             'nome' => $pastoral['nome'],
@@ -40,9 +75,18 @@ try {
             'total_coordenadores' => 0, // Será calculado separadamente se necessário
             'dia_semana' => $pastoral['dia_semana'],
             'horario' => $pastoral['horario'],
+            'local_reuniao' => $pastoral['local_reuniao'],
+            'coordenador_nome' => $coordenadorNome,
             'created_at' => $pastoral['created_at']
         ];
     }, $pastorais);
+    
+    error_log("pastorais_listar.php: Retornando " . count($pastoraisFormatadas) . " pastorais formatadas");
+    foreach ($pastoraisFormatadas as $p) {
+        if ($p['coordenador_nome']) {
+            error_log("pastorais_listar.php: Pastoral '{$p['nome']}' tem coordenador: {$p['coordenador_nome']}");
+        }
+    }
     
     Response::success($pastoraisFormatadas);
     

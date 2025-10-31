@@ -47,16 +47,20 @@ try {
     $campos = [];
     $valores = [];
     
-    // Campos permitidos para atualização
+    // Campos permitidos para atualização (usando nomes corretos das colunas)
     $camposPermitidos = [
         'nome',
         'tipo',
-        'comunidade',
+        'comunidade_capelania',
         'finalidade_descricao',
-        'contato_whatsapp',
-        'contato_email',
-        'responsavel',
-        'ativo'
+        'whatsapp_grupo_link',
+        'email_grupo',
+        'dia_semana',
+        'horario',
+        'local_reuniao',
+        'ativo',
+        'coordenador_id',
+        'vice_coordenador_id'
     ];
     
     foreach ($camposPermitidos as $campo) {
@@ -92,6 +96,28 @@ try {
     $buscarStmt = $db->prepare($buscarQuery);
     $buscarStmt->execute([$pastoral_id]);
     $pastoral = $buscarStmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Buscar nome do coordenador se houver
+    if ($pastoral['coordenador_id']) {
+        $coordQuery = "SELECT nome_completo, apelido FROM membros_membros WHERE id = ?";
+        $coordStmt = $db->prepare($coordQuery);
+        $coordStmt->execute([$pastoral['coordenador_id']]);
+        $coordenador = $coordStmt->fetch(PDO::FETCH_ASSOC);
+        if ($coordenador) {
+            $pastoral['coordenador_nome'] = $coordenador['nome_completo'] ?: $coordenador['apelido'];
+        }
+    }
+    
+    // Buscar nome do vice-coordenador se houver
+    if ($pastoral['vice_coordenador_id']) {
+        $viceCoordQuery = "SELECT nome_completo, apelido FROM membros_membros WHERE id = ?";
+        $viceCoordStmt = $db->prepare($viceCoordQuery);
+        $viceCoordStmt->execute([$pastoral['vice_coordenador_id']]);
+        $vice_coordenador = $viceCoordStmt->fetch(PDO::FETCH_ASSOC);
+        if ($vice_coordenador) {
+            $pastoral['vice_coordenador_nome'] = $vice_coordenador['nome_completo'] ?: $vice_coordenador['apelido'];
+        }
+    }
     
     Response::success($pastoral, 'Pastoral atualizada com sucesso');
     

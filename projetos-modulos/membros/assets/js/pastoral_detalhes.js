@@ -8,7 +8,6 @@ let PastoralState = {
     pastoral: null,
     membros: [],
     eventos: [],
-    coordenadores: [],
     // Cache local
     cache: new Map(),
     cacheValidoPor: 5 * 60 * 1000 // 5 minutos
@@ -51,17 +50,15 @@ async function carregarDadosPastoral(pastoralId) {
         }
         
         // Carregar todos os dados em paralelo para melhor performance
-        const [pastoralResponse, membrosResponse, eventosResponse, coordenadoresResponse] = await Promise.all([
+        const [pastoralResponse, membrosResponse, eventosResponse] = await Promise.all([
             fetch(`api/pastorais/${pastoralId}`),
             fetch(`api/pastorais/${pastoralId}/membros`),
-            fetch(`api/pastorais/${pastoralId}/eventos`),
-            fetch(`api/pastorais/${pastoralId}/coordenadores`)
+            fetch(`api/pastorais/${pastoralId}/eventos`)
         ]);
         
         const pastoralJson = await pastoralResponse.json();
         const membrosJson = await membrosResponse.json();
         const eventosJson = await eventosResponse.json();
-        const coordenadoresJson = await coordenadoresResponse.json();
         
         if (!pastoralJson.success) {
             mostrarNotificacao('Erro ao carregar dados da pastoral', 'error');
@@ -72,14 +69,12 @@ async function carregarDadosPastoral(pastoralId) {
         PastoralState.pastoral = pastoralJson.data;
         PastoralState.membros = membrosJson.success ? (membrosJson.data || []) : [];
         PastoralState.eventos = eventosJson.success ? (eventosJson.data || []) : [];
-        PastoralState.coordenadores = coordenadoresJson.success ? (coordenadoresJson.data || []) : [];
         
         // Salvar no cache
         const dadosParaCache = {
             pastoral: PastoralState.pastoral,
             membros: PastoralState.membros,
-            eventos: PastoralState.eventos,
-            coordenadores: PastoralState.coordenadores
+            eventos: PastoralState.eventos
         };
         salvarNoCache('pastoral-' + pastoralId, dadosParaCache);
         
@@ -99,7 +94,6 @@ function aplicarDadosCached(dados) {
     PastoralState.pastoral = dados.pastoral;
     PastoralState.membros = dados.membros;
     PastoralState.eventos = dados.eventos;
-    PastoralState.coordenadores = dados.coordenadores;
     atualizarInterface();
 }
 
@@ -109,7 +103,7 @@ function aplicarDadosCached(dados) {
 function atualizarInterface() {
     // Preencher informações básicas
     document.getElementById('pastoral-nome').textContent = PastoralState.pastoral?.nome || 'Carregando...';
-    document.getElementById('pastoral-descricao').textContent = PastoralState.pastoral?.descricao || 'Sem descrição';
+    document.getElementById('pastoral-descricao').textContent = PastoralState.pastoral?.finalidade_descricao || 'Sem descrição';
     
     // Atualizar todas as seções
     atualizarMetricas();
@@ -154,29 +148,17 @@ async function carregarEventosPastoral(pastoralId) {
 }
 
 /**
- * Carrega coordenadores da pastoral
- */
-async function carregarCoordenadores(pastoralId) {
-    try {
-        const response = await fetch(`api/pastorais/${pastoralId}/coordenadores`);
-        const data = await response.json();
-        
-        if (data.success) {
-            PastoralState.coordenadores = data.data || [];
-            atualizarCoordenadores();
-        }
-    } catch (error) {
-        console.error('Erro ao carregar coordenadores:', error);
-    }
-}
-
-/**
  * Atualiza métricas da página
  */
 function atualizarMetricas() {
     const totalMembros = PastoralState.membros.length;
-    const membrosAtivos = PastoralState.membros.filter(m => m.status === 'ativo').length;
-    const totalCoordenadores = PastoralState.coordenadores.length;
+    const membrosAtivos = PastoralState.membros.filter(m => m.status_vinculo === 'ativo').length;
+    
+    // Contar coordenadores (coordenador + vice-coordenador)
+    let totalCoordenadores = 0;
+    if (PastoralState.pastoral?.coordenador_id) totalCoordenadores++;
+    if (PastoralState.pastoral?.vice_coordenador_id) totalCoordenadores++;
+    
     const totalEventos = PastoralState.eventos.length;
     
     document.getElementById('total-membros').textContent = totalMembros;
@@ -293,6 +275,8 @@ function atualizarTabelaMembros() {
 function atualizarTabelaEventos() {
     const tbody = document.getElementById('tabela-eventos');
     
+    if (!tbody) return;
+    
     if (PastoralState.eventos.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum evento encontrado</td></tr>';
         return;
@@ -301,17 +285,276 @@ function atualizarTabelaEventos() {
     tbody.innerHTML = PastoralState.eventos.map(evento => `
         <tr>
             <td>${formatarData(evento.data)}</td>
-            <td>${evento.nome}</td>
-            <td>${evento.horario || '-'}</td>
+            <td>${evento.nome || '-'}</td>
+            <td>${evento.tipo || '-'}</td>
+            <td>${evento.horario ? evento.horario.substring(0, 5) : '-'}</td>
             <td>${evento.local || '-'}</td>
-            <td>${evento.total_inscritos || 0}</td>
             <td>
                 <button class="btn btn-sm btn-primary" onclick="verDetalhesEvento('${evento.id}')" title="Ver Detalhes">
                     <i class="fas fa-eye"></i>
                 </button>
+                <button class="btn btn-sm btn-warning" onclick="editarEvento('${evento.id}')" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="excluirEvento('${evento.id}')" title="Excluir">
+                    <i class="fas fa-trash"></i>
+                </button>
             </td>
         </tr>
     `).join('');
+}
+
+// Variável global para evento em edição
+let eventoEditando = null;
+
+/**
+ * Abre modal para criar novo evento
+ */
+function abrirModalEvento(evento = null) {
+    eventoEditando = evento;
+    const isEdicao = evento !== null;
+    
+    const modalHTML = `
+        <div id="modal-evento" class="modal fade show" style="display: block;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar"></i> ${isEdicao ? 'Editar Evento' : 'Novo Evento'}
+                        </h5>
+                        <button type="button" class="close" onclick="fecharModalEvento()" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="form-evento">
+                            <div class="form-row">
+                                <div class="form-group col-md-8">
+                                    <label for="evento-nome">Nome do Evento *</label>
+                                    <input type="text" class="form-control" id="evento-nome" name="nome" required 
+                                           value="${evento ? (evento.nome || '') : ''}" 
+                                           placeholder="Ex: Reunião Mensal">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="evento-tipo">Tipo</label>
+                                    <input type="text" class="form-control" id="evento-tipo" name="tipo" 
+                                           value="${evento ? (evento.tipo || '') : ''}" 
+                                           placeholder="Ex: Reunião, Tarde de Recreação">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="evento-data">Data do Evento *</label>
+                                    <input type="date" class="form-control" id="evento-data" name="data_evento" required 
+                                           value="${evento ? (evento.data || '') : ''}">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="evento-horario">Horário</label>
+                                    <input type="time" class="form-control" id="evento-horario" name="horario" 
+                                           value="${evento && evento.horario ? evento.horario.substring(0, 5) : ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="evento-local">Local</label>
+                                    <input type="text" class="form-control" id="evento-local" name="local" 
+                                           value="${evento ? (evento.local || '') : ''}" 
+                                           placeholder="Ex: Sala de Reuniões">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="evento-responsavel">Responsável</label>
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text" class="form-control autocomplete-input" 
+                                               id="evento-responsavel" 
+                                               name="responsavel_nome" 
+                                               autocomplete="off"
+                                               value="${evento && evento.responsavel_nome ? (evento.responsavel_nome || '') : ''}" 
+                                               placeholder="Digite o nome do responsável..." 
+                                               onkeyup="buscarMembrosAutocomplete('evento-responsavel', event)"
+                                               onblur="fecharAutocomplete('evento-responsavel')"
+                                               onfocus="if(this.value) buscarMembrosAutocomplete('evento-responsavel', event)">
+                                        <input type="hidden" id="evento-responsavel-id" name="responsavel_id" 
+                                               value="${evento ? (evento.responsavel_id || '') : ''}">
+                                        <div class="autocomplete-dropdown" id="evento-responsavel-dropdown"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="evento-descricao">Descrição</label>
+                                    <textarea class="form-control" id="evento-descricao" name="descricao" rows="3" 
+                                              placeholder="Descrição do evento...">${evento ? (evento.descricao || '') : ''}</textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalEvento()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="salvarEvento()">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show" onclick="fecharModalEvento()"></div>
+    `;
+    
+    // Remover modal anterior se existir
+    const modalAnterior = document.getElementById('modal-evento');
+    if (modalAnterior) {
+        modalAnterior.remove();
+        document.querySelector('.modal-backdrop')?.remove();
+    }
+    
+    // Adicionar modal
+    const container = document.getElementById('modal-container');
+    if (container) {
+        container.innerHTML = modalHTML;
+    } else {
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    // Focar no primeiro campo
+    setTimeout(() => {
+        document.getElementById('evento-nome').focus();
+    }, 100);
+}
+
+/**
+ * Fecha modal de evento
+ */
+function fecharModalEvento() {
+    const modal = document.getElementById('modal-evento');
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (modal) modal.remove();
+    if (backdrop) backdrop.remove();
+    eventoEditando = null;
+}
+
+/**
+ * Salva evento (criar ou atualizar)
+ */
+async function salvarEvento() {
+    const form = document.getElementById('form-evento');
+    if (!form || !form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const formData = new FormData(form);
+    // Pegar o ID do campo hidden
+    const responsavelId = document.getElementById('evento-responsavel-id')?.value || null;
+    const dados = {
+        nome: formData.get('nome'),
+        tipo: formData.get('tipo') || null,
+        data_evento: formData.get('data_evento'),
+        horario: formData.get('horario') || null,
+        local: formData.get('local') || null,
+        responsavel_id: responsavelId,
+        descricao: formData.get('descricao') || null
+    };
+    
+    const pastoralId = PastoralState.pastoral?.id;
+    if (!pastoralId) {
+        mostrarNotificacao('Erro: Pastoral não identificada', 'error');
+        return;
+    }
+    
+    try {
+        const url = eventoEditando 
+            ? `api/pastorais/${pastoralId}/eventos/${eventoEditando.id}`
+            : `api/pastorais/${pastoralId}/eventos`;
+        
+        const method = eventoEditando ? 'PUT' : 'POST';
+        
+        const btnSalvar = document.querySelector('#modal-evento .btn-primary');
+        const textoOriginal = btnSalvar.innerHTML;
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dados)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarNotificacao(eventoEditando ? 'Evento atualizado com sucesso!' : 'Evento criado com sucesso!', 'success');
+            fecharModalEvento();
+            
+            // Recarregar eventos
+            await carregarEventosPastoral(pastoralId);
+        } else {
+            mostrarNotificacao(result.error || 'Erro ao salvar evento', 'error');
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = textoOriginal;
+        }
+    } catch (error) {
+        console.error('Erro ao salvar evento:', error);
+        mostrarNotificacao('Erro ao salvar evento: ' + error.message, 'error');
+        
+        const btnSalvar = document.querySelector('#modal-evento .btn-primary');
+        if (btnSalvar) {
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = '<i class="fas fa-save"></i> Salvar';
+        }
+    }
+}
+
+/**
+ * Edita um evento
+ */
+function editarEvento(eventoId) {
+    const evento = PastoralState.eventos.find(e => e.id === eventoId);
+    if (!evento) {
+        mostrarNotificacao('Evento não encontrado', 'error');
+        return;
+    }
+    
+    abrirModalEvento(evento);
+}
+
+/**
+ * Exclui um evento
+ */
+async function excluirEvento(eventoId) {
+    if (!confirm('Tem certeza que deseja excluir este evento?')) {
+        return;
+    }
+    
+    const pastoralId = PastoralState.pastoral?.id;
+    if (!pastoralId) {
+        mostrarNotificacao('Erro: Pastoral não identificada', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`api/pastorais/${pastoralId}/eventos/${eventoId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarNotificacao('Evento excluído com sucesso!', 'success');
+            await carregarEventosPastoral(pastoralId);
+        } else {
+            mostrarNotificacao(result.error || 'Erro ao excluir evento', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao excluir evento:', error);
+        mostrarNotificacao('Erro ao excluir evento: ' + error.message, 'error');
+    }
 }
 
 /**
@@ -321,24 +564,43 @@ function atualizarCoordenadores() {
     const container = document.getElementById('coordenadores');
     if (!container) return;
     
-    if (PastoralState.coordenadores.length === 0) {
+    const pastoral = PastoralState.pastoral;
+    if (!pastoral || (!pastoral.coordenador_nome && !pastoral.vice_coordenador_nome)) {
         container.innerHTML = '<p class="text-muted">Nenhum coordenador cadastrado para esta pastoral.</p>';
         return;
     }
     
-    container.innerHTML = PastoralState.coordenadores.map(coord => {
-        const iniciais = (coord.nome_completo || coord.nome || '').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-        return `
-        <div class="coordinator-card">
+    let html = '';
+    
+    // Exibir Coordenador
+    if (pastoral.coordenador_nome) {
+        const inicial = pastoral.coordenador_nome.substring(0, 1).toUpperCase();
+        html += `
+        <div class="coordinator-card" style="margin-bottom: 1rem;">
             <div class="avatar">
-                ${iniciais}
+                ${inicial}
             </div>
-            <div class="name">${coord.nome_completo || coord.nome || 'Sem nome'}</div>
-            <div class="role">${coord.funcao || 'Coordenador'}</div>
-            ${coord.telefone ? `<div style="margin-top: 0.5rem;"><i class="fas fa-phone"></i> ${coord.telefone}</div>` : ''}
+            <div class="name">${pastoral.coordenador_nome}</div>
+            <div class="role">Coordenador</div>
         </div>
     `;
-    }).join('');
+    }
+    
+    // Exibir Vice-Coordenador
+    if (pastoral.vice_coordenador_nome) {
+        const inicial = pastoral.vice_coordenador_nome.substring(0, 1).toUpperCase();
+        html += `
+        <div class="coordinator-card" style="margin-bottom: 1rem;">
+            <div class="avatar">
+                ${inicial}
+            </div>
+            <div class="name">${pastoral.vice_coordenador_nome}</div>
+            <div class="role">Vice-Coordenador</div>
+        </div>
+    `;
+    }
+    
+    container.innerHTML = html;
 }
 
 /**
@@ -350,7 +612,14 @@ function mostrarAba(aba) {
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     
     // Adicionar active na aba clicada
-    event.target.classList.add('active');
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach((tab, index) => {
+        const tabContent = tab.getAttribute('onclick');
+        if (tabContent && tabContent.includes(`mostrarAba('${aba}')`)) {
+            tab.classList.add('active');
+        }
+    });
+    
     document.getElementById(`aba-${aba}`).classList.add('active');
     
     // Preencher formulário se for a aba de edição
@@ -372,11 +641,13 @@ function preencherFormularioEdicao() {
     
     document.getElementById('edit-nome').value = pastoral.nome || '';
     document.getElementById('edit-tipo').value = pastoral.tipo || '';
-    document.getElementById('edit-comunidade').value = pastoral.comunidade || '';
+    document.getElementById('edit-comunidade').value = pastoral.comunidade_capelania || '';
     document.getElementById('edit-finalidade').value = pastoral.finalidade_descricao || '';
-    document.getElementById('edit-contato_whatsapp').value = pastoral.contato_whatsapp || '';
-    document.getElementById('edit-contato_email').value = pastoral.contato_email || '';
-    document.getElementById('edit-responsavel').value = pastoral.responsavel || '';
+    document.getElementById('edit-whatsapp').value = pastoral.whatsapp_grupo_link || '';
+    document.getElementById('edit-email').value = pastoral.email_grupo || '';
+    document.getElementById('edit-dia-semana').value = pastoral.dia_semana || '';
+    document.getElementById('edit-horario').value = pastoral.horario || '';
+    document.getElementById('edit-local').value = pastoral.local_reuniao || '';
     document.getElementById('edit-ativo').value = pastoral.ativo !== undefined ? pastoral.ativo : '1';
 }
 
@@ -404,12 +675,12 @@ async function salvarPastoral() {
     });
     
     // Adicionar coordenadores ao payload
-    dados.coordenadores = PastoralState.coordenadores.map(coord => ({
-        id: coord.id,
-        nome: coord.nome_completo || coord.nome,
-        funcao: coord.funcao || 'Coordenador',
-        prioridade: coord.prioridade || 10
-    }));
+    dados.coordenador_id = coordenadorSelecionado || null;
+    dados.vice_coordenador_id = viceCoordenadorSelecionado || null;
+    
+    console.log('IDs dos coordenadores selecionados:');
+    console.log('Coordenador ID:', coordenadorSelecionado);
+    console.log('Vice-Coordenador ID:', viceCoordenadorSelecionado);
     
     try {
         console.log('Salvando dados:', dados);
@@ -450,68 +721,88 @@ function cancelarEdicao() {
 }
 
 // Estado para gerenciamento de coordenadores
-let coordenadoresParaAdicionar = [];
 let membroSelecionadoParaCoordenador = null;
+let coordenadorSelecionado = null;
+let viceCoordenadorSelecionado = null;
 
 /**
- * Preenche a lista de coordenadores na aba de edição
+ * Preenche os coordenadores na aba de edição
  */
 function preencherListaCoordenadoresEdicao() {
-    const container = document.getElementById('coordenadores-lista');
-    if (!container) return;
+    console.log('=== preencherListaCoordenadoresEdicao ===');
+    console.log('Pastoral atual:', PastoralState.pastoral);
     
-    container.innerHTML = '';
-    
-    PastoralState.coordenadores.forEach((coord, index) => {
-        const item = document.createElement('div');
-        item.className = 'coordinator-item-edit';
-        item.innerHTML = `
-            <div class="coordinator-info">
-                <div>
-                    <strong>Nome:</strong>
-                    <span>${coord.nome_completo || coord.nome || 'Sem nome'}</span>
-                </div>
-                <div>
-                    <strong>Função:</strong>
-                    <span>${coord.funcao || 'Coordenador'}</span>
-                </div>
-                <div>
-                    <strong>Telefone:</strong>
-                    <span>${coord.telefone || '-'}</span>
-                </div>
-            </div>
-            <div class="coordinator-actions">
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removerCoordenadorEdicao(${index})">
-                    <i class="fas fa-trash"></i> Remover
-                </button>
-            </div>
+    if (PastoralState.pastoral && PastoralState.pastoral.coordenador_id) {
+        console.log('Coordenador atual:', PastoralState.pastoral.coordenador_id, '- Nome:', PastoralState.pastoral.coordenador_nome);
+        document.getElementById('coordenador-atual').innerHTML = `
+            <span class="coordinator-name">${PastoralState.pastoral.coordenador_nome || 'Nenhum selecionado'}</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarCoordenador('coordenador')">
+                <i class="fas fa-user-edit"></i> Alterar
+            </button>
         `;
-        container.appendChild(item);
-    });
+        coordenadorSelecionado = PastoralState.pastoral.coordenador_id;
+        console.log('coordenadorSelecionado definido para:', coordenadorSelecionado);
+    } else {
+        console.log('Nenhum coordenador cadastrado');
+        // Manter HTML padrão se não houver coordenador
+        document.getElementById('coordenador-atual').innerHTML = `
+            <span class="coordinator-name">Nenhum selecionado</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarCoordenador('coordenador')">
+                <i class="fas fa-user-edit"></i> Selecionar
+            </button>
+        `;
+        coordenadorSelecionado = null;
+    }
+    
+    if (PastoralState.pastoral && PastoralState.pastoral.vice_coordenador_id) {
+        console.log('Vice-Coordenador atual:', PastoralState.pastoral.vice_coordenador_id, '- Nome:', PastoralState.pastoral.vice_coordenador_nome);
+        document.getElementById('vice-coordenador-atual').innerHTML = `
+            <span class="coordinator-name">${PastoralState.pastoral.vice_coordenador_nome || 'Nenhum selecionado'}</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarCoordenador('vice_coordenador')">
+                <i class="fas fa-user-edit"></i> Alterar
+            </button>
+        `;
+        viceCoordenadorSelecionado = PastoralState.pastoral.vice_coordenador_id;
+        console.log('viceCoordenadorSelecionado definido para:', viceCoordenadorSelecionado);
+    } else {
+        console.log('Nenhum vice-coordenador cadastrado');
+        // Manter HTML padrão se não houver vice-coordenador
+        document.getElementById('vice-coordenador-atual').innerHTML = `
+            <span class="coordinator-name">Nenhum selecionado</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarCoordenador('vice_coordenador')">
+                <i class="fas fa-user-edit"></i> Selecionar
+            </button>
+        `;
+        viceCoordenadorSelecionado = null;
+    }
 }
 
 /**
- * Abre modal para adicionar coordenador
+ * Abre modal para selecionar coordenador
  */
-async function adicionarCoordenador() {
+async function selecionarCoordenador(tipo) {
     membroSelecionadoParaCoordenador = null;
+    document.getElementById('tipo-coordenador-selecionando').value = tipo;
+    
+    // Atualizar título do modal
+    const titulo = tipo === 'coordenador' ? 'Selecionar Coordenador' : 'Selecionar Vice-Coordenador';
+    document.getElementById('modal-titulo').textContent = titulo;
     
     try {
-        // Buscar membros ativos
-        const response = await fetch('api/membros?limit=1000&status=ativo');
-        const result = await response.json();
+        // Verificar se a pastoral tem membros
+        if (!PastoralState.membros || PastoralState.membros.length === 0) {
+            mostrarNotificacao('Esta pastoral ainda não tem membros vinculados', 'warning');
+            return;
+        }
         
-        console.log('Resposta da API de membros:', result);
+        // Usar apenas os membros que já fazem parte da pastoral
+        const membros = PastoralState.membros.filter(m => m.status_vinculo === 'ativo');
         
-        // A API retorna { success: true, data: { data: [...], pagination: {...} } }
-        const membros = result.data?.data || result.data || [];
-        
-        if (Array.isArray(membros) && membros.length > 0) {
+        if (membros.length > 0) {
             preencherModalMembros(membros);
             document.getElementById('modal-selecionar-membro').classList.add('active');
         } else {
-            console.warn('Nenhum membro encontrado. Dados:', membros);
-            mostrarNotificacao('Nenhum membro disponível', 'warning');
+            mostrarNotificacao('Nenhum membro ativo disponível', 'warning');
         }
     } catch (error) {
         console.error('Erro ao buscar membros:', error);
@@ -526,78 +817,101 @@ function preencherModalMembros(membros) {
     const container = document.getElementById('lista-membros-selector');
     container.innerHTML = '';
     
-    membros.forEach(membro => {
+    membros.forEach((membro, index) => {
         const item = document.createElement('div');
         item.className = 'member-item-select';
-        item.onclick = () => selecionarMembro(membro);
+        item.dataset.membroIndex = index;
+        item.onclick = () => selecionarMembro(index, membro);
         item.innerHTML = `
             <strong>${membro.nome_completo || membro.apelido || 'Sem nome'}</strong>
             ${membro.email ? `<br><small>${membro.email}</small>` : ''}
         `;
         container.appendChild(item);
     });
+    
+    // Armazenar lista de membros globalmente
+    window.membrosDisponiveis = membros;
 }
 
 /**
  * Seleciona um membro
  */
-function selecionarMembro(membro) {
+function selecionarMembro(index, membro) {
+    console.log('Membro selecionado:', membro);
+    
     // Remover seleção anterior
     document.querySelectorAll('.member-item-select').forEach(item => {
         item.classList.remove('selected');
     });
     
     // Adicionar seleção atual
-    event.target.closest('.member-item-select').classList.add('selected');
+    const clickedItem = document.querySelector(`[data-membro-index="${index}"]`);
+    if (clickedItem) {
+        clickedItem.classList.add('selected');
+    }
+    
     membroSelecionadoParaCoordenador = membro;
+    console.log('membroSelecionadoParaCoordenador atualizado:', membroSelecionadoParaCoordenador);
 }
 
 /**
- * Adiciona o coordenador selecionado à lista
+ * Adiciona o coordenador selecionado
  */
 function adicionarCoordenadorSelecionado() {
+    console.log('=== adicionarCoordenadorSelecionado ===');
+    console.log('membroSelecionadoParaCoordenador:', membroSelecionadoParaCoordenador);
+    
     if (!membroSelecionadoParaCoordenador) {
         mostrarNotificacao('Selecione um membro', 'warning');
         return;
     }
     
-    // Verificar se já não está na lista
-    const jaExiste = PastoralState.coordenadores.some(c => 
-        c.id === membroSelecionadoParaCoordenador.id
-    );
+    const tipo = document.getElementById('tipo-coordenador-selecionando').value;
+    console.log('Tipo de coordenador:', tipo);
     
-    if (jaExiste) {
-        mostrarNotificacao('Este membro já é coordenador', 'warning');
-        return;
+    // Verificar qual ID usar - a API de membros da pastoral retorna 'id' (membro_id)
+    const membroId = membroSelecionadoParaCoordenador.id;
+    console.log('ID do membro selecionado:', membroId);
+    console.log('Objeto completo do membro:', JSON.stringify(membroSelecionadoParaCoordenador));
+    
+    if (tipo === 'coordenador') {
+        // Verificar se não é o vice-coordenador
+        if (viceCoordenadorSelecionado === membroId) {
+            mostrarNotificacao('Este membro já é vice-coordenador', 'warning');
+            return;
+        }
+        
+        coordenadorSelecionado = membroId;
+        console.log('Coordenador ID definido:', coordenadorSelecionado);
+        
+        // Atualizar interface
+        document.getElementById('coordenador-atual').innerHTML = `
+            <span class="coordinator-name">${membroSelecionadoParaCoordenador.nome_completo || membroSelecionadoParaCoordenador.apelido}</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarCoordenador('coordenador')">
+                <i class="fas fa-user-edit"></i> Alterar
+            </button>
+        `;
+    } else if (tipo === 'vice_coordenador') {
+        // Verificar se não é o coordenador
+        if (coordenadorSelecionado === membroId) {
+            mostrarNotificacao('Este membro já é coordenador', 'warning');
+            return;
+        }
+        
+        viceCoordenadorSelecionado = membroId;
+        console.log('Vice-Coordenador ID definido:', viceCoordenadorSelecionado);
+        
+        // Atualizar interface
+        document.getElementById('vice-coordenador-atual').innerHTML = `
+            <span class="coordinator-name">${membroSelecionadoParaCoordenador.nome_completo || membroSelecionadoParaCoordenador.apelido}</span>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selecionarCoordenador('vice_coordenador')">
+                <i class="fas fa-user-edit"></i> Alterar
+            </button>
+        `;
     }
-    
-    // Adicionar à lista de coordenadores
-    PastoralState.coordenadores.push({
-        id: membroSelecionadoParaCoordenador.id,
-        nome_completo: membroSelecionadoParaCoordenador.nome_completo,
-        nome: membroSelecionadoParaCoordenador.nome_completo,
-        email: membroSelecionadoParaCoordenador.email,
-        telefone: membroSelecionadoParaCoordenador.celular_whatsapp || membroSelecionadoParaCoordenador.telefone_fixo,
-        funcao: 'Coordenador',
-        prioridade: 10,
-        data_inicio: new Date().toISOString().split('T')[0]
-    });
-    
-    // Atualizar a lista visual
-    preencherListaCoordenadoresEdicao();
     
     // Fechar modal
     fecharModalMembro();
-}
-
-/**
- * Remove coordenador da lista de edição
- */
-function removerCoordenadorEdicao(index) {
-    if (confirm('Deseja remover este coordenador?')) {
-        PastoralState.coordenadores.splice(index, 1);
-        preencherListaCoordenadoresEdicao();
-    }
 }
 
 /**
@@ -658,16 +972,129 @@ function getStatusText(status) {
 
 function formatarData(data) {
     if (!data) return '-';
-    return new Date(data).toLocaleDateString('pt-BR');
+    
+    // Se a data já está em formato de string YYYY-MM-DD, converter corretamente
+    if (typeof data === 'string' && data.match(/^\d{4}-\d{2}-\d{2}/)) {
+        const [ano, mes, dia] = data.split('-').map(Number);
+        // Criar data no timezone local (mês é 0-indexed no JS)
+        const dataObj = new Date(ano, mes - 1, dia);
+        return dataObj.toLocaleDateString('pt-BR');
+    }
+    
+    // Para outros formatos, usar Date normal
+    const dataObj = new Date(data);
+    // Garantir que não está em UTC
+    if (!isNaN(dataObj.getTime())) {
+        return dataObj.toLocaleDateString('pt-BR');
+    }
+    
+    return data;
 }
 
 function mostrarNotificacao(mensagem, tipo = 'info') {
     console.log(`${tipo.toUpperCase()}: ${mensagem}`);
 }
 
+/**
+ * Visualiza detalhes de um evento em pop-up
+ */
 function verDetalhesEvento(eventoId) {
-    // TODO: Implementar visualização de detalhes do evento
-    console.log('Ver detalhes do evento:', eventoId);
+    const evento = PastoralState.eventos.find(e => e.id === eventoId);
+    if (!evento) {
+        mostrarNotificacao('Evento não encontrado', 'error');
+        return;
+    }
+    
+    const horarioFormatado = evento.horario ? evento.horario.substring(0, 5) : 'Não definido';
+    const tipoFormatado = evento.tipo || 'Não especificado';
+    const localFormatado = evento.local || 'Não definido';
+    const descricaoFormatada = evento.descricao || 'Sem descrição';
+    const responsavelFormatado = evento.responsavel_nome || evento.responsavel_id || 'Não definido';
+    const pastoralNome = PastoralState.pastoral?.nome || 'Pastoral desconhecida';
+    
+    const modalHTML = `
+        <div id="modal-detalhes-evento" class="modal fade show" style="display: block;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar-check"></i> Detalhes do Evento
+                        </h5>
+                        <button type="button" class="close" onclick="fecharModalDetalhesEvento()" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="evento-detalhes">
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-heading"></i> Nome:</div>
+                                <div class="detail-value">${evento.nome || '-'}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-tag"></i> Tipo:</div>
+                                <div class="detail-value">${tipoFormatado}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-calendar"></i> Data:</div>
+                                <div class="detail-value">${formatarData(evento.data)}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-clock"></i> Horário:</div>
+                                <div class="detail-value">${horarioFormatado}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-map-marker-alt"></i> Local:</div>
+                                <div class="detail-value">${localFormatado}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-church"></i> Pastoral:</div>
+                                <div class="detail-value">${pastoralNome}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-user"></i> Responsável:</div>
+                                <div class="detail-value">${responsavelFormatado}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-align-left"></i> Descrição:</div>
+                                <div class="detail-value" style="white-space: pre-wrap;">${descricaoFormatada}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalDetalhesEvento()">
+                            <i class="fas fa-times"></i> Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show" onclick="fecharModalDetalhesEvento()"></div>
+    `;
+    
+    // Remover modal anterior se existir
+    const modalAnterior = document.getElementById('modal-detalhes-evento');
+    if (modalAnterior) {
+        modalAnterior.remove();
+        document.querySelector('.modal-backdrop')?.remove();
+    }
+    
+    // Adicionar modal
+    const container = document.getElementById('modal-container');
+    if (container) {
+        container.innerHTML = modalHTML;
+    } else {
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+}
+
+/**
+ * Fecha modal de detalhes do evento
+ */
+function fecharModalDetalhesEvento() {
+    const modal = document.getElementById('modal-detalhes-evento');
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (modal) modal.remove();
+    if (backdrop) backdrop.remove();
 }
 
 // Exportar para o escopo global
@@ -680,5 +1107,282 @@ window.visualizarFoto = function(id) {
     // Abrir modal de visualização de foto
     console.log('Visualizar foto:', id);
 };
+
+// =====================================================
+// FUNÇÕES PARA ADICIONAR MEMBROS À PASTORAL
+// =====================================================
+
+let membroSelecionadoParaPastoral = null;
+
+/**
+ * Abre modal para adicionar membro à pastoral
+ */
+async function adicionarMembroPastoral() {
+    membroSelecionadoParaPastoral = null;
+    
+    try {
+        // Buscar membros ativos que ainda não estão na pastoral
+        const response = await fetch('api/membros?limit=1000&status=ativo');
+        const result = await response.json();
+        
+        const todosMembros = result.data?.data || result.data || [];
+        
+        // Filtrar membros que já estão na pastoral
+        const membrosDaPastoral = PastoralState.membros.map(m => m.id);
+        const membrosDisponiveis = todosMembros.filter(m => !membrosDaPastoral.includes(m.id));
+        
+        if (membrosDisponiveis.length > 0) {
+            preencherModalMembrosPastoral(membrosDisponiveis);
+            document.getElementById('modal-adicionar-membro-pastoral').classList.add('active');
+        } else {
+            mostrarNotificacao('Todos os membros ativos já estão nesta pastoral', 'info');
+        }
+    } catch (error) {
+        console.error('Erro ao buscar membros:', error);
+        mostrarNotificacao('Erro ao carregar membros', 'error');
+    }
+}
+
+/**
+ * Preenche o modal com lista de membros disponíveis
+ */
+function preencherModalMembrosPastoral(membros) {
+    const container = document.getElementById('lista-membros-pastoral');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    membros.forEach(membro => {
+        const item = document.createElement('div');
+        item.className = 'member-item-select';
+        item.onclick = () => selecionarMembroParaPastoral(membro);
+        item.innerHTML = `
+            <strong>${membro.nome_completo || membro.apelido || 'Sem nome'}</strong>
+            ${membro.email ? `<br><small>${membro.email}</small>` : ''}
+        `;
+        container.appendChild(item);
+    });
+}
+
+/**
+ * Seleciona um membro para adicionar à pastoral
+ */
+function selecionarMembroParaPastoral(membro) {
+    // Remover seleção anterior
+    document.querySelectorAll('#lista-membros-pastoral .member-item-select').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // Adicionar seleção atual
+    event.target.closest('.member-item-select').classList.add('selected');
+    membroSelecionadoParaPastoral = membro;
+}
+
+/**
+ * Adiciona o membro selecionado à pastoral
+ */
+async function adicionarMembroSelecionado() {
+    if (!membroSelecionadoParaPastoral) {
+        mostrarNotificacao('Selecione um membro', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch('api/pastorais/vincular-membro', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                membro_id: membroSelecionadoParaPastoral.id,
+                pastoral_id: PastoralState.pastoral.id
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarNotificacao('Membro adicionado com sucesso!', 'success');
+            
+            // Recarregar dados da pastoral
+            PastoralState.cache.clear();
+            await carregarDadosPastoral(PastoralState.pastoral.id);
+            
+            fecharModalAdicionarMembro();
+        } else {
+            mostrarNotificacao(result.message || 'Erro ao adicionar membro', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao adicionar membro:', error);
+        mostrarNotificacao('Erro ao adicionar membro: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Fecha o modal de adicionar membro
+ */
+function fecharModalAdicionarMembro() {
+    document.getElementById('modal-adicionar-membro-pastoral').classList.remove('active');
+    membroSelecionadoParaPastoral = null;
+    document.getElementById('busca-membro-pastoral').value = '';
+}
+
+/**
+ * Filtra membros na lista da pastoral
+ */
+function filtrarMembrosPastoral() {
+    const busca = document.getElementById('busca-membro-pastoral').value.toLowerCase();
+    const itens = document.querySelectorAll('#lista-membros-pastoral .member-item-select');
+    
+    itens.forEach(item => {
+        const texto = item.textContent.toLowerCase();
+        item.style.display = texto.includes(busca) ? 'block' : 'none';
+    });
+}
+
+/**
+ * Busca membros para autocomplete (mesma lógica do membros.js)
+ */
+let autocompleteTimeoutPastoral = null;
+async function buscarMembrosAutocomplete(campoId, event) {
+    const input = document.getElementById(campoId);
+    if (!input) return;
+    
+    // Ignorar teclas de navegação
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
+        return;
+    }
+    
+    const query = input.value.trim();
+    const dropdown = document.getElementById(campoId + '-dropdown');
+    
+    if (query.length < 2) {
+        dropdown.innerHTML = '';
+        dropdown.style.display = 'none';
+        // Limpar ID oculto
+        const hiddenId = document.getElementById(campoId + '-id');
+        if (hiddenId) hiddenId.value = '';
+        return;
+    }
+    
+    // Debounce: aguardar 300ms após parar de digitar
+    clearTimeout(autocompleteTimeoutPastoral);
+    autocompleteTimeoutPastoral = setTimeout(async () => {
+        try {
+            const url = `api/membros/buscar?q=${encodeURIComponent(query)}`;
+            console.log('Buscando membros (pastoral):', url);
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                console.error('Erro HTTP:', response.status, response.statusText);
+                dropdown.style.display = 'none';
+                return;
+            }
+            
+            const result = await response.json();
+            console.log('Resultado da busca (pastoral):', result);
+            
+            if (result.success && result.data && result.data.length > 0) {
+                mostrarAutocompleteDropdown(campoId, result.data);
+            } else {
+                dropdown.innerHTML = '<div class="autocomplete-item">Nenhum membro encontrado</div>';
+                dropdown.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Erro ao buscar membros:', error);
+            dropdown.style.display = 'none';
+        }
+    }, 300);
+}
+
+/**
+ * Mostra dropdown de autocomplete
+ */
+function mostrarAutocompleteDropdown(campoId, membros) {
+    const dropdown = document.getElementById(campoId + '-dropdown');
+    if (!dropdown) {
+        console.error('Dropdown não encontrado para:', campoId + '-dropdown');
+        return;
+    }
+    
+    console.log('Mostrando dropdown com', membros.length, 'membros');
+    
+    const html = membros.map(membro => {
+        // Escape correto para evitar problemas com aspas
+        const nomeEscapado = String(membro.nome).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const idEscapado = String(membro.id).replace(/'/g, "\\'");
+        return `
+        <div class="autocomplete-item" 
+             onclick="selecionarMembroAutocomplete('${campoId}', '${idEscapado}', '${nomeEscapado}')">
+            <strong>${membro.nome}</strong>
+        </div>
+    `;
+    }).join('');
+    
+    dropdown.innerHTML = html;
+    dropdown.style.display = 'block';
+    console.log('Dropdown exibido com sucesso');
+}
+
+/**
+ * Seleciona um membro do autocomplete
+ */
+function selecionarMembroAutocomplete(campoId, membroId, membroNome) {
+    const input = document.getElementById(campoId);
+    const hiddenId = document.getElementById(campoId + '-id');
+    const dropdown = document.getElementById(campoId + '-dropdown');
+    
+    if (input) {
+        input.value = membroNome;
+    }
+    if (hiddenId) {
+        hiddenId.value = membroId;
+    }
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+    
+    // Focar novamente no input
+    if (input) input.focus();
+}
+
+/**
+ * Fecha dropdown de autocomplete
+ */
+function fecharAutocomplete(campoId) {
+    // Aguardar um pouco para permitir clique no item
+    setTimeout(() => {
+        const dropdown = document.getElementById(campoId + '-dropdown');
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+    }, 200);
+}
+
+// Exportar funções para o escopo global
+window.mostrarAba = mostrarAba;
+window.cancelarEdicao = cancelarEdicao;
+window.selecionarCoordenador = selecionarCoordenador;
+window.adicionarCoordenadorSelecionado = adicionarCoordenadorSelecionado;
+window.fecharModalMembro = fecharModalMembro;
+window.filtrarMembros = filtrarMembros;
+window.adicionarMembroPastoral = adicionarMembroPastoral;
+window.adicionarMembroSelecionado = adicionarMembroSelecionado;
+window.fecharModalAdicionarMembro = fecharModalAdicionarMembro;
+window.filtrarMembrosPastoral = filtrarMembrosPastoral;
+// Funções de eventos
+window.abrirModalEvento = abrirModalEvento;
+window.fecharModalEvento = fecharModalEvento;
+window.salvarEvento = salvarEvento;
+window.editarEvento = editarEvento;
+window.excluirEvento = excluirEvento;
+window.verDetalhesEvento = verDetalhesEvento;
+window.fecharModalDetalhesEvento = fecharModalDetalhesEvento;
+// Funções de autocomplete
+window.buscarMembrosAutocomplete = buscarMembrosAutocomplete;
+window.selecionarMembroAutocomplete = selecionarMembroAutocomplete;
+window.fecharAutocomplete = fecharAutocomplete;
+window.mostrarAutocompleteDropdown = mostrarAutocompleteDropdown;
 
 

@@ -27,14 +27,45 @@ $method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
 // Extrair o path correto
-$basePath = '/PROJETOS/GerencialParoq/projetos-modulos/membros/api/';
-if (strpos($uri, $basePath) === 0) {
-    $path = substr($uri, strlen($basePath));
-} else {
-    // Fallback para outros formatos de URL
-    $path = str_replace('/projetos-modulos/membros/api/', '', $uri);
-    $path = str_replace('/api/', '', $path);
+$path = $uri;
+
+// Remover vários formatos possíveis de base path
+$basePaths = [
+    '/PROJETOS/GerencialParoq/projetos-modulos/membros/api/',
+    '/projetos-modulos/membros/api/',
+    '/api/'
+];
+
+foreach ($basePaths as $basePath) {
+    if (strpos($path, $basePath) === 0) {
+        $path = substr($path, strlen($basePath));
+        break;
+    }
 }
+
+// Remover partes específicas que podem aparecer no path
+$path = str_replace('/projetos/GerencialParoq/projetos-modulos/membros/api/', '', $path);
+$path = str_replace('/projetos/GerencialParoq/projetos-modulos/membros/api/', '', $path);
+
+// Tentar extrair o path depois de "api/"
+$lastApiPos = strrpos($path, '/api/');
+if ($lastApiPos !== false) {
+    $path = substr($path, $lastApiPos + 5); // +5 para pular "/api/"
+}
+
+// Se ainda tiver o prefixo errado, remover manualmente
+if (strpos($path, '/projetos/GerencialParoq') === 0) {
+    $path = substr($path, strlen('/projetos/GerencialParoq'));
+}
+if (strpos($path, 'projetos-modulos/membros/api/') === 0) {
+    $path = substr($path, strlen('projetos-modulos/membros/api/'));
+}
+if (strpos($path, 'api/') === 0) {
+    $path = substr($path, 4);
+}
+
+// Limpar barras extras no início
+$path = ltrim($path, '/');
 
 // Remover parâmetros da query string do path
 $path = strtok($path, '?');
@@ -42,6 +73,11 @@ $path = strtok($path, '?');
 // Debug: log do path para verificar
 error_log("API URI: " . $uri);
 error_log("API Path: " . $path);
+
+// Debug: verificar se o path contém 'membros/buscar'
+if (strpos($path, 'membros/buscar') !== false) {
+    error_log("Routes: Detectado path de busca de membros: $path");
+}
 
 // Roteamento
 switch ($path) {
@@ -85,6 +121,23 @@ switch ($path) {
         }
         break;
         
+    case 'pastorais/vincular-membro':
+        if ($method === 'POST') {
+            include 'endpoints/pastorais_vincular_membro.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'membros/buscar':
+        if ($method === 'GET') {
+            error_log("Routes: Rota específica para membros/buscar detectada");
+            include 'endpoints/membros_buscar.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
     case 'membros':
         if ($method === 'GET') {
             error_log("Rota membros: Incluindo endpoints/membros_listar.php");
@@ -107,11 +160,29 @@ switch ($path) {
         }
         break;
         
+    case 'eventos/calendario':
+        if ($method === 'GET') {
+            include 'endpoints/eventos_calendario.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
     case 'eventos':
         if ($method === 'GET') {
             include 'endpoints/eventos_listar.php';
         } elseif ($method === 'POST') {
             include 'endpoints/eventos_criar.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+
+    // ====== ESCALAS (por pastoral) ======
+    case 'escalas/semana':
+        // GET /api/escalas/semana?pastoral_id=...&start=YYYY-MM-DD&end=YYYY-MM-DD
+        if ($method === 'GET') {
+            include 'endpoints/escalas_listar_semana.php';
         } else {
             Response::error('Método não permitido', 405);
         }
@@ -126,9 +197,36 @@ switch ($path) {
         break;
         
     default:
-        // Verificar se é uma rota de detalhes da pastoral com sub-recursos
+        // Verificar se é uma rota de evento específico de uma pastoral (PUT, DELETE)
+        // Ex: /api/pastorais/{pastoral_id}/eventos/{evento_id}
+        if (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)\/eventos\/([a-f0-9\-]+)$/', $path, $matches)) {
+            $pastoral_id = $matches[1];
+            $evento_id = $matches[2];
+            
+            if ($method === 'PUT') {
+                include 'endpoints/pastoral_eventos_atualizar.php';
+            } elseif ($method === 'DELETE') {
+                include 'endpoints/pastoral_eventos_excluir.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
+        // Verificar se é uma rota de eventos de uma pastoral (GET, POST)
+        // Ex: /api/pastorais/{pastoral_id}/eventos
+        elseif (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)\/eventos$/', $path, $matches)) {
+            $pastoral_id = $matches[1];
+            
+            if ($method === 'GET') {
+                include 'endpoints/pastoral_eventos.php';
+            } elseif ($method === 'POST') {
+                include 'endpoints/pastoral_eventos_criar.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
+        // Verificar se é uma rota de detalhes da pastoral com sub-recursos (membros, coordenadores)
         // Aceita UUIDs, IDs numéricos ou IDs com prefixo (ex: pastoral-2)
-        if (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)\/(membros|eventos|coordenadores)$/', $path, $matches)) {
+        elseif (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)\/(membros|coordenadores)$/', $path, $matches)) {
             $pastoral_id = $matches[1];
             $resource = $matches[2];
             
@@ -148,6 +246,42 @@ switch ($path) {
                 include 'endpoints/pastoral_atualizar.php';
             } elseif ($method === 'DELETE') {
                 include 'endpoints/pastoral_excluir.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
+        // Verificar rotas de escalas por pastoral
+        elseif (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)\/escalas\/eventos$/', $path, $matches)) {
+            $pastoral_id = $matches[1];
+            if ($method === 'POST') {
+                include 'endpoints/escalas_eventos_criar.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
+        // Rota: detalhes do evento
+        elseif (preg_match('/^eventos\/([a-f0-9\-]{36})$/', $path, $matches)) {
+            $evento_id = $matches[1];
+            if ($method === 'GET') {
+                include 'endpoints/escalas_evento_detalhes.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
+        // Rota: salvar funcoes/atribuicoes do evento
+        elseif (preg_match('/^eventos\/([a-f0-9\-]{36})\/funcoes$/', $path, $matches)) {
+            $evento_id = $matches[1];
+            if ($method === 'POST') {
+                include 'endpoints/escalas_funcoes_salvar.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
+        // Export TXT
+        elseif (preg_match('/^eventos\/([a-f0-9\-]{36})\/export\/txt$/', $path, $matches)) {
+            $evento_id = $matches[1];
+            if ($method === 'GET') {
+                include 'endpoints/escalas_export_txt.php';
             } else {
                 Response::error('Método não permitido', 405);
             }

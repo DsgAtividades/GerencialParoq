@@ -19,6 +19,8 @@ const AppState = {
     membros: [],
     pastorais: [],
     eventos: [],
+    eventosCalendario: [], // Eventos para o calendário (gerais + pastorais)
+    eventosPorData: {}, // Eventos organizados por data para calendário
     escalas: [],
     filtros: {
         busca: '',
@@ -127,7 +129,7 @@ function carregarDadosSecao(sectionId) {
             carregarPastorais();
             break;
         case 'eventos':
-            carregarEventos();
+            carregarEventosCalendario();
             break;
         case 'escalas':
             carregarEscalas();
@@ -401,8 +403,11 @@ async function carregarPastorais() {
         }
         
         if (response && response.success) {
-            // A API retorna: { success: true, data: { data: [...] } }
+            // A API retorna: { success: true, data: [...] }
+            console.log('Resposta da API de pastorais:', response);
             const pastoraisData = response.data?.data || response.data || [];
+            console.log('Dados de pastorais extraídos:', pastoraisData);
+            console.log('Primeira pastoral (se houver):', pastoraisData[0]);
             AppState.pastorais = Array.isArray(pastoraisData) ? pastoraisData : [];
             
             atualizarSelectPastorais();
@@ -1057,6 +1062,12 @@ function atualizarCardsPastorais() {
     // Garantir que pastorais seja sempre um array
     const pastorais = Array.isArray(AppState.pastorais) ? AppState.pastorais : [];
     
+    console.log('atualizarCardsPastorais: Total de pastorais:', pastorais.length);
+    if (pastorais.length > 0) {
+        console.log('Primeira pastoral no render:', pastorais[0]);
+        console.log('Coordenador_nome da primeira:', pastorais[0]?.coordenador_nome);
+    }
+    
     if (pastorais.length === 0) {
         grid.innerHTML = `
             <div class="loading-card">
@@ -1074,8 +1085,8 @@ function atualizarCardsPastorais() {
             </div>
             <div class="card-body">
                 <p><strong>Tipo:</strong> ${pastoral.tipo}</p>
-                <p><strong>Coordenador:</strong> ${pastoral.coordenador?.nome_completo || 'Não definido'}</p>
-                <p><strong>Reunião:</strong> ${pastoral.dia_semana || 'Não definido'} às ${pastoral.horario || 'Não definido'}</p>
+                <p><strong>Coordenador:</strong> ${pastoral.coordenador_nome || 'Não definido'}</p>
+                <p><strong>Reunião:</strong> ${pastoral.dia_semana || 'Não definido'}${pastoral.horario ? ' às ' + pastoral.horario.substring(0, 5) : ' - Horário não definido'}</p>
                 <p><strong>Local:</strong> ${pastoral.local_reuniao || 'Não definido'}</p>
             </div>
             <div class="card-footer">
@@ -1090,44 +1101,711 @@ function atualizarCardsPastorais() {
 // =====================================================
 // EVENTOS
 // =====================================================
+/**
+ * Carrega eventos para o calendário
+ */
+async function carregarEventosCalendario() {
+    try {
+        const response = await fetch(`${CONFIG.apiBaseUrl}eventos/calendario`);
+        const result = await response.json();
+        
+        if (result.success) {
+            AppState.eventosCalendario = result.data.eventos || [];
+            AppState.eventosPorData = result.data.eventos_por_data || {};
+            atualizarCalendarioEventos();
+        } else {
+            console.error('Erro ao carregar eventos do calendário:', result.error);
+            mostrarCalendarioErro();
+        }
+    } catch (error) {
+        console.error('Erro ao carregar eventos do calendário:', error);
+        mostrarCalendarioErro();
+    }
+}
+
+/**
+ * Mostra mensagem de erro no calendário
+ */
+function mostrarCalendarioErro() {
+    const container = document.getElementById('calendario-eventos');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="loading-card">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Erro ao carregar eventos</p>
+        </div>
+    `;
+}
+
+/**
+ * Variável global para mês atual do calendário
+ */
+let mesCalendarioAtual = new Date();
+
+/**
+ * Atualiza o calendário de eventos
+ */
 function atualizarCalendarioEventos() {
     const container = document.getElementById('calendario-eventos');
     if (!container) return;
     
-    const eventos = Array.isArray(AppState.eventos) ? AppState.eventos : [];
-    if (eventos.length === 0) {
-        container.innerHTML = `
-            <div class="loading-card">
-                <i class="fas fa-calendar-alt"></i>
-                <p>Nenhum evento encontrado</p>
+    const eventosPorData = AppState.eventosPorData || {};
+    const mes = mesCalendarioAtual.getMonth();
+    const ano = mesCalendarioAtual.getFullYear();
+    
+    // Primeiro dia do mês
+    const primeiroDia = new Date(ano, mes, 1);
+    const ultimoDia = new Date(ano, mes + 1, 0);
+    const diasNoMes = ultimoDia.getDate();
+    const diaSemanaInicio = primeiroDia.getDay(); // 0 = Domingo, 6 = Sábado
+    
+    // Nomes dos meses e dias
+    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    
+    let html = `
+        <div class="calendar-wrapper">
+            <div class="calendar-header">
+                <button class="btn btn-sm btn-secondary" onclick="mesAnterior()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h3>${meses[mes]} ${ano}</h3>
+                <button class="btn btn-sm btn-secondary" onclick="mesProximo()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
-        `;
-        return;
+            <table class="calendar-table">
+                <thead>
+                    <tr>
+                        ${diasSemana.map(dia => `<th>${dia}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    let diaAtual = 1;
+    
+    // Gerar semanas
+    for (let semana = 0; semana < 6; semana++) {
+        html += '<tr>';
+        
+        for (let diaSemana = 0; diaSemana < 7; diaSemana++) {
+            if (semana === 0 && diaSemana < diaSemanaInicio) {
+                // Dias vazios antes do primeiro dia do mês
+                html += '<td class="calendar-day empty"></td>';
+            } else if (diaAtual > diasNoMes) {
+                // Dias vazios depois do último dia do mês
+                html += '<td class="calendar-day empty"></td>';
+            } else {
+                const dataFormatada = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(diaAtual).padStart(2, '0')}`;
+                const eventosDoDia = eventosPorData[dataFormatada] || [];
+                const totalEventos = eventosDoDia.length;
+                
+                // Determinar classe do dia
+                const hoje = new Date();
+                const isHoje = ano === hoje.getFullYear() && mes === hoje.getMonth() && diaAtual === hoje.getDate();
+                const classeDia = isHoje ? 'today' : '';
+                
+                html += `<td class="calendar-day ${classeDia}" onclick="mostrarEventosDoDia('${dataFormatada}', ${totalEventos})">
+                    <div class="day-number">${diaAtual}</div>
+                    ${totalEventos > 0 ? `<div class="day-events">
+                        ${Array.from({length: Math.min(totalEventos, 3)}, (_, i) => 
+                            `<span class="event-dot ${eventosDoDia[i]?.origem || 'geral'}" title="${eventosDoDia[i]?.nome || ''}"></span>`
+                        ).join('')}
+                        ${totalEventos > 3 ? `<span class="event-count">+${totalEventos - 3}</span>` : ''}
+                    </div>` : ''}
+                </td>`;
+                
+                diaAtual++;
+            }
+        }
+        
+        html += '</tr>';
+        
+        // Se já renderizou todos os dias, parar
+        if (diaAtual > diasNoMes) break;
     }
     
-    container.innerHTML = `
-        <div class="events-list">
-            ${eventos.map(evento => `
-                <div class="event-card">
-                    <div class="event-date">
-                        <span class="day">${new Date(evento.data_evento).getDate()}</span>
-                        <span class="month">${new Date(evento.data_evento).toLocaleDateString('pt-BR', { month: 'short' })}</span>
+    html += `
+                </tbody>
+            </table>
+            <div class="calendar-legend">
+                <div class="legend-item">
+                    <span class="event-dot geral"></span>
+                    <span>Eventos Gerais</span>
+                </div>
+                <div class="legend-item">
+                    <span class="event-dot pastoral"></span>
+                    <span>Eventos de Pastorais</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+/**
+ * Navega para o mês anterior
+ */
+function mesAnterior() {
+    mesCalendarioAtual.setMonth(mesCalendarioAtual.getMonth() - 1);
+    atualizarCalendarioEventos();
+}
+
+/**
+ * Navega para o próximo mês
+ */
+function mesProximo() {
+    mesCalendarioAtual.setMonth(mesCalendarioAtual.getMonth() + 1);
+    atualizarCalendarioEventos();
+}
+
+/**
+ * Mostra eventos de um dia específico
+ */
+function mostrarEventosDoDia(dataFormatada, totalEventos) {
+    if (totalEventos === 0) return;
+    
+    const eventosPorData = AppState.eventosPorData || {};
+    const eventosDoDia = eventosPorData[dataFormatada] || [];
+    
+    // Converter data corretamente para evitar problemas de fuso horário
+    const [ano, mes, dia] = dataFormatada.split('-').map(Number);
+    const dataObj = new Date(ano, mes - 1, dia);
+    const dataFormatadaBR = dataObj.toLocaleDateString('pt-BR', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+    
+    let html = `
+        <div id="modal-eventos-dia" class="modal fade show" style="display: block;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar-day"></i> Eventos de ${dataFormatadaBR}
+                        </h5>
+                        <button type="button" class="close" onclick="fecharModalEventosDia()" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                    <div class="event-info">
-                        <h4>${evento.nome}</h4>
-                        <p><i class="fas fa-clock"></i> ${evento.horario || 'Horário não definido'}</p>
-                        <p><i class="fas fa-map-marker-alt"></i> ${evento.local || 'Local não definido'}</p>
+                    <div class="modal-body">
+                        <div class="eventos-lista-dia">
+                            ${eventosDoDia.map(evento => {
+                                const horarioFormatado = evento.horario ? evento.horario.substring(0, 5) : 'Não definido';
+                                const origemBadge = evento.origem === 'pastoral' 
+                                    ? `<span class="badge badge-info">Pastoral: ${evento.pastoral_nome || 'N/A'}</span>`
+                                    : `<span class="badge badge-secondary">Evento Geral</span>`;
+                                
+                                return `
+                                    <div class="evento-item-dia" onclick="abrirDetalhesEventoCalendario('${evento.id}', '${evento.origem}')">
+                                        <div class="evento-item-header">
+                                            <h6>${evento.nome || 'Sem nome'}</h6>
+                                            ${origemBadge}
+                                        </div>
+                                        <div class="evento-item-body">
+                                            <p><i class="fas fa-clock"></i> ${horarioFormatado}</p>
+                                            ${evento.local ? `<p><i class="fas fa-map-marker-alt"></i> ${evento.local}</p>` : ''}
+                                            ${evento.tipo ? `<p><i class="fas fa-tag"></i> ${evento.tipo}</p>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
                     </div>
-                    <div class="event-actions">
-                        <button class="btn btn-sm btn-primary" onclick="visualizarEvento('${evento.id}')">
-                            <i class="fas fa-eye"></i>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalEventosDia()">
+                            <i class="fas fa-times"></i> Fechar
                         </button>
                     </div>
                 </div>
-            `).join('')}
+            </div>
+        </div>
+        <div class="modal-backdrop fade show" onclick="fecharModalEventosDia()"></div>
+    `;
+    
+    // Remover modal anterior se existir
+    const modalAnterior = document.getElementById('modal-eventos-dia');
+    if (modalAnterior) {
+        modalAnterior.remove();
+        document.querySelector('.modal-backdrop')?.remove();
+    }
+    
+    // Adicionar modal
+    const container = document.getElementById('modal-container');
+    if (container) {
+        container.innerHTML = html;
+    } else {
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
+}
+
+/**
+ * Fecha modal de eventos do dia
+ */
+function fecharModalEventosDia() {
+    const modal = document.getElementById('modal-eventos-dia');
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (modal) modal.remove();
+    if (backdrop) backdrop.remove();
+}
+
+/**
+ * Abre detalhes de um evento do calendário
+ */
+function abrirDetalhesEventoCalendario(eventoId, origem) {
+    const eventos = AppState.eventosCalendario || [];
+    const evento = eventos.find(e => e.id === eventoId);
+    
+    if (!evento) {
+        mostrarNotificacao('Evento não encontrado', 'error');
+        return;
+    }
+    
+    fecharModalEventosDia();
+    
+    const horarioFormatado = evento.horario ? evento.horario.substring(0, 5) : 'Não definido';
+    const tipoFormatado = evento.tipo || 'Não especificado';
+    const localFormatado = evento.local || 'Não definido';
+    const descricaoFormatada = evento.descricao || 'Sem descrição';
+    const responsavelFormatado = evento.responsavel_nome || evento.responsavel_id || 'Não definido';
+    const pastoralNome = evento.pastoral_nome || 'N/A';
+    
+    const modalHTML = `
+        <div id="modal-detalhes-evento" class="modal fade show" style="display: block;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar-check"></i> Detalhes do Evento
+                        </h5>
+                        <button type="button" class="close" onclick="fecharModalDetalhesEvento()" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="evento-detalhes">
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-heading"></i> Nome:</div>
+                                <div class="detail-value">${evento.nome || '-'}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-tag"></i> Tipo:</div>
+                                <div class="detail-value">${tipoFormatado}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-calendar"></i> Data:</div>
+                                <div class="detail-value">${formatarData(evento.data)}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-clock"></i> Horário:</div>
+                                <div class="detail-value">${horarioFormatado}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-map-marker-alt"></i> Local:</div>
+                                <div class="detail-value">${localFormatado}</div>
+                            </div>
+                            ${origem === 'pastoral' ? `
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-church"></i> Pastoral:</div>
+                                <div class="detail-value">${pastoralNome}</div>
+                            </div>
+                            ` : ''}
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-user"></i> Responsável:</div>
+                                <div class="detail-value">${responsavelFormatado}</div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label"><i class="fas fa-align-left"></i> Descrição:</div>
+                                <div class="detail-value" style="white-space: pre-wrap;">${descricaoFormatada}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalDetalhesEvento()">
+                            <i class="fas fa-times"></i> Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show" onclick="fecharModalDetalhesEvento()"></div>
+    `;
+    
+    // Remover modal anterior se existir
+    const modalAnterior = document.getElementById('modal-detalhes-evento');
+    if (modalAnterior) {
+        modalAnterior.remove();
+        document.querySelector('.modal-backdrop')?.remove();
+    }
+    
+    // Adicionar modal
+    const container = document.getElementById('modal-container');
+    if (container) {
+        container.innerHTML = modalHTML;
+    } else {
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+}
+
+/**
+ * Fecha modal de detalhes do evento (para calendário)
+ */
+function fecharModalDetalhesEvento() {
+    const modal = document.getElementById('modal-detalhes-evento');
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (modal) modal.remove();
+    if (backdrop) backdrop.remove();
+}
+
+// Variável global para evento geral em edição
+let eventoGeralEditando = null;
+
+/**
+ * Abre modal para criar/editar evento geral
+ */
+function abrirModalEvento(evento = null) {
+    eventoGeralEditando = evento;
+    const isEdicao = evento !== null;
+    
+    const tiposEvento = [
+        { value: 'missa', label: 'Missa' },
+        { value: 'reuniao', label: 'Reunião' },
+        { value: 'formacao', label: 'Formação' },
+        { value: 'acao_social', label: 'Ação Social' },
+        { value: 'feira', label: 'Feira' },
+        { value: 'festa_patronal', label: 'Festa Patronal' },
+        { value: 'outro', label: 'Outro' }
+    ];
+    
+    const tipoOptions = tiposEvento.map(t => 
+        `<option value="${t.value}" ${evento && evento.tipo === t.value ? 'selected' : ''}>${t.label}</option>`
+    ).join('');
+    
+    const modalHTML = `
+        <div id="modal-evento-geral" class="modal fade show" style="display: block;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-calendar"></i> ${isEdicao ? 'Editar Evento Geral' : 'Novo Evento Geral'}
+                        </h5>
+                        <button type="button" class="close" onclick="fecharModalEventoGeral()" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="form-evento-geral">
+                            <div class="form-row">
+                                <div class="form-group col-md-8">
+                                    <label for="evento-geral-nome">Nome do Evento *</label>
+                                    <input type="text" class="form-control" id="evento-geral-nome" name="nome" required 
+                                           value="${evento ? (evento.nome || '') : ''}" 
+                                           placeholder="Ex: Missa de Domingo">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="evento-geral-tipo">Tipo *</label>
+                                    <select class="form-control" id="evento-geral-tipo" name="tipo" required>
+                                        <option value="">Selecione...</option>
+                                        ${tipoOptions}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="evento-geral-data">Data do Evento *</label>
+                                    <input type="date" class="form-control" id="evento-geral-data" name="data_evento" required 
+                                           value="${evento ? (evento.data_evento || evento.data || '') : ''}">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="evento-geral-horario">Horário</label>
+                                    <input type="time" class="form-control" id="evento-geral-horario" name="horario" 
+                                           value="${evento && evento.horario ? evento.horario.substring(0, 5) : ''}">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="evento-geral-local">Local</label>
+                                    <input type="text" class="form-control" id="evento-geral-local" name="local" 
+                                           value="${evento ? (evento.local || '') : ''}" 
+                                           placeholder="Ex: Igreja Matriz">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="evento-geral-responsavel">Responsável</label>
+                                    <div class="autocomplete-wrapper">
+                                        <input type="text" class="form-control autocomplete-input" 
+                                               id="evento-geral-responsavel" 
+                                               name="responsavel_nome" 
+                                               autocomplete="off"
+                                               value="${evento && evento.responsavel_nome ? (evento.responsavel_nome || '') : ''}" 
+                                               placeholder="Digite o nome do responsável..." 
+                                               onkeyup="buscarMembrosAutocomplete('evento-geral-responsavel', event)"
+                                               onblur="fecharAutocomplete('evento-geral-responsavel')"
+                                               onfocus="if(this.value) buscarMembrosAutocomplete('evento-geral-responsavel', event)">
+                                        <input type="hidden" id="evento-geral-responsavel-id" name="responsavel_id" 
+                                               value="${evento ? (evento.responsavel_id || '') : ''}">
+                                        <div class="autocomplete-dropdown" id="evento-geral-responsavel-dropdown"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="evento-geral-descricao">Descrição</label>
+                                    <textarea class="form-control" id="evento-geral-descricao" name="descricao" rows="3" 
+                                              placeholder="Descrição do evento...">${evento ? (evento.descricao || '') : ''}</textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalEventoGeral()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="salvarEventoGeral()">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show" onclick="fecharModalEventoGeral()"></div>
+    `;
+    
+    // Remover modal anterior se existir
+    const modalAnterior = document.getElementById('modal-evento-geral');
+    if (modalAnterior) {
+        modalAnterior.remove();
+        document.querySelector('.modal-backdrop')?.remove();
+    }
+    
+    // Adicionar modal
+    const container = document.getElementById('modal-container');
+    if (container) {
+        container.innerHTML = modalHTML;
+    } else {
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    // Focar no primeiro campo
+    setTimeout(() => {
+        document.getElementById('evento-geral-nome').focus();
+    }, 100);
+}
+
+/**
+ * Fecha modal de evento geral
+ */
+function fecharModalEventoGeral() {
+    const modal = document.getElementById('modal-evento-geral');
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (modal) modal.remove();
+    if (backdrop) backdrop.remove();
+    eventoGeralEditando = null;
+}
+
+/**
+ * Salva evento geral (criar ou atualizar)
+ */
+async function salvarEventoGeral() {
+    const form = document.getElementById('form-evento-geral');
+    if (!form || !form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const formData = new FormData(form);
+    // Pegar o ID do campo hidden
+    const responsavelId = document.getElementById('evento-geral-responsavel-id')?.value || null;
+    const dados = {
+        nome: formData.get('nome'),
+        tipo: formData.get('tipo'),
+        data_evento: formData.get('data_evento'),
+        horario: formData.get('horario') || null,
+        local: formData.get('local') || null,
+        responsavel_id: responsavelId,
+        descricao: formData.get('descricao') || null
+    };
+    
+    try {
+        const url = eventoGeralEditando 
+            ? `${CONFIG.apiBaseUrl}eventos/${eventoGeralEditando.id}`
+            : `${CONFIG.apiBaseUrl}eventos`;
+        
+        const method = eventoGeralEditando ? 'PUT' : 'POST';
+        
+        const btnSalvar = document.querySelector('#modal-evento-geral .btn-primary');
+        const textoOriginal = btnSalvar.innerHTML;
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dados)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarNotificacao(eventoGeralEditando ? 'Evento atualizado com sucesso!' : 'Evento criado com sucesso!', 'success');
+            fecharModalEventoGeral();
+            
+            // Recarregar eventos no calendário
+            await carregarEventosCalendario();
+        } else {
+            mostrarNotificacao(result.error || 'Erro ao salvar evento', 'error');
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = textoOriginal;
+        }
+    } catch (error) {
+        console.error('Erro ao salvar evento geral:', error);
+        mostrarNotificacao('Erro ao salvar evento: ' + error.message, 'error');
+        
+        const btnSalvar = document.querySelector('#modal-evento-geral .btn-primary');
+        if (btnSalvar) {
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = '<i class="fas fa-save"></i> Salvar';
+        }
+    }
+}
+
+/**
+ * Busca membros para autocomplete
+ */
+let autocompleteTimeout = null;
+async function buscarMembrosAutocomplete(campoId, event) {
+    const input = document.getElementById(campoId);
+    if (!input) return;
+    
+    // Ignorar teclas de navegação
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
+        return;
+    }
+    
+    const query = input.value.trim();
+    const dropdown = document.getElementById(campoId + '-dropdown');
+    
+    if (query.length < 2) {
+        dropdown.innerHTML = '';
+        dropdown.style.display = 'none';
+        // Limpar ID oculto
+        const hiddenId = document.getElementById(campoId + '-id');
+        if (hiddenId) hiddenId.value = '';
+        return;
+    }
+    
+    // Debounce: aguardar 300ms após parar de digitar
+    clearTimeout(autocompleteTimeout);
+    autocompleteTimeout = setTimeout(async () => {
+        try {
+            const url = `${CONFIG.apiBaseUrl}membros/buscar?q=${encodeURIComponent(query)}`;
+            console.log('Buscando membros:', url);
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                console.error('Erro HTTP:', response.status, response.statusText);
+                dropdown.style.display = 'none';
+                return;
+            }
+            
+            const result = await response.json();
+            console.log('Resultado da busca:', result);
+            
+            if (result.success && result.data && result.data.length > 0) {
+                mostrarAutocompleteDropdown(campoId, result.data);
+            } else {
+                dropdown.innerHTML = '<div class="autocomplete-item">Nenhum membro encontrado</div>';
+                dropdown.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Erro ao buscar membros:', error);
+            dropdown.style.display = 'none';
+        }
+    }, 300);
+}
+
+/**
+ * Mostra dropdown de autocomplete
+ */
+function mostrarAutocompleteDropdown(campoId, membros) {
+    const dropdown = document.getElementById(campoId + '-dropdown');
+    if (!dropdown) {
+        console.error('Dropdown não encontrado para:', campoId + '-dropdown');
+        return;
+    }
+    
+    console.log('Mostrando dropdown com', membros.length, 'membros');
+    
+    const html = membros.map(membro => {
+        // Escape correto para evitar problemas com aspas
+        const nomeEscapado = String(membro.nome).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        const idEscapado = String(membro.id).replace(/'/g, "\\'");
+        return `
+        <div class="autocomplete-item" 
+             onclick="selecionarMembroAutocomplete('${campoId}', '${idEscapado}', '${nomeEscapado}')">
+            <strong>${membro.nome}</strong>
         </div>
     `;
+    }).join('');
+    
+    dropdown.innerHTML = html;
+    dropdown.style.display = 'block';
+    console.log('Dropdown exibido com sucesso');
 }
+
+/**
+ * Seleciona um membro do autocomplete
+ */
+function selecionarMembroAutocomplete(campoId, membroId, membroNome) {
+    const input = document.getElementById(campoId);
+    const hiddenId = document.getElementById(campoId + '-id');
+    const dropdown = document.getElementById(campoId + '-dropdown');
+    
+    if (input) {
+        input.value = membroNome;
+    }
+    if (hiddenId) {
+        hiddenId.value = membroId;
+    }
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+    
+    // Focar novamente no input
+    if (input) input.focus();
+}
+
+/**
+ * Fecha dropdown de autocomplete
+ */
+function fecharAutocomplete(campoId) {
+    // Aguardar um pouco para permitir clique no item
+    setTimeout(() => {
+        const dropdown = document.getElementById(campoId + '-dropdown');
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+    }, 200);
+}
+
+// Exportar para o escopo global
+window.abrirModalEvento = abrirModalEvento;
+window.fecharModalEventoGeral = fecharModalEventoGeral;
+window.salvarEventoGeral = salvarEventoGeral;
+window.buscarMembrosAutocomplete = buscarMembrosAutocomplete;
+window.selecionarMembroAutocomplete = selecionarMembroAutocomplete;
+window.fecharAutocomplete = fecharAutocomplete;
 
 // =====================================================
 // RELATÓRIOS
@@ -1159,9 +1837,216 @@ function gerarRelatorio(tipo) {
 // AÇÕES DE PASTORAIS
 // =====================================================
 function abrirModalPastoral() {
-    // Implementar modal de pastoral
-    console.log('Abrir modal de pastoral');
+    const modalHTML = `
+        <div id="modal-pastoral" class="modal fade show" style="display: block;">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-church"></i> Nova Pastoral
+                        </h5>
+                        <button type="button" class="close" onclick="fecharModalPastoral()" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="form-nova-pastoral">
+                            <div class="form-row">
+                                <div class="form-group col-md-8">
+                                    <label for="pastoral-nome">Nome da Pastoral *</label>
+                                    <input type="text" class="form-control" id="pastoral-nome" name="nome" required placeholder="Ex: Catequese de Adultos">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="pastoral-tipo">Tipo *</label>
+                                    <select class="form-control" id="pastoral-tipo" name="tipo" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="pastoral">Pastoral</option>
+                                        <option value="movimento">Movimento</option>
+                                        <option value="ministerio_liturgico">Ministério Litúrgico</option>
+                                        <option value="servico">Serviço</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="pastoral-comunidade">Comunidade/Capelania</label>
+                                    <input type="text" class="form-control" id="pastoral-comunidade" name="comunidade_capelania" placeholder="Ex: Matriz, Capela São José">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <label for="pastoral-descricao">Finalidade / Descrição</label>
+                                    <textarea class="form-control" id="pastoral-descricao" name="finalidade_descricao" rows="3" placeholder="Descreva a finalidade e objetivos desta pastoral..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-4">
+                                    <label for="pastoral-dia">Dia da Semana</label>
+                                    <input type="text" class="form-control" id="pastoral-dia" name="dia_semana" placeholder="Ex: Segunda-feira">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="pastoral-horario">Horário</label>
+                                    <input type="time" class="form-control" id="pastoral-horario" name="horario">
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label for="pastoral-local">Local de Reunião</label>
+                                    <input type="text" class="form-control" id="pastoral-local" name="local_reuniao" placeholder="Ex: Sala de Reuniões">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="pastoral-whatsapp">Link do WhatsApp</label>
+                                    <input type="text" class="form-control" id="pastoral-whatsapp" name="whatsapp_grupo_link" placeholder="Link do grupo do WhatsApp">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="pastoral-email">E-mail do Grupo</label>
+                                    <input type="email" class="form-control" id="pastoral-email" name="email_grupo" placeholder="contato@pastoral.com">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="fecharModalPastoral()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="salvarNovaPastoral()">
+                            <i class="fas fa-save"></i> Salvar Pastoral
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-backdrop fade show" onclick="fecharModalPastoral()"></div>
+    `;
+    
+    // Remover modal anterior se existir
+    const modalAnterior = document.getElementById('modal-pastoral');
+    if (modalAnterior) {
+        modalAnterior.remove();
+    }
+    
+    // Adicionar modal ao container
+    const container = document.getElementById('modal-container');
+    if (container) {
+        container.innerHTML = modalHTML;
+    } else {
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+    
+    // Focar no primeiro campo
+    setTimeout(() => {
+        document.getElementById('pastoral-nome').focus();
+    }, 100);
 }
+
+async function salvarNovaPastoral() {
+    const form = document.getElementById('form-nova-pastoral');
+    if (!form) return;
+    
+    // Validar formulário
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // Coletar dados do formulário
+    const formData = new FormData(form);
+    const dados = {
+        nome: formData.get('nome'),
+        tipo: formData.get('tipo'),
+        comunidade_capelania: formData.get('comunidade_capelania') || null,
+        finalidade_descricao: formData.get('finalidade_descricao') || null,
+        dia_semana: formData.get('dia_semana') || null,
+        horario: formData.get('horario') || null,
+        local_reuniao: formData.get('local_reuniao') || null,
+        whatsapp_grupo_link: formData.get('whatsapp_grupo_link') || null,
+        email_grupo: formData.get('email_grupo') || null,
+        ativo: 1  // Sempre ativa por padrão
+    };
+    
+    // Validações adicionais
+    if (!dados.nome || dados.nome.trim() === '') {
+        mostrarNotificacao('Nome da pastoral é obrigatório', 'error');
+        return;
+    }
+    
+    if (!dados.tipo) {
+        mostrarNotificacao('Tipo da pastoral é obrigatório', 'error');
+        return;
+    }
+    
+    try {
+        // Desabilitar botão durante o salvamento
+        const btnSalvar = document.querySelector('#modal-pastoral .btn-primary');
+        const textoOriginal = btnSalvar.innerHTML;
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+        
+        const response = await fetch('api/pastorais', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dados)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            mostrarNotificacao('Pastoral criada com sucesso!', 'success');
+            fecharModalPastoral();
+            
+            // Limpar cache e recarregar pastorais
+            AppState.apiCache.delete('pastorais');
+            await carregarPastorais();
+        } else {
+            mostrarNotificacao(result.error || 'Erro ao criar pastoral', 'error');
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = textoOriginal;
+        }
+    } catch (error) {
+        console.error('Erro ao salvar pastoral:', error);
+        mostrarNotificacao('Erro ao criar pastoral: ' + error.message, 'error');
+        
+        // Reabilitar botão
+        const btnSalvar = document.querySelector('#modal-pastoral .btn-primary');
+        if (btnSalvar) {
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = '<i class="fas fa-save"></i> Salvar Pastoral';
+        }
+    }
+}
+
+function fecharModalPastoral() {
+    const modal = document.getElementById('modal-pastoral');
+    const backdrop = document.querySelector('.modal-backdrop');
+    
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        setTimeout(() => modal.remove(), 300);
+    }
+    
+    if (backdrop) {
+        backdrop.classList.remove('show');
+        setTimeout(() => backdrop.remove(), 300);
+    }
+    
+    // Limpar container se estiver vazio
+    const container = document.getElementById('modal-container');
+    if (container && container.children.length === 0) {
+        container.innerHTML = '';
+    }
+}
+
+// Exportar funções globalmente
+window.abrirModalPastoral = abrirModalPastoral;
+window.salvarNovaPastoral = salvarNovaPastoral;
+window.fecharModalPastoral = fecharModalPastoral;
 
 function editarPastoral(id) {
     // Implementar edição de pastoral
@@ -1291,7 +2176,24 @@ function getStatusText(status) {
 }
 
 function formatarData(data) {
-    return new Date(data).toLocaleDateString('pt-BR');
+    if (!data) return '-';
+    
+    // Se a data já está em formato de string YYYY-MM-DD, converter corretamente
+    if (typeof data === 'string' && data.match(/^\d{4}-\d{2}-\d{2}/)) {
+        const [ano, mes, dia] = data.split('-').map(Number);
+        // Criar data no timezone local (mês é 0-indexed no JS)
+        const dataObj = new Date(ano, mes - 1, dia);
+        return dataObj.toLocaleDateString('pt-BR');
+    }
+    
+    // Para outros formatos, usar Date normal
+    const dataObj = new Date(data);
+    // Garantir que não está em UTC
+    if (!isNaN(dataObj.getTime())) {
+        return dataObj.toLocaleDateString('pt-BR');
+    }
+    
+    return data;
 }
 
 function formatarPastorais(pastorais) {
