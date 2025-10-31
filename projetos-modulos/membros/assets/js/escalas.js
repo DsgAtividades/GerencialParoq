@@ -157,6 +157,7 @@ function escalasAbrirModalEventoDetalhe(eventoId) {
                 </div>
               </div>
               <div class="modal-footer">
+                <button class="btn btn-danger" onclick="escExcluirEvento('${eventoId}')"><i class="fas fa-trash"></i> Excluir Escala</button>
                 <a class="btn btn-secondary" href="api/eventos/${eventoId}/export/txt" target="_blank"><i class="fas fa-file-alt"></i> Exportar TXT</a>
                 <button class="btn btn-primary" onclick="escSalvar('${eventoId}')"><i class="fas fa-save"></i> Salvar Escala</button>
               </div>
@@ -243,6 +244,35 @@ async function escSalvar(eventoId){
             escRenderFuncoes(eventoId, detalhe.funcoes || []);
         }
     } catch(e){ console.error('Erro ao salvar escala:', e); }
+}
+
+async function escExcluirEvento(eventoId){
+    if (!confirm('Tem certeza que deseja excluir este evento de escala? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+    try {
+        const resp = await fetch(`api/eventos/${eventoId}`, { method: 'DELETE' });
+        const j = await resp.json();
+        if (j.success) {
+            escFecharDetalhe();
+            // Recarregar semana
+            const pastoralId = window.pastoralId || (window.PastoralState?.pastoral?.id);
+            if (pastoralId) {
+                escalasCarregarSemana(pastoralId);
+            }
+            // Mostrar notificação se disponível
+            if (typeof mostrarNotificacao === 'function') {
+                mostrarNotificacao('Evento excluído com sucesso', 'success');
+            } else {
+                alert('Evento excluído com sucesso');
+            }
+        } else {
+            throw new Error(j.error || 'Erro ao excluir evento');
+        }
+    } catch(e){
+        console.error('Erro ao excluir evento:', e);
+        alert('Erro ao excluir evento: ' + (e.message || 'Erro desconhecido'));
+    }
 }
 
 async function escalasGarantirMembros(pastoralId){

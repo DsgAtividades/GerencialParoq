@@ -260,21 +260,6 @@ $module_description = 'Informações completas da pastoral';
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="edit-dia-semana">Dia da Semana</label>
-                            <input type="text" id="edit-dia-semana" name="dia_semana" placeholder="Ex: Segunda-feira">
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-horario">Horário</label>
-                            <input type="time" id="edit-horario" name="horario" placeholder="HH:MM">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="edit-local">Local de Reunião</label>
-                            <input type="text" id="edit-local" name="local_reuniao" placeholder="Local onde se reúne">
-                        </div>
-                        <div class="form-group">
                             <label for="edit-ativo">Status</label>
                             <select id="edit-ativo" name="ativo" class="form-control">
                                 <option value="1">Ativo</option>

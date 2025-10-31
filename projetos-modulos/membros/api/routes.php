@@ -264,6 +264,8 @@ switch ($path) {
             $evento_id = $matches[1];
             if ($method === 'GET') {
                 include 'endpoints/escalas_evento_detalhes.php';
+            } elseif ($method === 'DELETE') {
+                include 'endpoints/escalas_eventos_excluir.php';
             } else {
                 Response::error('Método não permitido', 405);
             }

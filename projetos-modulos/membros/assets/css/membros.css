@@ -773,6 +773,110 @@ td {
     background-color: #fafbfc;
 }
 
+/* Modal backdrop */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    backdrop-filter: blur(2px);
+}
+
+.modal-backdrop.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+}
+
+.modal-backdrop.fade.show {
+    opacity: 1;
+}
+
+.modal.show {
+    display: flex !important;
+}
+
+/* Close button no modal */
+.modal-header .close {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    line-height: 1;
+    opacity: 0.9;
+}
+
+.modal-header .close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.modal-header .close span {
+    font-size: 1.5rem;
+    font-weight: 400;
+}
+
+/* Estilos específicos para detalhes do evento */
+.evento-detalhes {
+    padding: 0.5rem 0;
+}
+
+.evento-detalhes .detail-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e9ecef;
+    gap: 1rem;
+}
+
+.evento-detalhes .detail-row:last-child {
+    border-bottom: none;
+}
+
+.evento-detalhes .detail-label {
+    min-width: 180px;
+    font-weight: 600;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.evento-detalhes .detail-label i {
+    color: var(--primary-color);
+    width: 24px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.evento-detalhes .detail-value {
+    flex: 1;
+    color: #212529;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.evento-detalhes .detail-value:empty::before {
+    content: '-';
+    color: #adb5bd;
+    font-style: italic;
+}
+
 /* Modal footer */
 .modal-footer {
     display: flex;

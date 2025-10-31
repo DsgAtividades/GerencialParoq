@@ -1086,8 +1086,6 @@ function atualizarCardsPastorais() {
             <div class="card-body">
                 <p><strong>Tipo:</strong> ${pastoral.tipo}</p>
                 <p><strong>Coordenador:</strong> ${pastoral.coordenador_nome || 'Não definido'}</p>
-                <p><strong>Reunião:</strong> ${pastoral.dia_semana || 'Não definido'}${pastoral.horario ? ' às ' + pastoral.horario.substring(0, 5) : ' - Horário não definido'}</p>
-                <p><strong>Local:</strong> ${pastoral.local_reuniao || 'Não definido'}</p>
             </div>
             <div class="card-footer">
                 <button class="btn btn-sm btn-success" onclick="visualizarPastoral('${pastoral.id}')" title="Ver Detalhes">
@@ -1883,21 +1881,6 @@ function abrirModalPastoral() {
                             </div>
 
                             <div class="form-row">
-                                <div class="form-group col-md-4">
-                                    <label for="pastoral-dia">Dia da Semana</label>
-                                    <input type="text" class="form-control" id="pastoral-dia" name="dia_semana" placeholder="Ex: Segunda-feira">
-                                </div>
-                                <div class="form-group col-md-4">
-                                    <label for="pastoral-horario">Horário</label>
-                                    <input type="time" class="form-control" id="pastoral-horario" name="horario">
-                                </div>
-                                <div class="form-group col-md-4">
-                                    <label for="pastoral-local">Local de Reunião</label>
-                                    <input type="text" class="form-control" id="pastoral-local" name="local_reuniao" placeholder="Ex: Sala de Reuniões">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
                                 <div class="form-group col-md-6">
                                     <label for="pastoral-whatsapp">Link do WhatsApp</label>
                                     <input type="text" class="form-control" id="pastoral-whatsapp" name="whatsapp_grupo_link" placeholder="Link do grupo do WhatsApp">
@@ -1960,9 +1943,6 @@ async function salvarNovaPastoral() {
         tipo: formData.get('tipo'),
         comunidade_capelania: formData.get('comunidade_capelania') || null,
         finalidade_descricao: formData.get('finalidade_descricao') || null,
-        dia_semana: formData.get('dia_semana') || null,
-        horario: formData.get('horario') || null,
-        local_reuniao: formData.get('local_reuniao') || null,
         whatsapp_grupo_link: formData.get('whatsapp_grupo_link') || null,
         email_grupo: formData.get('email_grupo') || null,
         ativo: 1  // Sempre ativa por padrão
