@@ -67,6 +67,28 @@ try {
     $stmt->execute([$membro_id]);
     $documentos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // Buscar foto do membro (anexo)
+    $fotoUrl = $membro['foto_url'];
+    error_log("membros_visualizar: foto_url original: " . ($fotoUrl ?: 'null'));
+    
+    if ($fotoUrl && preg_match('/^[a-f0-9\-]{36}$/', $fotoUrl)) {
+        // Se foto_url é um UUID, buscar URL do anexo
+        error_log("membros_visualizar: foto_url é UUID, buscando anexo: " . $fotoUrl);
+        $stmt = $db->prepare("SELECT url_arquivo FROM membros_anexos WHERE id = ? AND entidade_tipo = 'membro'");
+        $stmt->execute([$fotoUrl]);
+        $anexo = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($anexo && !empty($anexo['url_arquivo'])) {
+            $fotoUrl = $anexo['url_arquivo'];
+            error_log("membros_visualizar: URL resolvida do anexo: " . $fotoUrl);
+        } else {
+            // Se não encontrou o anexo, limpar foto_url
+            error_log("membros_visualizar: Anexo não encontrado para UUID: " . $fotoUrl);
+            $fotoUrl = null;
+        }
+    } elseif ($fotoUrl) {
+        error_log("membros_visualizar: foto_url já é uma URL: " . $fotoUrl);
+    }
+    
     // Buscar vínculos com pastorais (simplificado)
     $stmt = $db->prepare("
         SELECT 
@@ -111,7 +133,7 @@ try {
         'apelido' => $membro['apelido'],
         'data_nascimento' => $membro['data_nascimento'],
         'sexo' => $membro['sexo'],
-        'foto_url' => $membro['foto_url'],
+        'foto_url' => $fotoUrl ? $fotoUrl : null, // URL completa da foto (resolvida do anexo se necessário)
         'celular_whatsapp' => $membro['celular_whatsapp'],
         'email' => $membro['email'],
         'telefone_fixo' => $membro['telefone_fixo'],
@@ -132,7 +154,13 @@ try {
         'status' => $membro['status'],
         'motivo_bloqueio' => $membro['motivo_bloqueio'],
         'created_at' => $membro['created_at'],
-        'updated_at' => $membro['updated_at']
+        'updated_at' => $membro['updated_at'],
+        'documentos' => $documentos, // Adicionar documentos na resposta
+        'enderecos' => $enderecos,
+        'contatos' => $contatos,
+        'vinculos' => $vinculos,
+        'formacoes' => $formacoes,
+        'checkins' => $checkins
     ];
     
     Response::success($membro_simples);

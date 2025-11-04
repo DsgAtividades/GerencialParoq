@@ -158,22 +158,34 @@ $module_description = 'Informações completas da pastoral';
                         <i class="fas fa-user-plus"></i> Adicionar Membro à Pastoral
                     </button>
                 </div>
-                <div class="data-table-wrapper">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>Email</th>
-                                <th>Telefone</th>
-                                <th>Função</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-membros">
-                            <!-- Membros serão preenchidos via JS -->
-                        </tbody>
-                    </table>
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Membros da Pastoral</h3>
+                        <div class="table-actions">
+                            <span id="total-membros-pastoral">0 membros</span>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>Função</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-membros">
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> Carregando...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -184,22 +196,34 @@ $module_description = 'Informações completas da pastoral';
                         <i class="fas fa-plus"></i> Novo Evento
                     </button>
                 </div>
-                <div class="data-table-wrapper">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Nome</th>
-                                <th>Tipo</th>
-                                <th>Horário</th>
-                                <th>Local</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabela-eventos">
-                            <!-- Eventos serão preenchidos via JS -->
-                        </tbody>
-                    </table>
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Eventos da Pastoral</h3>
+                        <div class="table-actions">
+                            <span id="total-eventos-pastoral">0 eventos</span>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Nome</th>
+                                    <th>Tipo</th>
+                                    <th>Horário</th>
+                                    <th>Local</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-eventos">
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        <i class="fas fa-spinner fa-spin"></i> Carregando...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -363,7 +387,11 @@ $module_description = 'Informações completas da pastoral';
     </div>
 
     <!-- Scripts -->
+    <!-- Utilitários devem ser carregados primeiro -->
+    <script src="assets/js/sanitizer.js"></script>
+    <script src="assets/js/validator.js"></script>
     <script src="assets/js/api.js"></script>
+    <script src="assets/js/modals.js"></script>
     <script src="assets/js/pastoral_detalhes.js"></script>
     <script src="assets/js/escalas.js"></script>
     <script>

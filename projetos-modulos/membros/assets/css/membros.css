@@ -470,9 +470,7 @@
     border-bottom: 1px solid var(--border-color);
     vertical-align: middle;
 }
-td {
-    text-align: center;
-}
+/* Removido para permitir alinhamento individual nas células */
 
 .data-table tbody tr:hover {
     background-color: #f8f9fa;
@@ -641,7 +639,7 @@ td {
     font-size: 0.9rem;
 }
 /* =====================================================
-   MODAIS
+   MODAIS - REVISÃO COMPLETA PARA MÁXIMA VISIBILIDADE E UX
    ===================================================== */
 
 /* Modal principal - overlay */
@@ -655,9 +653,13 @@ td {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(2px);
-    animation: modalFadeIn 0.3s ease-out;
+    background-color: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+    animation: modalFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 2rem 1rem;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 @keyframes modalFadeIn {
@@ -667,27 +669,33 @@ td {
     }
     to {
         opacity: 1;
-        backdrop-filter: blur(2px);
+        backdrop-filter: blur(3px);
     }
 }
 
 /* Modal dialog - container do conteúdo */
 .modal-dialog {
+    margin: 0 auto;
     position: relative;
     width: auto;
-    margin: 0 auto;
-    margin-top: 10px;
+    height: 92vh;
+    min-width: 400px;
+    margin: auto;
     max-width: 90vw;
-    max-height: 95vh;
+    max-height: 98vh;
+    min-height: auto;
     display: flex;
     flex-direction: column;
-    animation: modalSlideIn 0.3s ease-out;
+    animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* Garantir que o modal não seja cortado */
+    position: relative;
+    z-index: 1051;
 }
 
 @keyframes modalSlideIn {
     from {
         opacity: 0;
-        transform: translateY(-50px) scale(0.95);
+        transform: translateY(-30px) scale(0.96);
     }
     to {
         opacity: 1;
@@ -697,19 +705,26 @@ td {
 
 /* Tamanhos de modal */
 .modal-sm {
-    max-width: 400px;
+    min-width: 400px;
+    max-width: 500px;
+    width: auto;
 }
 
 .modal-md {
-    max-width: 600px;
+    min-width: 500px;
+    max-width: 700px;
+    width: auto;
 }
 
 .modal-lg {
-    max-width: 800px;
+    min-width: 700px;
+    width: auto;
 }
 
 .modal-xl {
-    max-width: 1000px;
+    min-width: 900px;
+    max-width: 1200px;
+    width: auto;
 }
 
 /* Modal content - conteúdo principal */
@@ -718,11 +733,21 @@ td {
     display: flex;
     flex-direction: column;
     width: 100%;
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    height: 100%;
+    min-width: 100%;
+    min-height: auto;
+    max-height: 92vh;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05);
     border: none;
     overflow: hidden;
+    flex-shrink: 0;
+    /* Garantir que footer sempre fique visível */
+    justify-content: space-between;
+    /* Melhor visibilidade com contraste */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 /* Modal header */
@@ -730,47 +755,91 @@ td {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.5rem 2rem;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    color: white;
+    padding: 1.75rem 2.5rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: #ffffff;
     border-bottom: none;
+    flex-shrink: 0;
+    flex-grow: 0;
+    min-height: 75px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* Melhor contraste */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .modal-title {
     margin: 0;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
 }
 
 .btn-close {
-    background: none;
+    background: rgba(255, 255, 255, 0.15);
     border: none;
     font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.95);
     cursor: pointer;
     padding: 0.5rem;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 300;
+    line-height: 1;
 }
 
 .btn-close:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    transform: scale(1.1);
+    background-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-close:active {
+    transform: scale(0.95) rotate(90deg);
 }
 
 /* Modal body */
 .modal-body {
-    padding: 2rem;
-    flex: 1;
+    padding: 2.5rem;
+    flex: 1 1 0;
+    min-height: 250px;
+    height: 100%;
     overflow-y: auto;
-    background-color: #fafbfc;
+    overflow-x: hidden;
+    background-color: #ffffff;
+    /* Permitir scroll interno sem esconder footer */
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 transparent;
+    /* Melhor espaçamento e legibilidade */
+    line-height: 1.6;
+}
+
+/* Estilizar scrollbar no Chrome/Safari */
+.modal-body::-webkit-scrollbar {
+    width: 10px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 5px;
+    margin: 8px 0;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 5px;
+    border: 2px solid #f7fafc;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
 }
 
 /* Modal backdrop */
@@ -798,35 +867,40 @@ td {
     display: flex !important;
 }
 
-/* Close button no modal */
+/* Close button no modal (alternativa para classes .close) */
 .modal-header .close {
-    background: none;
+    background: rgba(255, 255, 255, 0.15);
     border: none;
     font-size: 1.8rem;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
     cursor: pointer;
     padding: 0.5rem;
     border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     line-height: 1;
-    opacity: 0.9;
+    opacity: 1;
 }
 
 .modal-header .close:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    opacity: 1;
-    transform: scale(1.1);
+    background-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header .close:active {
+    transform: scale(0.95) rotate(90deg);
 }
 
 .modal-header .close span {
-    font-size: 1.5rem;
-    font-weight: 400;
+    font-size: 1.6rem;
+    font-weight: 300;
+    line-height: 1;
 }
 
 /* Estilos específicos para detalhes do evento */
@@ -883,9 +957,17 @@ td {
     align-items: center;
     justify-content: flex-end;
     gap: 1rem;
-    padding: 1.5rem 2rem;
-    background-color: white;
-    border-top: 1px solid var(--border-color);
+    padding: 1.75rem 2.5rem;
+    background-color: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    min-height: 85px;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+    /* Garantir que o footer seja sempre visível */
+    margin-top: auto;
 }
 
 /* Formulários dentro do modal */
@@ -893,18 +975,53 @@ td {
     margin-bottom: 1.5rem;
 }
 
+/* Melhorar legibilidade de labels e inputs no modal */
 .modal-body .form-label {
     font-weight: 600;
-    color: var(--dark-color);
+    color: #334155;
     margin-bottom: 0.5rem;
-    display: block;
+    font-size: 0.95rem;
 }
 
 .modal-body .form-control {
-    border: 2px solid #e9ecef;
+    border: 1.5px solid #e2e8f0;
     border-radius: 8px;
     padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
     font-size: 0.95rem;
+}
+
+.modal-body .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+    outline: none;
+}
+
+/* Melhorar visibilidade de seções do formulário */
+.modal-body .form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-body .form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.modal-body .section-title {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Estilos adicionais para form-control dentro do modal */
+.modal-body .form-control {
     transition: var(--transition);
     background-color: white;
 }
@@ -915,14 +1032,69 @@ td {
     outline: none;
 }
 
-.modal-body .form-control.is-invalid {
-    border-color: var(--danger-color);
+/* Estilos para campos com erro - melhorados */
+.modal-body .form-control.is-invalid,
+.form-control.is-invalid {
+    border-color: var(--danger-color) !important;
+    border-width: 2px !important;
+    background-color: #fff5f5;
+    animation: shake 0.5s ease-in-out;
 }
 
-.modal-body .invalid-feedback {
+.modal-body .form-control.is-invalid:focus,
+.form-control.is-invalid:focus {
+    border-color: var(--danger-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.modal-body .invalid-feedback,
+.invalid-feedback {
+    color: #dc3545 !important;
+    font-size: 0.875rem !important;
+    margin-top: 0.25rem !important;
+    display: block !important;
+    font-weight: 400;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    animation: slideIn 0.3s ease-out;
+    line-height: 1.4;
+    width: 100%;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Estilo mais destacado para mensagens importantes (opcional) */
+.modal-body .invalid-feedback.importante {
+    padding: 0.25rem 0.5rem;
+    background-color: #fff5f5;
+    border-left: 3px solid var(--danger-color);
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+.modal-body .invalid-feedback strong {
     color: var(--danger-color);
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
+    font-weight: 600;
+}
+
+/* Animação de shake para campo com erro */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Animação de entrada para mensagem de erro */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Seções do formulário */
@@ -1076,51 +1248,97 @@ td {
 
 /* Botões do modal */
 .modal-footer .btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.875rem 2rem;
     font-weight: 600;
-    border-radius: 8px;
-    transition: var(--transition);
+    font-size: 0.95rem;
+    border-radius: 10px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border: none;
     cursor: pointer;
+    min-width: 120px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .modal-footer .btn-secondary {
-    background-color: #6c757d;
+    background-color: #64748b;
     color: white;
 }
 
 .modal-footer .btn-secondary:hover {
-    background-color: #5a6268;
-    transform: translateY(-1px);
+    background-color: #475569;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(100, 116, 139, 0.4);
+}
+
+.modal-footer .btn-secondary:active {
+    transform: translateY(0);
 }
 
 .modal-footer .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
     color: white;
-    box-shadow: 0 4px 12px rgba(44, 90, 160, 0.3);
+    box-shadow: 0 4px 14px rgba(44, 90, 160, 0.35);
 }
 
 .modal-footer .btn-primary:hover {
-    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(44, 90, 160, 0.4);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(44, 90, 160, 0.45);
+}
+
+.modal-footer .btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(44, 90, 160, 0.3);
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
-    .modal-dialog {
-        margin: 0.5rem;
-        max-width: 95vw;
+    .modal {
+        padding: 1rem 0.5rem;
+        align-items: flex-start;
+        padding-top: 1rem;
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    
+    .modal-body {
+        padding: 1.5rem;
+        max-height: calc(100vh - 200px);
     }
     
-    .modal-header,
-    .modal-body,
+    .modal-sm,
+    .modal-md,
+    .modal-lg,
+    .modal-xl {
+        min-width: calc(100% - 1rem);
+        width: calc(100% - 1rem);
+        max-width: calc(100% - 1rem);
+    }
+    
+    .modal-header {
+        padding: 1.25rem 1.5rem;
+        min-height: 65px;
+    }
+    
     .modal-footer {
-        padding: 1rem;
+        padding: 1.25rem 1.5rem;
+        min-height: 75px;
+        flex-wrap: wrap;
     }
     
     .modal-title {
-        font-size: 1.2rem;
+        font-size: 1.25rem;
+    }
+    
+    .modal-footer .btn {
+        flex: 1;
+        min-width: calc(50% - 0.5rem);
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
     }
 }
 
@@ -1266,6 +1484,26 @@ td {
 .d-block { display: block; }
 .d-flex { display: flex; }
 .d-grid { display: grid; }
+
+/* Flexbox utilities */
+.align-items-center { align-items: center; }
+.align-items-start { align-items: flex-start; }
+.align-items-end { align-items: flex-end; }
+.justify-content-between { justify-content: space-between; }
+.justify-content-center { justify-content: center; }
+
+/* Gap utilities */
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 1rem; }
+
+/* Margin utilities */
+.me-1 { margin-right: 0.25rem; }
+.me-2 { margin-right: 0.5rem; }
+.me-3 { margin-right: 1rem; }
+.ms-1 { margin-left: 0.25rem; }
+.ms-2 { margin-left: 0.5rem; }
+.ms-3 { margin-left: 1rem; }
 
 /* =====================================================
    RESPONSIVIDADE
@@ -1414,7 +1652,7 @@ td {
     justify-content: center;
 }
 
-.modal-foto .modal-dialog {
+.modal-foto {
     max-width: 800px;
 }
 
@@ -2027,3 +2265,51 @@ vertical-align: middle;
 .drop-area { min-height:42px; background:#fbfcff; border:1px solid #eef2ff; border-radius:4px; padding:6px; display:flex; flex-wrap:wrap; gap:6px; }
 .tag-membro { background:#eef5ff; border:1px solid #cfe0ff; border-radius:16px; padding:2px 8px; display:inline-flex; align-items:center; gap:6px; }
 .tag-membro i { cursor:pointer; font-style:normal; color:#c00; margin-left:4px; }
+
+/* =====================================================
+   NOTIFICAÇÕES DE ERRO - MELHORADAS
+   ===================================================== */
+.alert-error,
+.alert-danger {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3) !important;
+    border-left: 4px solid var(--danger-color) !important;
+}
+
+.alert-error p,
+.alert-danger p {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+.alert-error p:last-child,
+.alert-danger p:last-child {
+    margin-bottom: 0;
+}
+
+.alert-error strong,
+.alert-danger strong {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.alert-error p strong,
+.alert-danger p strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+/* Animação de entrada para notificações */
+.alert {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

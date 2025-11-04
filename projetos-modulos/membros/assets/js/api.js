@@ -46,18 +46,53 @@ class APIClient {
         try {
             const response = await fetch(url, config);
             
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
+            // Tentar ler o corpo da resposta mesmo em caso de erro
             const contentType = response.headers.get('content-type');
+            let responseData;
+            
+            console.log(`[API] Status: ${response.status}, Content-Type: ${contentType}`);
+            
             if (contentType && contentType.includes('application/json')) {
-                return await response.json();
+                responseData = await response.json();
+                console.log('[API] Response JSON:', responseData);
+            } else {
+                responseData = await response.text();
+                console.log('[API] Response Text:', responseData);
             }
             
-            return await response.text();
+            // Se a resposta não foi OK, verificar se tem mensagem de erro no JSON
+            if (!response.ok) {
+                console.log('[API] Resposta não OK. responseData tipo:', typeof responseData);
+                console.log('[API] responseData.error:', responseData?.error);
+                console.log('[API] responseData completo:', responseData);
+                
+                // Se for JSON e tiver mensagem de erro, usar ela
+                if (typeof responseData === 'object' && responseData && responseData.error) {
+                    console.log('[API] Criando erro com mensagem do backend:', responseData.error);
+                    const error = new Error(responseData.error);
+                    error.status = response.status;
+                    error.statusText = response.statusText;
+                    error.responseData = responseData;
+                    throw error;
+                } else {
+                    // Caso contrário, usar mensagem genérica
+                    console.log('[API] Criando erro genérico');
+                    const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    error.status = response.status;
+                    error.statusText = response.statusText;
+                    error.responseData = responseData;
+                    throw error;
+                }
+            }
+            
+            return responseData;
         } catch (error) {
             console.error(`Erro na API ${endpoint}:`, error);
+            console.log('[API] error.responseData:', error.responseData);
+            // Se o erro já tem responseData, preservar
+            if (!error.responseData && error.message) {
+                error.responseData = { error: error.message };
+            }
             throw error;
         }
     }
@@ -181,6 +216,14 @@ const EventosAPI = {
  * API de Dashboard
  */
 const DashboardAPI = {
+    /**
+     * OTIMIZADO: Busca todas as estatísticas em uma única requisição
+     */
+    async agregado() {
+        return api.get('dashboard/agregado');
+    },
+    
+    // Endpoints individuais (mantidos para compatibilidade)
     async estatisticasGerais() {
         return api.get('dashboard/geral');
     },

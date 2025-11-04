@@ -81,9 +81,24 @@ async function carregarDadosPastoral(pastoralId) {
         // Atualizar interface
         atualizarInterface();
         
+        // Garantir que os contadores sejam atualizados após um pequeno delay
+        // (para caso os elementos ainda não estejam no DOM)
+        setTimeout(() => {
+            atualizarTabelaMembros();
+            atualizarTabelaEventos();
+        }, 200);
+        
     } catch (error) {
         console.error('Erro ao carregar dados da pastoral:', error);
         mostrarNotificacao('Erro ao carregar dados da pastoral: ' + error.message, 'error');
+        
+        // Mesmo em caso de erro, tentar atualizar contadores com valores vazios
+        PastoralState.membros = [];
+        PastoralState.eventos = [];
+        setTimeout(() => {
+            atualizarTabelaMembros();
+            atualizarTabelaEventos();
+        }, 200);
     }
 }
 
@@ -92,9 +107,15 @@ async function carregarDadosPastoral(pastoralId) {
  */
 function aplicarDadosCached(dados) {
     PastoralState.pastoral = dados.pastoral;
-    PastoralState.membros = dados.membros;
-    PastoralState.eventos = dados.eventos;
+    PastoralState.membros = dados.membros || [];
+    PastoralState.eventos = dados.eventos || [];
     atualizarInterface();
+    
+    // Garantir que os contadores sejam atualizados após aplicar cache
+    setTimeout(() => {
+        atualizarTabelaMembros();
+        atualizarTabelaEventos();
+    }, 100);
 }
 
 /**
@@ -102,14 +123,16 @@ function aplicarDadosCached(dados) {
  */
 function atualizarInterface() {
     // Preencher informações básicas
-    document.getElementById('pastoral-nome').textContent = PastoralState.pastoral?.nome || 'Carregando...';
-    document.getElementById('pastoral-descricao').textContent = PastoralState.pastoral?.finalidade_descricao || 'Sem descrição';
+    const nomeEl = document.getElementById('pastoral-nome');
+    const descEl = document.getElementById('pastoral-descricao');
+    if (nomeEl) nomeEl.textContent = PastoralState.pastoral?.nome || 'Carregando...';
+    if (descEl) descEl.textContent = PastoralState.pastoral?.finalidade_descricao || 'Sem descrição';
     
     // Atualizar todas as seções
     atualizarMetricas();
     atualizarInfoPastoral();
-    atualizarTabelaMembros();
-    atualizarTabelaEventos();
+    atualizarTabelaMembros(); // Já atualiza o contador internamente
+    atualizarTabelaEventos(); // Já atualiza o contador internamente
     atualizarCoordenadores();
 }
 
@@ -124,9 +147,15 @@ async function carregarMembrosPastoral(pastoralId) {
         if (data.success) {
             PastoralState.membros = data.data || [];
             atualizarTabelaMembros();
+            atualizarMetricas(); // Atualizar métricas também
+        } else {
+            PastoralState.membros = [];
+            atualizarTabelaMembros();
         }
     } catch (error) {
         console.error('Erro ao carregar membros:', error);
+        PastoralState.membros = [];
+        atualizarTabelaMembros();
     }
 }
 
@@ -141,9 +170,15 @@ async function carregarEventosPastoral(pastoralId) {
         if (data.success) {
             PastoralState.eventos = data.data || [];
             atualizarTabelaEventos();
+            atualizarMetricas(); // Atualizar métricas também
+        } else {
+            PastoralState.eventos = [];
+            atualizarTabelaEventos();
         }
     } catch (error) {
         console.error('Erro ao carregar eventos:', error);
+        PastoralState.eventos = [];
+        atualizarTabelaEventos();
     }
 }
 
@@ -244,29 +279,71 @@ function atualizarInfoPastoral() {
  */
 function atualizarTabelaMembros() {
     const tbody = document.getElementById('tabela-membros');
+    if (!tbody) return;
     
-    if (PastoralState.membros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum membro encontrado</td></tr>';
+    const membros = Array.isArray(PastoralState.membros) ? PastoralState.membros : [];
+    
+    if (membros.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    <i class="fas fa-users"></i> Nenhum membro encontrado
+                </td>
+            </tr>
+        `;
+        
+        // Atualizar contador
+        const totalMembros = document.getElementById('total-membros-pastoral');
+        if (totalMembros) {
+            totalMembros.textContent = '0 membros';
+        }
         return;
     }
     
-    tbody.innerHTML = PastoralState.membros.map(membro => `
+    tbody.innerHTML = membros.map(membro => `
         <tr>
-            <td>${membro.nome_completo}</td>
-            <td>${membro.email || '-'}</td>
-            <td>${membro.telefone || '-'}</td>
-            <td>${membro.funcao || '-'}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="avatar me-2">
+                        <i class="fas fa-user-circle fa-2x text-muted"></i>
+                    </div>
+                    <div>
+                        <strong>${window.Sanitizer ? window.Sanitizer.escapeHtml(membro.nome_completo || '-') : (membro.nome_completo || '-')}</strong>
+                        ${membro.apelido ? `<br><small class="text-muted">${window.Sanitizer ? window.Sanitizer.escapeHtml(membro.apelido) : membro.apelido}</small>` : ''}
+                    </div>
+                </div>
+            </td>
+            <td style="text-align: left;">${membro.email ? `<i class="fas fa-envelope"></i> ${window.Sanitizer ? window.Sanitizer.escapeHtml(membro.email) : membro.email}` : '-'}</td>
+            <td style="text-align: left;">${membro.telefone ? `<i class="fas fa-phone"></i> ${window.Sanitizer ? window.Sanitizer.escapeHtml(membro.telefone) : membro.telefone}` : '-'}</td>
+            <td>${membro.funcao ? (window.Sanitizer ? window.Sanitizer.escapeHtml(membro.funcao) : membro.funcao) : '-'}</td>
             <td><span class="badge badge-${getStatusClass(membro.status)}">${getStatusText(membro.status)}</span></td>
             <td>
-                <button class="btn btn-sm btn-info" onclick="visualizarFoto('${membro.id}')" title="Visualizar Foto" ${!membro.foto_url ? 'disabled' : ''}>
-                    <i class="fas fa-image"></i>
-                </button>
+                <div class="d-flex gap-1">
                 <button class="btn btn-sm btn-secondary" onclick="visualizarMembro('${membro.id}')" title="Visualizar">
                     <i class="fas fa-eye"></i>
                 </button>
+                </div>
             </td>
         </tr>
     `).join('');
+    
+    // Atualizar contador - sempre atualizar, mesmo se elemento não existir ainda
+    const totalMembros = document.getElementById('total-membros-pastoral');
+    if (totalMembros) {
+        const total = membros.length;
+        const texto = total === 1 ? '1 membro' : `${total} membros`;
+        totalMembros.textContent = texto;
+    } else {
+        // Se o elemento não existe ainda, tentar novamente após um pequeno delay
+        setTimeout(() => {
+            const el = document.getElementById('total-membros-pastoral');
+            if (el) {
+                const total = membros.length;
+                const texto = total === 1 ? '1 membro' : `${total} membros`;
+                el.textContent = texto;
+            }
+        }, 100);
+    }
 }
 
 /**
@@ -274,22 +351,36 @@ function atualizarTabelaMembros() {
  */
 function atualizarTabelaEventos() {
     const tbody = document.getElementById('tabela-eventos');
-    
     if (!tbody) return;
     
-    if (PastoralState.eventos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum evento encontrado</td></tr>';
+    const eventos = Array.isArray(PastoralState.eventos) ? PastoralState.eventos : [];
+    
+    if (eventos.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    <i class="fas fa-calendar"></i> Nenhum evento encontrado
+                </td>
+            </tr>
+        `;
+        
+        // Atualizar contador
+        const totalEventos = document.getElementById('total-eventos-pastoral');
+        if (totalEventos) {
+            totalEventos.textContent = '0 eventos';
+        }
         return;
     }
     
-    tbody.innerHTML = PastoralState.eventos.map(evento => `
+    tbody.innerHTML = eventos.map(evento => `
         <tr>
             <td>${formatarData(evento.data)}</td>
-            <td>${evento.nome || '-'}</td>
-            <td>${evento.tipo || '-'}</td>
-            <td>${evento.horario ? evento.horario.substring(0, 5) : '-'}</td>
-            <td>${evento.local || '-'}</td>
+            <td style="text-align: left;"><strong>${window.Sanitizer ? window.Sanitizer.escapeHtml(evento.nome || '-') : (evento.nome || '-')}</strong></td>
+            <td style="text-align: left;"><span class="badge badge-secondary">${window.Sanitizer ? window.Sanitizer.escapeHtml(evento.tipo || '-') : (evento.tipo || '-')}</span></td>
+            <td style="text-align: left;"><i class="fas fa-clock"></i> ${evento.horario ? evento.horario.substring(0, 5) : '-'}</td>
+            <td style="text-align: left;"><i class="fas fa-map-marker-alt"></i> ${evento.local ? (window.Sanitizer ? window.Sanitizer.escapeHtml(evento.local) : evento.local) : '-'}</td>
             <td>
+                <div class="d-flex gap-1">
                 <button class="btn btn-sm btn-primary" onclick="verDetalhesEvento('${evento.id}')" title="Ver Detalhes">
                     <i class="fas fa-eye"></i>
                 </button>
@@ -299,9 +390,28 @@ function atualizarTabelaEventos() {
                 <button class="btn btn-sm btn-danger" onclick="excluirEvento('${evento.id}')" title="Excluir">
                     <i class="fas fa-trash"></i>
                 </button>
+                </div>
             </td>
         </tr>
     `).join('');
+    
+    // Atualizar contador - sempre atualizar, mesmo se elemento não existir ainda
+    const totalEventos = document.getElementById('total-eventos-pastoral');
+    if (totalEventos) {
+        const total = eventos.length;
+        const texto = total === 1 ? '1 evento' : `${total} eventos`;
+        totalEventos.textContent = texto;
+    } else {
+        // Se o elemento não existe ainda, tentar novamente após um pequeno delay
+        setTimeout(() => {
+            const el = document.getElementById('total-eventos-pastoral');
+            if (el) {
+                const total = eventos.length;
+                const texto = total === 1 ? '1 evento' : `${total} eventos`;
+                el.textContent = texto;
+            }
+        }, 100);
+    }
 }
 
 // Variável global para evento em edição
@@ -607,6 +717,18 @@ function atualizarCoordenadores() {
  * Mostra aba específica
  */
 function mostrarAba(aba) {
+    // Garantir que os contadores sejam atualizados ao mostrar as abas
+    if (aba === 'membros') {
+        // Pequeno delay para garantir que a aba está visível
+        setTimeout(() => {
+            atualizarTabelaMembros();
+        }, 50);
+    } else if (aba === 'eventos') {
+        // Pequeno delay para garantir que a aba está visível
+        setTimeout(() => {
+            atualizarTabelaEventos();
+        }, 50);
+    }
     // Remover active de todas as abas
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -1094,16 +1216,99 @@ function fecharModalDetalhesEvento() {
     if (backdrop) backdrop.remove();
 }
 
-// Exportar para o escopo global
-window.visualizarMembro = function(id) {
-    // Abrir modal de visualização de membro
-    console.log('Visualizar membro:', id);
-};
+// =====================================================
+// CACHE DE DADOS DE MEMBROS (para visualização rápida)
+// =====================================================
 
-window.visualizarFoto = function(id) {
-    // Abrir modal de visualização de foto
-    console.log('Visualizar foto:', id);
-};
+/**
+ * Obtém dados de um membro do cache
+ */
+function obterDadosDoCache(id) {
+    if (!id) return null;
+    const cached = PastoralState.cache.get(`membro-${id}`);
+    if (!cached) return null;
+    
+    const agora = Date.now();
+    if (agora - cached.timestamp > PastoralState.cacheValidoPor) {
+        PastoralState.cache.delete(`membro-${id}`);
+        return null;
+    }
+    
+    return cached.data;
+}
+
+/**
+ * Salva dados de um membro no cache
+ */
+function salvarDadosNoCache(id, dados) {
+    if (!id || !dados) return;
+    PastoralState.cache.set(`membro-${id}`, {
+        data: dados,
+        timestamp: Date.now()
+    });
+}
+
+/**
+ * Mostra indicador de carregamento
+ */
+function mostrarIndicadorCarregamento(mensagem = 'Carregando...') {
+    // Usar a função de notificação se disponível
+    if (typeof mostrarNotificacao === 'function') {
+        // Não mostrar notificação para carregamento, apenas log
+        console.log(mensagem);
+    }
+}
+
+/**
+ * Oculta indicador de carregamento
+ */
+function ocultarIndicadorCarregamento() {
+    // Função vazia por enquanto, pode ser expandida depois
+}
+
+// =====================================================
+// FUNÇÕES DE VISUALIZAÇÃO DE MEMBROS
+// =====================================================
+
+/**
+ * Visualiza membro (copiado de membros.js)
+ */
+async function visualizarMembro(id) {
+    try {
+        // Verificar cache primeiro (mais rápido)
+        const dadosCache = obterDadosDoCache(id);
+        if (dadosCache) {
+            console.log('Usando dados do cache para visualização rápida');
+            abrirModalMembro(dadosCache, 'visualizar');
+            return;
+        }
+        
+        // Se não estiver no cache, mostrar indicador de carregamento
+        mostrarIndicadorCarregamento('Carregando dados do membro...');
+        
+        // Buscar da API para garantir dados completos
+        console.log('Buscando dados completos da API...');
+        const response = await MembrosAPI.buscar(id);
+        
+        // Ocultar indicador
+        ocultarIndicadorCarregamento();
+        
+        if (response && response.success) {
+            // Salvar no cache para próximas visualizações
+            salvarDadosNoCache(id, response.data);
+            abrirModalMembro(response.data, 'visualizar');
+        } else {
+            mostrarNotificacao('Erro ao carregar dados do membro: ' + (response?.error || 'Erro desconhecido'), 'error');
+        }
+    } catch (error) {
+        ocultarIndicadorCarregamento();
+        console.error('Erro ao visualizar membro:', error);
+        mostrarNotificacao('Erro ao carregar dados do membro: ' + error.message, 'error');
+    }
+}
+
+// Exportar para o escopo global
+window.visualizarMembro = visualizarMembro;
 
 // =====================================================
 // FUNÇÕES PARA ADICIONAR MEMBROS À PASTORAL

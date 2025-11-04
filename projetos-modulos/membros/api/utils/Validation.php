@@ -22,16 +22,21 @@ class Validation {
     
     /**
      * Validar CPF
+     * Retorna true se válido, false caso contrário
      */
     public function isValidCPF($cpf) {
+        // Limpar formatação
         $cpf = preg_replace('/[^0-9]/', '', $cpf);
         
+        // Verificar tamanho
         if (strlen($cpf) != 11) {
+            error_log("Validation::isValidCPF: CPF com tamanho inválido: " . strlen($cpf) . " dígitos");
             return false;
         }
         
-        // Verificar se todos os dígitos são iguais
+        // Verificar se todos os dígitos são iguais (CPFs inválidos como 111.111.111-11)
         if (preg_match('/(\d)\1{10}/', $cpf)) {
+            error_log("Validation::isValidCPF: CPF com todos os dígitos iguais: " . $cpf);
             return false;
         }
         
@@ -44,6 +49,7 @@ class Validation {
         $digit1 = $remainder < 2 ? 0 : 11 - $remainder;
         
         if (intval($cpf[9]) != $digit1) {
+            error_log("Validation::isValidCPF: Primeiro dígito verificador inválido. Esperado: $digit1, Atual: " . $cpf[9] . " (CPF: $cpf)");
             return false;
         }
         
@@ -55,7 +61,12 @@ class Validation {
         $remainder = $sum % 11;
         $digit2 = $remainder < 2 ? 0 : 11 - $remainder;
         
-        return intval($cpf[10]) == $digit2;
+        if (intval($cpf[10]) != $digit2) {
+            error_log("Validation::isValidCPF: Segundo dígito verificador inválido. Esperado: $digit2, Atual: " . $cpf[10] . " (CPF: $cpf)");
+            return false;
+        }
+        
+        return true;
     }
     
     /**

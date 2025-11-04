@@ -346,42 +346,78 @@ async function carregarMembros() {
     try {
         mostrarLoadingTabela();
 
+        // Limpar filtros vazios antes de enviar
+        const filtrosLimpos = {};
+        if (AppState.filtros.busca && AppState.filtros.busca.trim()) {
+            filtrosLimpos.busca = AppState.filtros.busca.trim();
+        }
+        if (AppState.filtros.status && AppState.filtros.status.trim()) {
+            filtrosLimpos.status = AppState.filtros.status.trim();
+        }
+        if (AppState.filtros.pastoral && AppState.filtros.pastoral.trim()) {
+            filtrosLimpos.pastoral = AppState.filtros.pastoral.trim();
+        }
+        if (AppState.filtros.funcao && AppState.filtros.funcao.trim()) {
+            filtrosLimpos.funcao = AppState.filtros.funcao.trim();
+        }
+
         const params = {
             page: AppState.paginacao.page,
             limit: AppState.paginacao.limit,
-            ...AppState.filtros
+            ...filtrosLimpos
         };
 
-        // Criar chave de cache baseada nos parâmetros
-        const cacheKey = 'membros-' + JSON.stringify(params);
-        const cached = obterDoCache(cacheKey);
+        // NÃO usar cache quando há filtros ativos
+        const temFiltros = Object.keys(filtrosLimpos).length > 0;
         
         let response;
-        if (cached) {
-            console.log('Usando membros do cache');
-            response = cached;
-        } else {
-            response = await carregarMembrosAPI(params);
-            // Salvar no cache apenas se não houver busca/filtros
-            if (!AppState.filtros.busca && !AppState.filtros.status && !AppState.filtros.pastoral) {
+        if (!temFiltros) {
+            // Apenas usar cache se não houver filtros
+            const cacheKey = 'membros-' + JSON.stringify(params);
+            const cached = obterDoCache(cacheKey);
+            
+            if (cached) {
+                console.log('Usando membros do cache');
+                response = cached;
+            } else {
+                response = await carregarMembrosAPI(params);
                 salvarNoCache(cacheKey, response);
             }
+        } else {
+            // Com filtros, sempre buscar da API (sem cache)
+            console.log('Buscando membros com filtros:', params);
+            response = await carregarMembrosAPI(params);
         }
 
         if (response && response.success) {
-            // A API retorna: { success: true, data: { data: [...], paginacao: {...} } }
+            // A API retorna: { success: true, data: { data: [...], pagination: {...} } }
             const membrosData = response.data?.data || response.data || [];
             AppState.membros = Array.isArray(membrosData) ? membrosData : [];
-            AppState.paginacao = response.data?.paginacao || response.paginacao || AppState.paginacao;
+            
+            // Atualizar paginação - API retorna 'pagination' (em inglês)
+            const pagination = response.data?.pagination || response.pagination || {};
+            AppState.paginacao = {
+                page: pagination.page || AppState.paginacao.page || 1,
+                limit: pagination.limit || AppState.paginacao.limit || 20,
+                total: pagination.total !== undefined ? pagination.total : (AppState.paginacao.total || 0),
+                pages: pagination.pages || 1,
+                has_next: pagination.has_next !== undefined ? pagination.has_next : false,
+                has_prev: pagination.has_prev !== undefined ? pagination.has_prev : false
+            };
+            
             atualizarTabelaMembros();
             atualizarPaginacao();
         } else {
             AppState.membros = [];
+            AppState.paginacao.total = 0;
+            atualizarTabelaMembros();
             mostrarErroTabela('Erro ao carregar membros');
         }
     } catch (error) {
         console.error('Erro ao carregar membros:', error);
         AppState.membros = [];
+        AppState.paginacao.total = 0;
+        atualizarTabelaMembros();
         mostrarErroTabela('Erro de conexão');
     }
 }
@@ -726,6 +762,14 @@ function atualizarTabelaMembros() {
                 </td>
             </tr>
         `;
+        
+        // Atualizar contador mesmo quando não houver membros
+        const totalRegistros = document.getElementById('total-registros');
+        if (totalRegistros) {
+            const total = AppState.paginacao?.total || 0;
+            const texto = total === 1 ? '1 registro' : `${total} registros`;
+            totalRegistros.textContent = texto;
+        }
         return;
     }
     
@@ -761,9 +805,6 @@ function atualizarTabelaMembros() {
             </td>
             <td>
                 <div class="d-flex gap-1">
-                    <button class="btn btn-sm btn-info" onclick="window.visualizarFoto('${membro.id}')" title="Visualizar Foto" ${!membro.foto_url ? 'disabled' : ''}>
-                        <i class="fas fa-image"></i>
-                    </button>
                     <button class="btn btn-sm btn-secondary" onclick="window.visualizarMembro('${membro.id}')" title="Visualizar">
                         <i class="fas fa-eye"></i>
                     </button>
@@ -781,7 +822,9 @@ function atualizarTabelaMembros() {
     // Atualizar contador de registros
     const totalRegistros = document.getElementById('total-registros');
     if (totalRegistros) {
-        totalRegistros.textContent = `${AppState.paginacao.total} registros`;
+        const total = AppState.paginacao?.total || AppState.membros?.length || 0;
+        const texto = total === 1 ? '1 registro' : `${total} registros`;
+        totalRegistros.textContent = texto;
     }
 }
 
@@ -903,92 +946,6 @@ function excluirMembro(id) {
     }
 }
 
-// Função abrirModalMembro está definida em modals.js
-
-/**
- * Visualiza foto do membro
- */
-function visualizarFoto(id) {
-    const membro = AppState.membros.find(m => m.id === id);
-    
-    if (!membro) {
-        mostrarNotificacao('Membro não encontrado', 'error');
-        return;
-    }
-    
-    if (!membro.foto_url) {
-        mostrarNotificacao('Este membro não possui foto cadastrada', 'info');
-        return;
-    }
-    
-    // Criar modal para exibir a foto
-    const modalId = 'modal-foto-' + Date.now();
-    const modalHtml = `
-        <div class="modal" id="${modalId}" style="display: flex;">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Foto - ${membro.nome_completo}</h5>
-                        <button type="button" class="btn-close" onclick="fecharModalFoto('${modalId}')">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body text-center">
-                        <img src="${membro.foto_url}" alt="Foto de ${membro.nome_completo}" 
-                             style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);" 
-                             onerror="this.src='https://via.placeholder.com/400x400?text=Erro+ao+carregar+imagem'">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="fecharModalFoto('${modalId}')">
-                            Fechar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Adicionar modal ao body
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = modalHtml;
-    document.body.appendChild(tempDiv.firstElementChild);
-    
-    // Adicionar overlay de fundo
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1040;';
-    overlay.onclick = () => fecharModalFoto(modalId);
-    document.body.appendChild(overlay);
-    
-    // Adicionar animação de entrada
-    setTimeout(() => {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.style.opacity = '1';
-        }
-    }, 10);
-}
-
-/**
- * Fechar modal de foto
- */
-function fecharModalFoto(modalId) {
-    const modal = document.getElementById(modalId);
-    const overlay = document.querySelector('.modal-overlay');
-    
-    if (modal) {
-        modal.style.opacity = '0';
-        setTimeout(() => {
-            modal.remove();
-            if (overlay) overlay.remove();
-        }, 300);
-    }
-}
-
-// Exportar para o escopo global
-window.visualizarFoto = visualizarFoto;
-window.fecharModalFoto = fecharModalFoto;
-
 function atualizarPaginacao() {
     const infoPaginacao = document.getElementById('info-paginacao');
     const btnAnterior = document.querySelector('[onclick="paginarAnterior()"]');
@@ -1025,19 +982,62 @@ function paginarProximo() {
 // FILTROS
 // =====================================================
 function aplicarFiltros() {
-    AppState.filtros.busca = document.getElementById('filtro-busca').value;
-    AppState.filtros.status = document.getElementById('filtro-status').value;
-    AppState.filtros.pastoral = document.getElementById('filtro-pastoral').value;
+    const filtroBusca = document.getElementById('filtro-busca');
+    const filtroStatus = document.getElementById('filtro-status');
+    const filtroPastoral = document.getElementById('filtro-pastoral');
+    
+    // Atualizar filtros no estado
+    AppState.filtros.busca = filtroBusca ? filtroBusca.value.trim() : '';
+    AppState.filtros.status = filtroStatus ? filtroStatus.value.trim() : '';
+    AppState.filtros.pastoral = filtroPastoral ? filtroPastoral.value.trim() : '';
     AppState.paginacao.page = 1;
     
-    // Invalidar cache ao aplicar filtros
+    // Invalidar todo o cache ao aplicar filtros
     limparCacheExpirado();
+    AppState.apiCache.clear(); // Limpar cache de API também
+    
+    console.log('Aplicando filtros:', AppState.filtros);
     
     carregarMembros();
 }
 
 // Versão com debounce para busca
 const aplicarFiltrosDebounce = debounce(aplicarFiltros, 500);
+
+/**
+ * Limpa todos os filtros e recarrega membros
+ */
+function limparFiltros() {
+    const filtroBusca = document.getElementById('filtro-busca');
+    const filtroStatus = document.getElementById('filtro-status');
+    const filtroPastoral = document.getElementById('filtro-pastoral');
+    
+    // Limpar campos
+    if (filtroBusca) filtroBusca.value = '';
+    if (filtroStatus) filtroStatus.value = '';
+    if (filtroPastoral) filtroPastoral.value = '';
+    
+    // Limpar estado
+    AppState.filtros = {
+        busca: '',
+        status: '',
+        pastoral: '',
+        funcao: ''
+    };
+    AppState.paginacao.page = 1;
+    
+    // Limpar cache
+    limparCacheExpirado();
+    AppState.apiCache.clear();
+    
+    console.log('Filtros limpos');
+    
+    // Recarregar membros
+    carregarMembros();
+}
+
+// Exportar para escopo global
+window.limparFiltros = limparFiltros;
 
 function atualizarSelectPastorais() {
     const select = document.getElementById('filtro-pastoral');
@@ -1296,12 +1296,13 @@ function mostrarEventosDoDia(dataFormatada, totalEventos) {
                         <div class="eventos-lista-dia">
                             ${eventosDoDia.map(evento => {
                                 const horarioFormatado = evento.horario ? evento.horario.substring(0, 5) : 'Não definido';
-                                const origemBadge = evento.origem === 'pastoral' 
+                                const origem = evento.origem || (evento.pastoral_id ? 'pastoral' : 'geral');
+                                const origemBadge = origem === 'pastoral' 
                                     ? `<span class="badge badge-info">Pastoral: ${evento.pastoral_nome || 'N/A'}</span>`
                                     : `<span class="badge badge-secondary">Evento Geral</span>`;
                                 
                                 return `
-                                    <div class="evento-item-dia" onclick="abrirDetalhesEventoCalendario('${evento.id}', '${evento.origem}')">
+                                    <div class="evento-item-dia" onclick="abrirDetalhesEventoCalendario('${evento.id}', '${origem}')">
                                         <div class="evento-item-header">
                                             <h6>${evento.nome || 'Sem nome'}</h6>
                                             ${origemBadge}
@@ -1365,9 +1366,18 @@ function abrirDetalhesEventoCalendario(eventoId, origem) {
         return;
     }
     
+    // Determinar origem se não foi passada
+    if (!origem) {
+        // Verificar se é evento geral ou de pastoral
+        origem = evento.origem || (evento.pastoral_id ? 'pastoral' : 'geral');
+    }
+    
+    // Se não tem pastoral_id definido e não é explicitamente pastoral, considerar geral
+    const isEventoGeral = origem === 'geral' || (!evento.pastoral_id && origem !== 'pastoral');
+    
     fecharModalEventosDia();
     
-    const horarioFormatado = evento.horario ? evento.horario.substring(0, 5) : 'Não definido';
+    const horarioFormatado = evento.horario ? evento.horario.substring(0, 5) : (evento.hora_inicio ? evento.hora_inicio.substring(0, 5) : 'Não definido');
     const tipoFormatado = evento.tipo || 'Não especificado';
     const localFormatado = evento.local || 'Não definido';
     const descricaoFormatada = evento.descricao || 'Sem descrição';
@@ -1398,7 +1408,7 @@ function abrirDetalhesEventoCalendario(eventoId, origem) {
                             </div>
                             <div class="detail-row">
                                 <div class="detail-label"><i class="fas fa-calendar"></i> Data:</div>
-                                <div class="detail-value">${formatarData(evento.data)}</div>
+                                <div class="detail-value">${formatarData(evento.data || evento.data_evento)}</div>
                             </div>
                             <div class="detail-row">
                                 <div class="detail-label"><i class="fas fa-clock"></i> Horário:</div>
@@ -1425,6 +1435,14 @@ function abrirDetalhesEventoCalendario(eventoId, origem) {
                         </div>
                     </div>
                     <div class="modal-footer">
+                        ${isEventoGeral ? `
+                        <button type="button" class="btn btn-danger" onclick="confirmarExcluirEvento('${evento.id}')" title="Excluir este evento">
+                            <i class="fas fa-trash"></i> Excluir
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="editarEventoGeral('${evento.id}')" title="Editar este evento">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        ` : ''}
                         <button type="button" class="btn btn-secondary" onclick="fecharModalDetalhesEvento()">
                             <i class="fas fa-times"></i> Fechar
                         </button>
@@ -1797,6 +1815,86 @@ function fecharAutocomplete(campoId) {
     }, 200);
 }
 
+/**
+ * Edita um evento geral
+ */
+async function editarEventoGeral(eventoId) {
+    try {
+        // Buscar dados do evento
+        const response = await EventosAPI.buscar(eventoId);
+        
+        if (response.success) {
+            const evento = response.data;
+            // Converter para formato esperado pelo modal
+            evento.data = evento.data_evento;
+            evento.horario = evento.horario || evento.hora_inicio;
+            
+            fecharModalDetalhesEvento();
+            
+            // Aguardar um pouco para fechar modal anterior
+            setTimeout(() => {
+                abrirModalEvento(evento);
+            }, 100);
+        } else {
+            mostrarNotificacao('Erro ao carregar evento para edição', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao buscar evento:', error);
+        mostrarNotificacao('Erro ao carregar evento: ' + error.message, 'error');
+    }
+}
+
+/**
+ * Confirma e exclui um evento geral
+ */
+function confirmarExcluirEvento(eventoId) {
+    abrirModalConfirmacao(
+        'Confirmar Exclusão',
+        'Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.',
+        () => excluirEventoGeral(eventoId),
+        null
+    );
+}
+
+/**
+ * Exclui um evento geral
+ */
+async function excluirEventoGeral(eventoId) {
+    try {
+        const btnExcluir = document.querySelector('[onclick*="confirmarExcluirEvento"]');
+        if (btnExcluir) {
+            btnExcluir.disabled = true;
+            btnExcluir.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+        }
+        
+        const response = await EventosAPI.excluir(eventoId);
+        
+        if (response.success) {
+            mostrarNotificacao('Evento excluído com sucesso!', 'success');
+            fecharModalDetalhesEvento();
+            
+            // Recarregar eventos no calendário
+            await carregarEventosCalendario();
+            await carregarEventos(); // Recarregar também na lista de eventos
+        } else {
+            mostrarNotificacao(response.error || 'Erro ao excluir evento', 'error');
+            if (btnExcluir) {
+                btnExcluir.disabled = false;
+                btnExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao excluir evento:', error);
+        mostrarNotificacao('Erro ao excluir evento: ' + error.message, 'error');
+        
+        const btnExcluir = document.querySelector('[onclick*="confirmarExcluirEvento"]');
+        if (btnExcluir) {
+            btnExcluir.disabled = false;
+            btnExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+        }
+    }
+}
+
 // Exportar para o escopo global
 window.abrirModalEvento = abrirModalEvento;
 window.fecharModalEventoGeral = fecharModalEventoGeral;
@@ -1804,6 +1902,9 @@ window.salvarEventoGeral = salvarEventoGeral;
 window.buscarMembrosAutocomplete = buscarMembrosAutocomplete;
 window.selecionarMembroAutocomplete = selecionarMembroAutocomplete;
 window.fecharAutocomplete = fecharAutocomplete;
+window.editarEventoGeral = editarEventoGeral;
+window.confirmarExcluirEvento = confirmarExcluirEvento;
+window.excluirEventoGeral = excluirEventoGeral;
 
 // =====================================================
 // RELATÓRIOS
@@ -2224,6 +2325,22 @@ function configurarEventos() {
         });
     }
     
+    // Evento para filtro de status
+    const filtroStatus = document.getElementById('filtro-status');
+    if (filtroStatus) {
+        filtroStatus.addEventListener('change', function() {
+            aplicarFiltros();
+        });
+    }
+    
+    // Evento para filtro de pastoral
+    const filtroPastoral = document.getElementById('filtro-pastoral');
+    if (filtroPastoral) {
+        filtroPastoral.addEventListener('change', function() {
+            aplicarFiltros();
+        });
+    }
+    
     // Eventos de teclado
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -2241,12 +2358,87 @@ function fecharModais() {
 // EXPORTAÇÃO
 // =====================================================
 function exportarMembros() {
+    // Criar modal para escolher formato
+    // Usar HTML string com isHtmlContent: true (código interno, confiável)
+    const modalHTML = `
+        <div class="export-options" style="text-align: center;">
+            <h5 style="margin-bottom: 1.5rem; font-weight: 600;">Escolha o formato de exportação:</h5>
+            <div class="export-buttons" style="display: flex; gap: 1rem; margin: 1.5rem 0;">
+                <button type="button" class="btn btn-success" id="btn-export-excel" style="flex: 1; padding: 0.75rem 1rem; font-size: 1rem; min-height: 50px;">
+                    <i class="fas fa-file-excel"></i> Excel (XLSX)
+                </button>
+                <button type="button" class="btn btn-danger" id="btn-export-pdf" style="flex: 1; padding: 0.75rem 1rem; font-size: 1rem; min-height: 50px;">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </button>
+            </div>
+            <p style="margin-top: 1.5rem; font-size: 0.9rem; color: #6c757d;">
+                Os filtros atuais serão aplicados na exportação.
+            </p>
+        </div>
+    `;
+    
+    abrirModal('Exportar Membros', modalHTML, [
+        {
+            texto: 'Cancelar',
+            classe: 'btn-secondary',
+            onclick: function() {
+                fecharModal();
+            }
+        }
+    ], { isHtmlContent: true });
+    
+    // Adicionar event listeners após o modal ser criado
+    setTimeout(() => {
+        const btnExcel = document.getElementById('btn-export-excel');
+        const btnPDF = document.getElementById('btn-export-pdf');
+        
+        if (btnExcel) {
+            btnExcel.addEventListener('click', function(e) {
+                e.preventDefault();
+                fecharModal();
+                exportarMembrosFormato('xlsx');
+            });
+        }
+        
+        if (btnPDF) {
+            btnPDF.addEventListener('click', function(e) {
+                e.preventDefault();
+                fecharModal();
+                exportarMembrosFormato('pdf');
+            });
+        }
+    }, 100);
+}
+
+/**
+ * Exporta membros no formato especificado
+ */
+function exportarMembrosFormato(formato) {
+    // Limpar filtros vazios
+    const filtrosLimpos = {};
+    if (AppState.filtros.busca && AppState.filtros.busca.trim()) {
+        filtrosLimpos.busca = AppState.filtros.busca.trim();
+    }
+    if (AppState.filtros.status && AppState.filtros.status.trim()) {
+        filtrosLimpos.status = AppState.filtros.status.trim();
+    }
+    if (AppState.filtros.pastoral && AppState.filtros.pastoral.trim()) {
+        filtrosLimpos.pastoral = AppState.filtros.pastoral.trim();
+    }
+    
     const params = new URLSearchParams({
-        formato: 'excel',
-        ...AppState.filtros
+        formato: formato,
+        ...filtrosLimpos
     });
     
-    window.open(`${CONFIG.apiBaseUrl}relatorios/membros?${params}`, '_blank');
+    // Mostrar notificação
+    mostrarNotificacao(`Exportando membros em formato ${formato.toUpperCase()}...`, 'info');
+    
+    // Pequeno delay para garantir que o modal foi fechado
+    setTimeout(() => {
+        // Abrir download em nova aba
+        window.open(`${CONFIG.apiBaseUrl}membros/exportar?${params}`, '_blank');
+    }, 100);
 }
 
 // =====================================================
@@ -2255,6 +2447,8 @@ function exportarMembros() {
 
 // Exportar funções de ação dos membros para uso global
 window.visualizarMembro = visualizarMembro;
+window.exportarMembros = exportarMembros;
+window.exportarMembrosFormato = exportarMembrosFormato;
 window.editarMembro = editarMembro;
 window.excluirMembro = excluirMembro;
 window.carregarMembros = carregarMembros;

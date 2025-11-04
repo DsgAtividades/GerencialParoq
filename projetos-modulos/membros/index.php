@@ -212,6 +212,9 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                             <button class="btn btn-primary" onclick="aplicarFiltros()">
                                 <i class="fas fa-search"></i> Filtrar
                             </button>
+                            <button class="btn btn-secondary" onclick="limparFiltros()" style="margin-left: 0.5rem;">
+                                <i class="fas fa-times"></i> Limpar
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -390,6 +393,9 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Utilitários devem ser carregados primeiro -->
+    <script src="assets/js/sanitizer.js"></script>
+    <script src="assets/js/validator.js"></script>
     <script src="assets/js/api.js"></script>
     <script src="assets/js/modals.js"></script>
     <script src="assets/js/table.js"></script>

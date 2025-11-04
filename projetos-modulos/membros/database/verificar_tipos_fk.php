@@ -1,33 +1,47 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 
-$db = new MembrosDatabase();
-$conn = $db->getConnection();
+if (!class_exists('PDO')) {
+    die("PDO não está disponível neste ambiente\n");
+}
+
+try {
+    $db = new MembrosDatabase();
+    $conn = $db->getConnection();
+} catch (Exception $e) {
+    die("Erro ao conectar no banco: " . $e->getMessage() . "\n");
+}
 
 echo "=== VERIFICANDO TIPOS DAS COLUNAS ===\n\n";
 
-// Verificar membros_pastorais
-$stmt = $conn->query("DESCRIBE membros_pastorais");
-$cols = $stmt->fetchAll(PDO::FETCH_ASSOC);
-echo "membros_pastorais.id:\n";
-foreach($cols as $col) {
-    if ($col['Field'] === 'id') {
-        echo "  Tipo: {$col['Type']}\n";
-        echo "  Null: {$col['Null']}\n";
-        echo "  Key: {$col['Key']}\n";
+$tables = [
+    'membros_membros',
+    'membros_enderecos_membro',
+    'membros_contatos_membro',
+    'membros_documentos_membro',
+    'membros_membros_pastorais',
+    'membros_pastorais'
+];
+
+foreach ($tables as $table) {
+    echo "Tabela: {$table}\n";
+    try {
+        $stmt = $conn->query("DESCRIBE {$table}");
+        $cols = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($cols as $col) {
+            printf("  %-30s | %-20s | Null: %-3s | Key: %-3s | Default: %s\n",
+                $col['Field'],
+                $col['Type'],
+                $col['Null'],
+                $col['Key'],
+                $col['Default'] === null ? 'NULL' : $col['Default']
+            );
+        }
+    } catch (Exception $e) {
+        echo "  Erro ao descrever tabela: " . $e->getMessage() . "\n";
     }
+    echo "\n";
 }
 
-// Verificar membros_membros
-echo "\nmembros_membros.id:\n";
-$stmt = $conn->query("DESCRIBE membros_membros");
-$cols = $stmt->fetchAll(PDO::FETCH_ASSOC);
-foreach($cols as $col) {
-    if ($col['Field'] === 'id') {
-        echo "  Tipo: {$col['Type']}\n";
-        echo "  Null: {$col['Null']}\n";
-        echo "  Key: {$col['Key']}\n";
-    }
-}
 ?>
 

@@ -15,12 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Configuração de resposta JSON
-header('Content-Type: application/json; charset=utf-8');
-
 // Incluir dependências
 require_once 'utils/Response.php';
 require_once 'utils/Validation.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Obter método e URI
 $method = $_SERVER['REQUEST_METHOD'];
@@ -79,8 +77,24 @@ if (strpos($path, 'membros/buscar') !== false) {
     error_log("Routes: Detectado path de busca de membros: $path");
 }
 
+// Verificar se é rota de exportação (não definir header JSON)
+$isExportacao = strpos($path, 'exportar') !== false || isset($_GET['formato']);
+
+// Configuração de resposta JSON (apenas se não for exportação)
+if (!$isExportacao) {
+    header('Content-Type: application/json; charset=utf-8');
+}
+
 // Roteamento
 switch ($path) {
+    case 'dashboard/agregado':
+        if ($method === 'GET') {
+            include 'endpoints/dashboard_agregado.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
     case 'dashboard/geral':
         if ($method === 'GET') {
             include 'endpoints/dashboard_geral.php';
@@ -124,6 +138,15 @@ switch ($path) {
     case 'pastorais/vincular-membro':
         if ($method === 'POST') {
             include 'endpoints/pastorais_vincular_membro.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'membros/exportar':
+        if ($method === 'GET') {
+            error_log("Routes: Rota específica para membros/exportar detectada");
+            include 'endpoints/membros_exportar.php';
         } else {
             Response::error('Método não permitido', 405);
         }
@@ -259,15 +282,43 @@ switch ($path) {
                 Response::error('Método não permitido', 405);
             }
         }
-        // Rota: detalhes do evento
+        // Rota: eventos gerais por ID (GET, PUT, DELETE)
+        // Verificar se é evento geral primeiro (antes das rotas de escalas)
         elseif (preg_match('/^eventos\/([a-f0-9\-]{36})$/', $path, $matches)) {
             $evento_id = $matches[1];
-            if ($method === 'GET') {
-                include 'endpoints/escalas_evento_detalhes.php';
-            } elseif ($method === 'DELETE') {
-                include 'endpoints/escalas_eventos_excluir.php';
+            
+            // Verificar se é evento geral (tabela membros_eventos)
+            // Fazemos uma verificação rápida para distinguir entre evento geral e evento de escala
+            try {
+                $testDb = new MembrosDatabase();
+                $testQuery = "SELECT COUNT(*) as count FROM membros_eventos WHERE id = ?";
+                $result = $testDb->fetchOne($testQuery, [$evento_id]);
+                $isEventoGeral = ($result && isset($result['count']) && $result['count'] > 0);
+            } catch (Exception $e) {
+                error_log("Erro ao verificar tipo de evento: " . $e->getMessage());
+                $isEventoGeral = false;
+            }
+            
+            if ($isEventoGeral) {
+                // Evento geral
+                if ($method === 'GET') {
+                    include 'endpoints/eventos_visualizar.php';
+                } elseif ($method === 'PUT') {
+                    include 'endpoints/eventos_atualizar.php';
+                } elseif ($method === 'DELETE') {
+                    include 'endpoints/eventos_excluir.php';
+                } else {
+                    Response::error('Método não permitido', 405);
+                }
             } else {
-                Response::error('Método não permitido', 405);
+                // Evento de escala (fallback para rota antiga)
+                if ($method === 'GET') {
+                    include 'endpoints/escalas_evento_detalhes.php';
+                } elseif ($method === 'DELETE') {
+                    include 'endpoints/escalas_eventos_excluir.php';
+                } else {
+                    Response::error('Método não permitido', 405);
+                }
             }
         }
         // Rota: salvar funcoes/atribuicoes do evento
@@ -294,6 +345,17 @@ switch ($path) {
             if ($method === 'GET') {
                 include 'endpoints/membros_pastorais.php';
             } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
+        // Rota: upload de foto do membro
+        elseif (preg_match('/^membros\/upload-foto$/', $path)) {
+            error_log("Rota upload-foto detectada. Método: " . $method);
+            if ($method === 'POST') {
+                error_log("Incluindo endpoints/membros_upload_foto.php");
+                include 'endpoints/membros_upload_foto.php';
+            } else {
+                error_log("Erro: Método não permitido para upload-foto: " . $method);
                 Response::error('Método não permitido', 405);
             }
         }

@@ -21,8 +21,23 @@ try {
     // Validar dados obrigatórios
     $validation = new Validation();
     
-    if (!isset($input['nome_completo']) || empty(trim($input['nome_completo']))) {
-        Response::error('Nome completo é obrigatório', 400);
+    // Validar campos NOT NULL do banco
+    $camposObrigatorios = [
+        'nome_completo' => 'Nome completo'
+    ];
+    
+    foreach ($camposObrigatorios as $campo => $nomeCampo) {
+        if (!isset($input[$campo]) || empty(trim($input[$campo]))) {
+            error_log("membros_criar.php: Campo obrigatório '$campo' não fornecido ou vazio");
+            Response::error("Campo obrigatório '$nomeCampo' não preenchido. Este campo é obrigatório e não pode estar vazio.", 400);
+        }
+    }
+    
+    // Validação adicional após trim
+    $nome_completo = trim($input['nome_completo']);
+    if (empty($nome_completo)) {
+        error_log("membros_criar.php: Nome completo está vazio após trim");
+        Response::error('Nome completo não pode estar vazio. Este campo é obrigatório no banco de dados.', 400);
     }
     
     // Validar email se fornecido
@@ -41,16 +56,42 @@ try {
     
     // Validar CPF se fornecido
     if (isset($input['cpf']) && !empty($input['cpf'])) {
+        // Validar CPF (a função isValidCPF já remove formatação internamente)
         if (!$validation->isValidCPF($input['cpf'])) {
             Response::error('CPF inválido', 400);
         }
         
-        // Verificar se CPF já existe
+        // Limpar CPF para salvar no banco (após validação)
+        $cpf_limpo = preg_replace('/[^0-9]/', '', $input['cpf']);
+        
+        // Verificar se CPF já existe (usar CPF limpo)
         $stmt = $db->prepare("SELECT id FROM membros_membros WHERE cpf = ?");
-        $stmt->execute([$input['cpf']]);
+        $stmt->execute([$cpf_limpo]);
         if ($stmt->fetch()) {
             Response::error('CPF já cadastrado', 409);
         }
+        
+        // Atualizar input com CPF limpo para salvar no banco
+        $input['cpf'] = $cpf_limpo;
+    } else {
+        $input['cpf'] = null;
+    }
+
+    // Normalizar campos que precisam de tipos específicos
+    $input['paroquiano'] = isset($input['paroquiano'])
+        ? (in_array($input['paroquiano'], [true, 1, '1', 'true', 'on'], true) ? 1 : 0)
+        : 0;
+
+    if (isset($input['frequencia']) && $input['frequencia'] === '') {
+        $input['frequencia'] = null;
+    }
+
+    if (isset($input['periodo']) && $input['periodo'] === '') {
+        $input['periodo'] = null;
+    }
+
+    if (isset($input['sexo']) && $input['sexo'] === '') {
+        $input['sexo'] = null;
     }
     
     // Gerar UUID para o membro
@@ -88,7 +129,7 @@ try {
             'cep' => $input['cep'] ?? null,
             'cpf' => $input['cpf'] ?? null,
             'rg' => $input['rg'] ?? null,
-            'paroquiano' => $input['paroquiano'] ?? false,
+            'paroquiano' => $input['paroquiano'],
             'comunidade_ou_capelania' => $input['comunidade_ou_capelania'] ?? null,
             'data_entrada' => $input['data_entrada'] ?? date('Y-m-d'),
             'foto_url' => $input['foto_url'] ?? null,
@@ -179,7 +220,7 @@ try {
         // Inserir documentos se fornecidos
         if (isset($input['documentos']) && is_array($input['documentos'])) {
             foreach ($input['documentos'] as $documento) {
-                if (isset($documento['tipo']) && isset($documento['numero']) && !empty($documento['numero'])) {
+                if (isset($documento['tipo_documento']) && isset($documento['numero']) && !empty($documento['numero'])) {
                     $documento_id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
                         mt_rand(0, 0xffff), mt_rand(0, 0xffff),
                         mt_rand(0, 0xffff),
@@ -190,17 +231,17 @@ try {
                     
                     $stmt = $db->prepare("
                         INSERT INTO membros_documentos_membro 
-                        (id, membro_id, tipo, numero, orgao_emissor, data_emissao, data_validade, arquivo_url, observacoes) 
+                        (id, membro_id, tipo_documento, numero, orgao_emissor, data_emissao, data_vencimento, arquivo_url, observacoes) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ");
                     $stmt->execute([
                         $documento_id,
                         $membro_id,
-                        $documento['tipo'],
+                        $documento['tipo_documento'],
                         $documento['numero'],
                         $documento['orgao_emissor'] ?? null,
                         $documento['data_emissao'] ?? null,
-                        $documento['data_validade'] ?? null,
+                        $documento['data_vencimento'] ?? null,
                         $documento['arquivo_url'] ?? null,
                         $documento['observacoes'] ?? null
                     ]);
@@ -210,6 +251,67 @@ try {
         
         // Confirmar transação
         $db->commit();
+        
+        // Se foto_url foi fornecido (URL do arquivo), criar anexo agora que temos o membro_id
+        if (isset($input['foto_url']) && !empty($input['foto_url'])) {
+            // Se foto_url é uma URL (não UUID), significa que foi feito upload mas anexo ainda não foi criado
+            if (strpos($input['foto_url'], '/uploads/fotos/') !== false) {
+                // Extrair nome do arquivo da URL
+                $nomeArquivo = basename($input['foto_url']);
+                $caminhoArquivo = __DIR__ . '/../../uploads/fotos/' . $nomeArquivo;
+                
+                // Verificar se arquivo existe
+                if (file_exists($caminhoArquivo)) {
+                    // Gerar UUID para o anexo
+                    $anexoId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                        mt_rand(0, 0xffff),
+                        mt_rand(0, 0x0fff) | 0x4000,
+                        mt_rand(0, 0x3fff) | 0x8000,
+                        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+                    );
+                    
+                    // Obter informações do arquivo
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mimeType = finfo_file($finfo, $caminhoArquivo);
+                    finfo_close($finfo);
+                    $tamanho = filesize($caminhoArquivo);
+                    
+                    // Criar anexo
+                    $stmt = $db->prepare("
+                        INSERT INTO membros_anexos 
+                        (id, entidade_tipo, entidade_id, nome_arquivo, tipo_arquivo, tamanho_bytes, url_arquivo, descricao) 
+                        VALUES (?, 'membro', ?, ?, ?, ?, ?, ?)
+                    ");
+                    $stmt->execute([
+                        $anexoId,
+                        $membro_id,
+                        $nomeArquivo,
+                        $mimeType,
+                        $tamanho,
+                        $input['foto_url'],
+                        'Foto do membro'
+                    ]);
+                    
+                    // Atualizar foto_url com ID do anexo
+                    $stmt = $db->prepare("UPDATE membros_membros SET foto_url = ? WHERE id = ?");
+                    $stmt->execute([$anexoId, $membro_id]);
+                }
+            } elseif (preg_match('/^[a-f0-9\-]{36}$/', $input['foto_url'])) {
+                // Se foto_url é um UUID (ID de anexo), atualizar o anexo com o membro_id
+                $stmt = $db->prepare("UPDATE membros_anexos SET entidade_id = ? WHERE id = ? AND entidade_tipo = 'membro'");
+                $stmt->execute([$membro_id, $input['foto_url']]);
+                
+                // Atualizar foto_url com a URL completa do arquivo
+                $stmt = $db->prepare("SELECT url_arquivo FROM membros_anexos WHERE id = ?");
+                $stmt->execute([$input['foto_url']]);
+                $anexo = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($anexo) {
+                    $stmt = $db->prepare("UPDATE membros_membros SET foto_url = ? WHERE id = ?");
+                    $stmt->execute([$anexo['url_arquivo'], $membro_id]);
+                }
+            }
+        }
         
         // Buscar dados do membro criado
         $stmt = $db->prepare("

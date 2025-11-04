@@ -24,8 +24,19 @@ try {
         Response::error('ID inválido', 400);
     }
     
-    // Buscar dados da pastoral
-    $query = "SELECT * FROM membros_pastorais WHERE id = ?";
+    // Buscar dados da pastoral com coordenadores em uma única query (otimização N+1)
+    $query = "
+        SELECT 
+            p.*,
+            c.nome_completo as coordenador_nome,
+            c.apelido as coordenador_apelido,
+            vc.nome_completo as vice_coordenador_nome,
+            vc.apelido as vice_coordenador_apelido
+        FROM membros_pastorais p
+        LEFT JOIN membros_membros c ON p.coordenador_id = c.id
+        LEFT JOIN membros_membros vc ON p.vice_coordenador_id = vc.id
+        WHERE p.id = ?
+    ";
     $stmt = $db->prepare($query);
     $stmt->execute([$pastoral_id]);
     $pastoral = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -34,26 +45,16 @@ try {
         Response::error('Pastoral não encontrada', 404);
     }
     
-    // Buscar nome do coordenador se houver
+    // Formatar nome do coordenador (usar apelido se nome completo não existir)
     if ($pastoral['coordenador_id']) {
-        $coordQuery = "SELECT nome_completo, apelido FROM membros_membros WHERE id = ?";
-        $coordStmt = $db->prepare($coordQuery);
-        $coordStmt->execute([$pastoral['coordenador_id']]);
-        $coordenador = $coordStmt->fetch(PDO::FETCH_ASSOC);
-        if ($coordenador) {
-            $pastoral['coordenador_nome'] = $coordenador['nome_completo'] ?: $coordenador['apelido'];
-        }
+        $pastoral['coordenador_nome'] = $pastoral['coordenador_nome'] ?: $pastoral['coordenador_apelido'];
+        unset($pastoral['coordenador_apelido']); // Remover campo temporário
     }
     
-    // Buscar nome do vice-coordenador se houver
+    // Formatar nome do vice-coordenador (usar apelido se nome completo não existir)
     if ($pastoral['vice_coordenador_id']) {
-        $viceCoordQuery = "SELECT nome_completo, apelido FROM membros_membros WHERE id = ?";
-        $viceCoordStmt = $db->prepare($viceCoordQuery);
-        $viceCoordStmt->execute([$pastoral['vice_coordenador_id']]);
-        $vice_coordenador = $viceCoordStmt->fetch(PDO::FETCH_ASSOC);
-        if ($vice_coordenador) {
-            $pastoral['vice_coordenador_nome'] = $vice_coordenador['nome_completo'] ?: $vice_coordenador['apelido'];
-        }
+        $pastoral['vice_coordenador_nome'] = $pastoral['vice_coordenador_nome'] ?: $pastoral['vice_coordenador_apelido'];
+        unset($pastoral['vice_coordenador_apelido']); // Remover campo temporário
     }
     
     Response::success($pastoral);

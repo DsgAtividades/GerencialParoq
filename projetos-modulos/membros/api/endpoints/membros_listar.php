@@ -23,7 +23,10 @@ try {
     $pastoral = isset($_GET['pastoral']) ? trim($_GET['pastoral']) : '';
     $funcao = isset($_GET['funcao']) ? trim($_GET['funcao']) : '';
     
-    // Query base simples - sem JOINs para evitar perda de registros
+    // Log dos filtros recebidos para debug
+    error_log("membros_listar.php: Filtros - busca: '$busca', status: '$status', pastoral: '$pastoral', funcao: '$funcao'");
+    
+    // Query otimizada com LEFT JOIN para buscar pastorais em uma única query
     $query = "
         SELECT 
             m.id,
@@ -36,8 +39,10 @@ try {
             m.comunidade_ou_capelania,
             m.foto_url,
             m.created_at,
-            '' as pastorais
+            GROUP_CONCAT(DISTINCT p.nome SEPARATOR ', ') as pastorais
         FROM membros_membros m
+        LEFT JOIN membros_membros_pastorais mp ON m.id = mp.membro_id
+        LEFT JOIN membros_pastorais p ON mp.pastoral_id = p.id
         WHERE 1=1
     ";
     
@@ -45,10 +50,19 @@ try {
     
     // Adicionar filtros
     if (!empty($busca)) {
-        $query .= " AND (m.nome_completo LIKE ? OR m.apelido LIKE ? OR m.email LIKE ?)";
-        $params[] = "%{$busca}%";
-        $params[] = "%{$busca}%";
-        $params[] = "%{$busca}%";
+        $query .= " AND (
+            m.nome_completo LIKE ? OR 
+            m.apelido LIKE ? OR 
+            m.email LIKE ? OR 
+            m.celular_whatsapp LIKE ? OR 
+            m.telefone_fixo LIKE ?
+        )";
+        $buscaParam = "%{$busca}%";
+        $params[] = $buscaParam;
+        $params[] = $buscaParam;
+        $params[] = $buscaParam;
+        $params[] = $buscaParam;
+        $params[] = $buscaParam;
     }
     
     if (!empty($status)) {
@@ -56,17 +70,20 @@ try {
         $params[] = $status;
     }
     
-    // Filtros de pastoral e função removidos temporariamente
-    // (serão implementados em versão futura com query separada)
+    // Filtro de pastoral - implementado
     if (!empty($pastoral)) {
-        // TODO: Implementar filtro de pastoral com query separada
+        $query .= " AND m.id IN (SELECT membro_id FROM membros_membros_pastorais WHERE pastoral_id = ?)";
+        $params[] = $pastoral;
     }
     
+    // Filtro de função - implementado
     if (!empty($funcao)) {
-        // TODO: Implementar filtro de função com query separada
+        $query .= " AND m.id IN (SELECT membro_id FROM membros_membros_pastorais WHERE funcao_id = ?)";
+        $params[] = $funcao;
     }
     
-    $query .= " ORDER BY m.nome_completo LIMIT ? OFFSET ?";
+    // Agrupar por membro para o GROUP_CONCAT funcionar corretamente
+    $query .= " GROUP BY m.id ORDER BY m.nome_completo LIMIT ? OFFSET ?";
     $params[] = $limit;
     $params[] = $offset;
     
@@ -86,10 +103,19 @@ try {
     $countParams = [];
     
     if (!empty($busca)) {
-        $countQuery .= " AND (m.nome_completo LIKE ? OR m.apelido LIKE ? OR m.email LIKE ?)";
-        $countParams[] = "%{$busca}%";
-        $countParams[] = "%{$busca}%";
-        $countParams[] = "%{$busca}%";
+        $countQuery .= " AND (
+            m.nome_completo LIKE ? OR 
+            m.apelido LIKE ? OR 
+            m.email LIKE ? OR 
+            m.celular_whatsapp LIKE ? OR 
+            m.telefone_fixo LIKE ?
+        )";
+        $buscaParam = "%{$busca}%";
+        $countParams[] = $buscaParam;
+        $countParams[] = $buscaParam;
+        $countParams[] = $buscaParam;
+        $countParams[] = $buscaParam;
+        $countParams[] = $buscaParam;
     }
     
     if (!empty($status)) {
@@ -97,8 +123,17 @@ try {
         $countParams[] = $status;
     }
     
-    // Filtros de pastoral e função removidos temporariamente
-    // (serão implementados em versão futura)
+    // Filtro de pastoral - implementado
+    if (!empty($pastoral)) {
+        $countQuery .= " AND m.id IN (SELECT membro_id FROM membros_membros_pastorais WHERE pastoral_id = ?)";
+        $countParams[] = $pastoral;
+    }
+    
+    // Filtro de função - implementado
+    if (!empty($funcao)) {
+        $countQuery .= " AND m.id IN (SELECT membro_id FROM membros_membros_pastorais WHERE funcao_id = ?)";
+        $countParams[] = $funcao;
+    }
     
     error_log("membros_listar.php: Executando query de contagem");
     $countStmt = $db->prepare($countQuery);
