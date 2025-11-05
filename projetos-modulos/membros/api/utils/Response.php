@@ -7,11 +7,28 @@
 class Response {
     
     /**
+     * Preparar resposta (limpar buffer e definir headers)
+     */
+    private static function prepare() {
+        // Limpar qualquer output anterior
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        
+        // Definir headers JSON (apenas se headers ainda não foram enviados)
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        }
+    }
+    
+    /**
      * Enviar resposta de sucesso (método estático)
      */
     public static function success($data = null, $meta = null, $statusCode = 200) {
+        self::prepare();
         http_response_code($statusCode);
-        header('Content-Type: application/json; charset=utf-8');
         
         $response = [
             'success' => true,
@@ -23,7 +40,16 @@ class Response {
             $response['meta'] = $meta;
         }
         
-        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        $json = json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        
+        if ($json === false) {
+            // Erro ao codificar JSON
+            error_log("JSON encode error: " . json_last_error_msg());
+            self::error('Erro ao processar resposta', 500);
+            return;
+        }
+        
+        echo $json;
         exit;
     }
     
@@ -31,8 +57,8 @@ class Response {
      * Enviar resposta de erro (método estático)
      */
     public static function error($message, $statusCode = 400, $details = null) {
+        self::prepare();
         http_response_code($statusCode);
-        header('Content-Type: application/json; charset=utf-8');
         
         $response = [
             'success' => false,
@@ -44,7 +70,16 @@ class Response {
             $response['details'] = $details;
         }
         
-        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        $json = json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        
+        if ($json === false) {
+            // Erro ao codificar JSON - resposta mínima
+            http_response_code(500);
+            echo '{"success":false,"error":"Erro interno do servidor"}';
+            exit;
+        }
+        
+        echo $json;
         exit;
     }
     
@@ -52,8 +87,8 @@ class Response {
      * Enviar resposta de validação (método estático)
      */
     public static function validationError($errors, $statusCode = 422) {
+        self::prepare();
         http_response_code($statusCode);
-        header('Content-Type: application/json; charset=utf-8');
         
         $response = [
             'success' => false,
@@ -62,7 +97,15 @@ class Response {
             'timestamp' => date('c')
         ];
         
-        echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        $json = json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        
+        if ($json === false) {
+            error_log("JSON encode error: " . json_last_error_msg());
+            self::error('Erro ao processar resposta', 500);
+            return;
+        }
+        
+        echo $json;
         exit;
     }
     

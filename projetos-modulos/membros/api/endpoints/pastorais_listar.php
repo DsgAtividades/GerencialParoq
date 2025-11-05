@@ -6,10 +6,24 @@
  * Cache: 10 minutos (600 segundos)
  */
 
-require_once '../config/database.php';
-require_once '../utils/Cache.php';
+// Evitar qualquer output antes do JSON
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// Limpar qualquer output anterior
+if (ob_get_level()) {
+    ob_clean();
+}
+
+// Iniciar buffer de output para capturar erros
+ob_start();
 
 try {
+    require_once __DIR__ . '/../../config/database.php';
+    require_once __DIR__ . '/../utils/Response.php';
+    require_once __DIR__ . '/../utils/Cache.php';
+    
     $db = new MembrosDatabase();
     $cache = new Cache();
     
@@ -19,6 +33,7 @@ try {
     // Tentar obter do cache
     $cachedPastorais = $cache->get($cacheKey);
     if ($cachedPastorais !== null) {
+        ob_end_clean();
         Response::success($cachedPastorais);
         exit;
     }
@@ -102,12 +117,29 @@ try {
         }
     }
     
-    // Armazenar no cache por 10 minutos
-    $cache->set($cacheKey, $pastoraisFormatadas, 600);
+    // Armazenar no cache por 10 minutos (apenas se não houver erro)
+    try {
+        $cache->set($cacheKey, $pastoraisFormatadas, 600);
+    } catch (Exception $cacheError) {
+        // Log do erro mas não interrompe a resposta
+        error_log("Cache error: " . $cacheError->getMessage());
+    }
     
+    ob_end_clean();
     Response::success($pastoraisFormatadas);
     
+} catch (PDOException $e) {
+    ob_end_clean();
+    error_log("Pastorais PDO error: " . $e->getMessage());
+    Response::error('Erro ao conectar com banco de dados', 500);
 } catch (Exception $e) {
+    ob_end_clean();
+    error_log("Pastorais error: " . $e->getMessage());
+    error_log("Pastorais error trace: " . $e->getTraceAsString());
     Response::error('Erro ao carregar pastorais: ' . $e->getMessage(), 500);
+} catch (Throwable $e) {
+    ob_end_clean();
+    error_log("Pastorais fatal error: " . $e->getMessage());
+    Response::error('Erro interno do servidor', 500);
 }
 ?>

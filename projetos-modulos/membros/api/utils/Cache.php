@@ -14,9 +14,17 @@ class Cache {
         // Diretório padrão para cache
         $this->cacheDir = $cacheDir ?? __DIR__ . '/../../cache/';
         
+        // Normalizar caminho
+        $this->cacheDir = rtrim($this->cacheDir, '/\\') . DIRECTORY_SEPARATOR;
+        
         // Criar diretório se não existir
         if (!is_dir($this->cacheDir)) {
-            mkdir($this->cacheDir, 0755, true);
+            @mkdir($this->cacheDir, 0755, true);
+        }
+        
+        // Verificar se diretório existe e é gravável
+        if (!is_dir($this->cacheDir) || !is_writable($this->cacheDir)) {
+            error_log("Cache: Diretório não é gravável: " . $this->cacheDir);
         }
     }
     
@@ -27,29 +35,47 @@ class Cache {
      * @return mixed|null Valor do cache ou null se não existir/expirado
      */
     public function get($key) {
-        $filePath = $this->getFilePath($key);
-        
-        // Verificar se arquivo existe
-        if (!file_exists($filePath)) {
+        try {
+            $filePath = $this->getFilePath($key);
+            
+            // Verificar se arquivo existe
+            if (!file_exists($filePath) || !is_readable($filePath)) {
+                return null;
+            }
+            
+            // Ler conteúdo do arquivo
+            $content = @file_get_contents($filePath);
+            if ($content === false || empty($content)) {
+                return null;
+            }
+            
+            $data = @json_decode($content, true);
+            
+            // Verificar se JSON foi decodificado corretamente
+            if ($data === null || json_last_error() !== JSON_ERROR_NONE) {
+                // Arquivo corrompido - remover
+                @unlink($filePath);
+                return null;
+            }
+            
+            // Verificar se tem estrutura esperada
+            if (!isset($data['value']) || !isset($data['expires_at'])) {
+                @unlink($filePath);
+                return null;
+            }
+            
+            // Verificar se expirou
+            if (time() > $data['expires_at']) {
+                // Cache expirado - remover arquivo
+                @unlink($filePath);
+                return null;
+            }
+            
+            return $data['value'];
+        } catch (Exception $e) {
+            error_log("Cache get error: " . $e->getMessage());
             return null;
         }
-        
-        // Ler conteúdo do arquivo
-        $content = file_get_contents($filePath);
-        $data = json_decode($content, true);
-        
-        if ($data === null) {
-            return null;
-        }
-        
-        // Verificar se expirou
-        if (isset($data['expires_at']) && time() > $data['expires_at']) {
-            // Cache expirado - remover arquivo
-            unlink($filePath);
-            return null;
-        }
-        
-        return $data['value'];
     }
     
     /**
@@ -61,6 +87,12 @@ class Cache {
      * @return bool Sucesso da operação
      */
     public function set($key, $value, $ttl = null) {
+        // Verificar se diretório é gravável
+        if (!is_dir($this->cacheDir) || !is_writable($this->cacheDir)) {
+            error_log("Cache: Não é possível escrever no diretório: " . $this->cacheDir);
+            return false;
+        }
+        
         $filePath = $this->getFilePath($key);
         
         $ttl = $ttl ?? $this->defaultTTL;
@@ -74,8 +106,13 @@ class Cache {
         ];
         
         $content = json_encode($data, JSON_UNESCAPED_UNICODE);
+        if ($content === false) {
+            error_log("Cache: Erro ao codificar JSON para chave: " . $key);
+            return false;
+        }
         
-        return file_put_contents($filePath, $content) !== false;
+        $result = @file_put_contents($filePath, $content);
+        return $result !== false;
     }
     
     /**
