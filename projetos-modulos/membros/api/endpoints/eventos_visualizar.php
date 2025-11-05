@@ -11,12 +11,17 @@ try {
     // A variável $evento_id é definida pelo routes.php via regex
     global $evento_id;
     
+    error_log("eventos_visualizar.php: Recebido evento_id: " . ($evento_id ?? 'null'));
+    
     // Verificar se o ID foi fornecido
     if (!isset($evento_id) || empty($evento_id)) {
+        error_log("eventos_visualizar.php: ID do evento não fornecido");
         Response::error('ID do evento é obrigatório', 400);
     }
     
     $db = new MembrosDatabase();
+    
+    error_log("eventos_visualizar.php: Buscando evento com ID: " . $evento_id);
     
     // Buscar evento com informações adicionais
     $query = "

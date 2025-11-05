@@ -467,7 +467,7 @@ function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
                     }
                 </div>
                 ${!isVisualizacao ? `
-                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="adicionarDocumento()">
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" style ="margin-bottom: 10px;" onclick="adicionarDocumento()">
                         <i class="fas fa-plus"></i> Adicionar Documento
                     </button>
                 ` : ''}

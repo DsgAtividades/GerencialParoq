@@ -190,16 +190,6 @@ switch ($path) {
             Response::error('Método não permitido', 405);
         }
         break;
-        
-    case 'eventos':
-        if ($method === 'GET') {
-            include 'endpoints/eventos_listar.php';
-        } elseif ($method === 'POST') {
-            include 'endpoints/eventos_criar.php';
-        } else {
-            Response::error('Método não permitido', 405);
-        }
-        break;
 
     // ====== ESCALAS (por pastoral) ======
     case 'escalas/semana':
@@ -220,6 +210,52 @@ switch ($path) {
         break;
         
     default:
+        // Verificar rota de evento por ID ANTES de todas as outras
+        // Ex: /api/eventos/{id}
+        // Aceita UUIDs (36 caracteres) e IDs com prefixo (ex: evt-xxx)
+        if (preg_match('/^eventos\/([a-f0-9\-]+|[a-z]+-[a-f0-9]+)$/i', $path, $matches)) {
+            $evento_id = $matches[1];
+            
+            error_log("Routes: Verificando evento com ID: " . $evento_id);
+            
+            // Verificar se é evento geral (tabela membros_eventos)
+            try {
+                $testDb = new MembrosDatabase();
+                $testQuery = "SELECT COUNT(*) as count FROM membros_eventos WHERE id = ?";
+                $result = $testDb->fetchOne($testQuery, [$evento_id]);
+                $isEventoGeral = ($result && isset($result['count']) && $result['count'] > 0);
+                error_log("Routes: Evento geral encontrado? " . ($isEventoGeral ? 'sim' : 'não'));
+            } catch (Exception $e) {
+                error_log("Erro ao verificar tipo de evento: " . $e->getMessage());
+                $isEventoGeral = false;
+            }
+            
+            if ($isEventoGeral) {
+                // Evento geral
+                error_log("Routes: Incluindo endpoint de evento geral para ID: " . $evento_id);
+                if ($method === 'GET') {
+                    include 'endpoints/eventos_visualizar.php';
+                } elseif ($method === 'PUT') {
+                    include 'endpoints/eventos_atualizar.php';
+                } elseif ($method === 'DELETE') {
+                    include 'endpoints/eventos_excluir.php';
+                } else {
+                    Response::error('Método não permitido', 405);
+                }
+                exit;
+            } else {
+                // Evento de escala (fallback para rota antiga)
+                error_log("Routes: Incluindo endpoint de evento de escala para ID: " . $evento_id);
+                if ($method === 'GET') {
+                    include 'endpoints/escalas_evento_detalhes.php';
+                } elseif ($method === 'DELETE') {
+                    include 'endpoints/escalas_eventos_excluir.php';
+                } else {
+                    Response::error('Método não permitido', 405);
+                }
+                exit;
+            }
+        }
         // Verificar se é uma rota de evento específico de uma pastoral (PUT, DELETE)
         // Ex: /api/pastorais/{pastoral_id}/eventos/{evento_id}
         if (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)\/eventos\/([a-f0-9\-]+)$/', $path, $matches)) {
@@ -282,43 +318,14 @@ switch ($path) {
                 Response::error('Método não permitido', 405);
             }
         }
-        // Rota: eventos gerais por ID (GET, PUT, DELETE)
-        // Verificar se é evento geral primeiro (antes das rotas de escalas)
-        elseif (preg_match('/^eventos\/([a-f0-9\-]{36})$/', $path, $matches)) {
-            $evento_id = $matches[1];
-            
-            // Verificar se é evento geral (tabela membros_eventos)
-            // Fazemos uma verificação rápida para distinguir entre evento geral e evento de escala
-            try {
-                $testDb = new MembrosDatabase();
-                $testQuery = "SELECT COUNT(*) as count FROM membros_eventos WHERE id = ?";
-                $result = $testDb->fetchOne($testQuery, [$evento_id]);
-                $isEventoGeral = ($result && isset($result['count']) && $result['count'] > 0);
-            } catch (Exception $e) {
-                error_log("Erro ao verificar tipo de evento: " . $e->getMessage());
-                $isEventoGeral = false;
-            }
-            
-            if ($isEventoGeral) {
-                // Evento geral
-                if ($method === 'GET') {
-                    include 'endpoints/eventos_visualizar.php';
-                } elseif ($method === 'PUT') {
-                    include 'endpoints/eventos_atualizar.php';
-                } elseif ($method === 'DELETE') {
-                    include 'endpoints/eventos_excluir.php';
-                } else {
-                    Response::error('Método não permitido', 405);
-                }
+        // Verificar se é rota de eventos (listar ou criar)
+        elseif ($path === 'eventos') {
+            if ($method === 'GET') {
+                include 'endpoints/eventos_listar.php';
+            } elseif ($method === 'POST') {
+                include 'endpoints/eventos_criar.php';
             } else {
-                // Evento de escala (fallback para rota antiga)
-                if ($method === 'GET') {
-                    include 'endpoints/escalas_evento_detalhes.php';
-                } elseif ($method === 'DELETE') {
-                    include 'endpoints/escalas_eventos_excluir.php';
-                } else {
-                    Response::error('Método não permitido', 405);
-                }
+                Response::error('Método não permitido', 405);
             }
         }
         // Rota: salvar funcoes/atribuicoes do evento

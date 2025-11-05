@@ -6,6 +6,17 @@
  * Parâmetros: formato (pdf|xlsx), busca, status, pastoral
  */
 
+// Limpar qualquer output anterior e iniciar buffer
+while (ob_get_level()) {
+    ob_end_clean();
+}
+ob_start();
+
+// Desabilitar exibição de erros durante a exportação (mas manter log)
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 require_once __DIR__ . '/../../config/database.php';
 
 try {
@@ -116,6 +127,11 @@ try {
  * Exporta membros em formato XLSX usando PhpSpreadsheet
  */
 function exportarXLSXPhpSpreadsheet($membros) {
+    // Limpar buffer antes de gerar arquivo binário
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
     $phpspreadsheetPath = __DIR__ . '/../../../obras/vendor/autoload.php';
     if (!file_exists($phpspreadsheetPath)) {
         // Fallback para CSV se PhpSpreadsheet não estiver disponível
@@ -194,13 +210,16 @@ function exportarXLSXPhpSpreadsheet($membros) {
     // Nome do arquivo
     $nomeArquivo = 'membros_' . date('Y-m-d_His') . '.xlsx';
     
-    // Headers
+    // Headers - enviar antes de qualquer output
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     header('Content-Disposition: attachment; filename="' . $nomeArquivo . '"');
     header('Cache-Control: max-age=0');
+    header('Pragma: public');
     
-    // Gerar arquivo
+    // Gerar arquivo diretamente para output
     $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+    
+    // Salvar para output
     $writer->save('php://output');
     exit;
 }
@@ -209,6 +228,11 @@ function exportarXLSXPhpSpreadsheet($membros) {
  * Exporta membros em formato CSV otimizado para Excel
  */
 function exportarCSVExcel($membros, $busca = '', $status = '', $pastoral = '') {
+    // Limpar buffer antes de gerar arquivo
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
     $nomeArquivo = 'membros_' . date('Y-m-d_His') . '.csv';
     
     // Headers para CSV (Excel abre CSV nativamente)
@@ -267,6 +291,11 @@ function exportarCSVExcel($membros, $busca = '', $status = '', $pastoral = '') {
  * Exporta membros em formato CSV padrão
  */
 function exportarCSV($membros, $busca = '', $status = '', $pastoral = '') {
+    // Limpar buffer antes de gerar arquivo
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
     $nomeArquivo = 'membros_' . date('Y-m-d_His') . '.csv';
     
     header('Content-Type: text/csv; charset=utf-8');
@@ -321,6 +350,11 @@ function exportarCSV($membros, $busca = '', $status = '', $pastoral = '') {
  * Exporta membros em formato PDF
  */
 function exportarPDF($membros, $busca = '', $status = '', $pastoral = '') {
+    // Limpar buffer antes de gerar arquivo binário
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    
     $nomeArquivo = 'membros_' . date('Y-m-d_His') . '.pdf';
     
     // Usar SimplePDF diretamente (não depende de arquivos de fonte externos)
@@ -396,6 +430,23 @@ function exportarPDF($membros, $busca = '', $status = '', $pastoral = '') {
     $pdf->SetY(-15);
     $pdf->SetFont('Arial', 'I', 8);
     $pdf->Cell(0, 10, 'Total de membros: ' . count($membros) . ' | Gerado em ' . date('d/m/Y H:i:s'), 0, 0, 'C');
+    
+    // Debug: verificar se há páginas e elementos
+    $reflection = new ReflectionClass($pdf);
+    $pagesProperty = $reflection->getProperty('pages');
+    $pagesProperty->setAccessible(true);
+    $pages = $pagesProperty->getValue($pdf);
+    
+    error_log("PDF Debug: Total de páginas: " . count($pages));
+    foreach ($pages as $pageNum => $pageData) {
+        error_log("PDF Debug: Página $pageNum tem " . count($pageData['elements']) . " elementos");
+    }
+    
+    // Headers PDF - DEVE ser enviado ANTES de qualquer output
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="' . $nomeArquivo . '"');
+    header('Cache-Control: max-age=0');
+    header('Pragma: public');
     
     // Output
     $pdf->Output('D', $nomeArquivo);
@@ -489,6 +540,11 @@ class SimplePDF {
             $h = $this->fontSize * 1.2;
         }
         
+        // Se width for 0, calcular baseado na largura da página
+        if ($w == 0) {
+            $w = $this->w - $this->marginLeft - $this->marginRight;
+        }
+        
         $this->pages[$this->currentPage]['elements'][] = [
             'type' => 'cell',
             'x' => $this->x,
@@ -541,43 +597,63 @@ class SimplePDF {
     
     public function Output($dest = 'I', $name = '') {
         $pdfContent = $this->generatePDF();
-        
-        if ($dest == 'D' || $dest == 'F') {
-            echo $pdfContent;
-        } else {
-            echo $pdfContent;
-        }
+        echo $pdfContent;
     }
     
     private function generatePDF() {
-        $pdf = "%PDF-1.4\n";
-        $pdf .= "1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n";
+        $objects = [];
+        $offsets = [];
         
+        // Objeto 1: Catalog
+        $catalog = "<<\n/Type /Catalog\n/Pages 2 0 R\n>>";
+        $objects[1] = $catalog;
+        
+        // Objeto 2: Pages
         $pageCount = count($this->pages);
-        $pdf .= "2 0 obj\n<<\n/Type /Pages\n/Kids [";
-        for ($i = 3; $i < 3 + $pageCount; $i++) {
-            $pdf .= "$i 0 R ";
-        }
-        $pdf .= "]\n/Count $pageCount\n>>\nendobj\n";
         
+        // Se não houver páginas, criar uma página vazia
+        if ($pageCount == 0) {
+            $this->AddPage('L', 'A4');
+            $pageCount = 1;
+        }
+        
+        $pageRefs = [];
+        $objNum = 3;
+        foreach ($this->pages as $pageNum => $pageData) {
+            $pageRefs[] = "$objNum 0 R";
+            $objNum += 2; // Cada página tem um objeto de conteúdo e um objeto de página
+        }
+        $pages = "<<\n/Type /Pages\n/Kids [" . implode(' ', $pageRefs) . "]\n/Count $pageCount\n>>";
+        $objects[2] = $pages;
+        
+        // Objetos de páginas
         $objNum = 3;
         foreach ($this->pages as $pageNum => $pageData) {
             $orientation = $pageData['orientation'];
             $elements = $pageData['elements'];
             $pageHeight = ($orientation == 'L') ? 210 : 297; // altura em mm
+            $pageWidth = ($orientation == 'L') ? 297 : 210; // largura em mm
             
+            // Conteúdo da página
             $content = "q\n";
-            $content .= "BT\n";
-            $content .= "/F1 12 Tf\n";
             
             foreach ($elements as $element) {
                 if ($element['type'] == 'cell') {
                     // Converter mm para pontos (1mm = 2.83465 points)
                     $mmToPt = 2.83465;
+                    $pageHeightPt = $pageHeight * $mmToPt;
+                    
+                    // Coordenadas X (não precisa inverter)
                     $x = $element['x'] * $mmToPt;
-                    $y = ($pageHeight - $element['y']) * $mmToPt; // Inverter Y (PDF tem origem no canto inferior esquerdo)
                     $w = $element['w'] * $mmToPt;
                     $h = $element['h'] * $mmToPt;
+                    
+                    // Inverter Y: PDF tem origem no canto inferior esquerdo (Y=0 está embaixo)
+                    // Nossa coordenada Y está do topo (Y=0 está em cima)
+                    // element['y'] é a posição do topo da célula em nosso sistema
+                    // Converter para PDF: Y_pdf = altura_página - Y_elemento
+                    // Mas precisamos do canto inferior esquerdo da célula: Y_pdf = altura_página - (Y_elemento + altura_elemento)
+                    $y = $pageHeightPt - (($element['y'] + $element['h']) * $mmToPt);
                     
                     // Fill
                     if ($element['fill']) {
@@ -591,56 +667,118 @@ class SimplePDF {
                     // Border
                     if ($element['border']) {
                         $content .= "0 0 0 RG\n";
-                        $content .= "1 w\n"; // Line width
-                        $content .= "$x $y $w $h re S\n";
+                        $content .= "0.5 w\n"; // Line width
+                        $content .= "$x $y $w 0 re S\n"; // Top
+                        $content .= "$x $y 0 $h re S\n"; // Left
+                        $content .= ($x + $w) . " $y 0 $h re S\n"; // Right
+                        $content .= "$x " . ($y + $h) . " $w 0 re S\n"; // Bottom
                     }
                     
                     // Text
-                    $text = $element['text'];
-                    // Escapar caracteres especiais do PDF
-                    $text = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
-                    
-                    $fontSizePt = $element['fontSize'] * $mmToPt * 0.35; // Ajustar tamanho da fonte
-                    $textX = $x + 2;
-                    $textY = $y - $h + ($element['fontSize'] * $mmToPt * 0.4);
-                    
-                    if ($element['align'] == 'C') {
-                        $textWidth = strlen($text) * $fontSizePt * 0.5;
-                        $textX = $x + ($w / 2) - ($textWidth / 2);
-                    } elseif ($element['align'] == 'R') {
-                        $textWidth = strlen($text) * $fontSizePt * 0.5;
-                        $textX = $x + $w - $textWidth - 2;
+                    if (!empty($element['text'])) {
+                        $text = $element['text'];
+                        // Escapar caracteres especiais do PDF
+                        $text = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
+                        
+                        // Converter tamanho da fonte de mm para pontos
+                        $fontSizePt = $element['fontSize'] * 2.83465 * 0.6; // Ajustar para melhor legibilidade
+                        
+                        // Posicionamento do texto
+                        // No PDF, Y=0 está no canto inferior esquerdo
+                        // A célula está em $y (que é o canto inferior esquerdo após inversão)
+                        // Para centralizar o texto verticalmente na célula:
+                        // - Centro vertical da célula = Y + (altura / 2)
+                        // - O texto é posicionado pela linha de base (baseline)
+                        // - Ajustar para que a linha de base fique no centro menos metade do tamanho da fonte
+                        $textX = $x + 3;
+                        // Centralizar verticalmente: centro da célula menos metade da altura do texto
+                        // A linha de base fica ~70% da altura da fonte acima do Y especificado
+                        $textY = $y + ($h / 2) - ($fontSizePt * 0.7); // 0.7 é aproximadamente a altura da linha de base
+                        
+                        if ($element['align'] == 'C') {
+                            // Centralizar: estimar largura do texto
+                            $textWidth = mb_strlen($text, 'UTF-8') * $fontSizePt * 0.5;
+                            $textX = $x + ($w / 2) - ($textWidth / 2);
+                        } elseif ($element['align'] == 'R') {
+                            // Alinhar à direita
+                            $textWidth = mb_strlen($text, 'UTF-8') * $fontSizePt * 0.5;
+                            $textX = $x + $w - $textWidth - 3;
+                        } else {
+                            // Alinhar à esquerda (padrão)
+                            $textX = $x + 3;
+                        }
+                        
+                        // Text color
+                        $r = $element['textColor'][0] / 255;
+                        $g = $element['textColor'][1] / 255;
+                        $b = $element['textColor'][2] / 255;
+                        
+                        // Renderizar texto
+                        // IMPORTANTE: No PDF, Td é relativo, então precisamos resetar o cursor primeiro
+                        // Usar matriz de transformação de texto (Tm) para posicionamento absoluto
+                        // Tm: [a b c d e f] onde e,f são a posição X,Y
+                        $content .= "BT\n"; // Begin Text
+                        $content .= "/F1 $fontSizePt Tf\n"; // Definir fonte e tamanho
+                        $content .= "$r $g $b rg\n"; // Cor do texto (RGB)
+                        // Resetar matriz de texto e posicionar absolutamente
+                        // Matriz: [1 0 0 1 x y] = identidade com translação
+                        $content .= "1 0 0 1 $textX $textY Tm\n"; // Matriz de transformação (posição absoluta)
+                        $content .= "($text) Tj\n"; // Desenhar texto
+                        $content .= "ET\n"; // End Text
                     }
-                    
-                    $content .= "0 0 0 rg\n";
-                    $content .= "BT\n";
-                    $content .= "/F1 " . $fontSizePt . " Tf\n";
-                    $content .= "$textX $textY Td\n";
-                    $content .= "($text) Tj\n";
-                    $content .= "ET\n";
                 }
             }
             
-            $content .= "ET\n";
             $content .= "Q\n";
             
+            // Objeto de conteúdo
             $contentObj = $objNum++;
-            $pdf .= "$contentObj 0 obj\n<<\n/Length " . strlen($content) . "\n>>\nstream\n$content\nendstream\nendobj\n";
+            $objects[$contentObj] = "<<\n/Length " . strlen($content) . "\n>>\nstream\n$content\nendstream";
             
-            // MediaBox para A4 (em pontos: 595.28 x 841.89 para portrait, invertido para landscape)
+            // Objeto de página
             $mediaBox = $orientation == 'L' ? "[0 0 841.89 595.28]" : "[0 0 595.28 841.89]";
-            $pdf .= "$objNum 0 obj\n<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox $mediaBox\n/Contents $contentObj 0 R\n/Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>\n>>\nendobj\n";
-            $objNum++;
+            $pageObj = $objNum++;
+            $objects[$pageObj] = "<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox $mediaBox\n/Contents $contentObj 0 R\n/Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>\n>>";
         }
         
-        $xref = strlen($pdf);
-        $pdf .= "xref\n0 $objNum\n0000000000 65535 f \n";
-        for ($i = 1; $i < $objNum; $i++) {
-            $pdf .= sprintf("%010d 00000 n \n", $xref);
-            $xref += 50; // Aproximação
+        // Construir PDF
+        $pdf = "%PDF-1.4\n";
+        
+        // Escrever objetos e calcular offsets simultaneamente
+        if (empty($objects)) {
+            // Se não houver objetos, retornar PDF mínimo válido
+            return "%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n2 0 obj\n<<\n/Type /Pages\n/Kids []\n/Count 0\n>>\nendobj\nxref\n0 3\n0000000000 65535 f \ntrailer\n<<\n/Size 3\n/Root 1 0 R\n>>\nstartxref\n0\n%%EOF\n";
         }
         
-        $pdf .= "trailer\n<<\n/Size $objNum\n/Root 1 0 R\n>>\nstartxref\n$xref\n%%EOF\n";
+        $maxObjNum = max(array_keys($objects));
+        
+        foreach (range(1, $maxObjNum) as $i) {
+            if (isset($objects[$i])) {
+                $offsets[$i] = strlen($pdf);
+                $pdf .= "$i 0 obj\n";
+                $pdf .= $objects[$i];
+                $pdf .= "\nendobj\n";
+            }
+        }
+        
+        // Xref table
+        $xrefStart = strlen($pdf);
+        $pdf .= "xref\n";
+        $pdf .= "0 " . ($maxObjNum + 1) . "\n";
+        $pdf .= "0000000000 65535 f \n";
+        
+        foreach (range(1, $maxObjNum) as $i) {
+            if (isset($offsets[$i])) {
+                $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
+            }
+        }
+        
+        // Trailer
+        $pdf .= "trailer\n";
+        $pdf .= "<<\n/Size " . ($maxObjNum + 1) . "\n/Root 1 0 R\n>>\n";
+        $pdf .= "startxref\n";
+        $pdf .= $xrefStart . "\n";
+        $pdf .= "%%EOF\n";
         
         return $pdf;
     }

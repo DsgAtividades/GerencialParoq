@@ -1820,27 +1820,44 @@ function fecharAutocomplete(campoId) {
  */
 async function editarEventoGeral(eventoId) {
     try {
+        console.log('Buscando evento para edição:', eventoId);
+        
         // Buscar dados do evento
         const response = await EventosAPI.buscar(eventoId);
+        console.log('Resposta da API:', response);
         
-        if (response.success) {
+        // Verificar se a resposta tem sucesso
+        if (response && response.success && response.data) {
             const evento = response.data;
-            // Converter para formato esperado pelo modal
-            evento.data = evento.data_evento;
-            evento.horario = evento.horario || evento.hora_inicio;
+            console.log('Evento encontrado:', evento);
             
-            fecharModalDetalhesEvento();
+            // Converter para formato esperado pelo modal
+            // Garantir que data_evento existe (usar data como fallback)
+            if (!evento.data_evento && evento.data) {
+                evento.data_evento = evento.data;
+            }
+            evento.data = evento.data_evento || evento.data;
+            
+            // Garantir que horario existe
+            evento.horario = evento.horario || evento.hora_inicio || '';
+            
+            // Fechar modal de detalhes se estiver aberto
+            const modalDetalhes = document.getElementById('modal-detalhes-evento');
+            if (modalDetalhes) {
+                fecharModalDetalhesEvento();
+            }
             
             // Aguardar um pouco para fechar modal anterior
             setTimeout(() => {
                 abrirModalEvento(evento);
             }, 100);
         } else {
-            mostrarNotificacao('Erro ao carregar evento para edição', 'error');
+            console.error('Resposta da API inválida:', response);
+            mostrarNotificacao('Erro ao carregar evento para edição. Resposta inválida da API.', 'error');
         }
     } catch (error) {
         console.error('Erro ao buscar evento:', error);
-        mostrarNotificacao('Erro ao carregar evento: ' + error.message, 'error');
+        mostrarNotificacao('Erro ao carregar evento: ' + (error.message || 'Erro desconhecido'), 'error');
     }
 }
 

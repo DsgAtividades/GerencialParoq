@@ -121,18 +121,15 @@ $module_description = 'Informações completas da pastoral';
                     <div class="info-grid" id="info-pastoral">
                         <!-- Informações serão preenchidas via JS -->
                     </div>
-                </div>
-            </div>
-
-            <!-- Coordenadores -->
-            <div class="row mb-4">
-                <div class="col-md-12">
                     <h3>Coordenadores</h3>
                     <div class="coordinators-list" id="coordenadores">
                         <!-- Coordenadores serão preenchidos via JS -->
                     </div>
+
                 </div>
             </div>
+
+
 
             <!-- Abas -->
             <div class="tabs">
