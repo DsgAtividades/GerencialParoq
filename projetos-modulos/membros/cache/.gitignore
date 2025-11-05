@@ -1,0 +1,6 @@
+# Arquivos de cache gerados automaticamente
+*.cache
+
+# Manter o diretório mas ignorar arquivos
+!.gitkeep
+

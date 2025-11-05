@@ -2,12 +2,26 @@
 /**
  * Endpoint: Listar Pastorais
  * Retorna lista de pastorais
+ * 
+ * Cache: 10 minutos (600 segundos)
  */
 
 require_once '../config/database.php';
+require_once '../utils/Cache.php';
 
 try {
     $db = new MembrosDatabase();
+    $cache = new Cache();
+    
+    // Gerar chave de cache
+    $cacheKey = $cache->generateKey('pastorais_listar', $_GET);
+    
+    // Tentar obter do cache
+    $cachedPastorais = $cache->get($cacheKey);
+    if ($cachedPastorais !== null) {
+        Response::success($cachedPastorais);
+        exit;
+    }
     
     $query = "
         SELECT 
@@ -87,6 +101,9 @@ try {
             error_log("pastorais_listar.php: Pastoral '{$p['nome']}' tem coordenador: {$p['coordenador_nome']}");
         }
     }
+    
+    // Armazenar no cache por 10 minutos
+    $cache->set($cacheKey, $pastoraisFormatadas, 600);
     
     Response::success($pastoraisFormatadas);
     

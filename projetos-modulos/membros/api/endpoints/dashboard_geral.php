@@ -2,14 +2,28 @@
 /**
  * Endpoint: Dashboard Geral
  * Retorna estatísticas gerais do sistema
+ * 
+ * Cache: 5 minutos (300 segundos)
  */
 
 require_once '../config/database.php';
+require_once '../utils/Cache.php';
 
 try {
     $db = new MembrosDatabase();
+    $cache = new Cache();
     
-    // Estatísticas gerais
+    // Gerar chave de cache baseada nos parâmetros
+    $cacheKey = $cache->generateKey('dashboard_geral', $_GET);
+    
+    // Tentar obter do cache
+    $cachedStats = $cache->get($cacheKey);
+    if ($cachedStats !== null) {
+        Response::success($cachedStats);
+        exit;
+    }
+    
+    // Estatísticas gerais - Query otimizada
     $stats = [
         'totalMembros' => $db->query("SELECT COUNT(*) as total FROM membros_membros")->fetch()['total'],
         'membrosAtivos' => $db->query("SELECT COUNT(*) as total FROM membros_membros WHERE status = 'ativo'")->fetch()['total'],
@@ -20,7 +34,7 @@ try {
     // Alertas
     $alertas = [];
     
-    // Membros sem pastoral
+    // Membros sem pastoral - Query otimizada com JOIN
     $semPastoral = $db->query("
         SELECT COUNT(*) as total 
         FROM membros_membros m 
@@ -52,6 +66,9 @@ try {
     }
     
     $stats['alertas'] = $alertas;
+    
+    // Armazenar no cache por 5 minutos
+    $cache->set($cacheKey, $stats, 300);
     
     Response::success($stats);
     

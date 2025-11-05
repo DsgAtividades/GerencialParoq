@@ -70,15 +70,37 @@ try {
         $params[] = $status;
     }
     
-    // Filtro de pastoral - implementado
+    // Filtro de pastoral - Otimizado: usar JOIN em vez de subquery
     if (!empty($pastoral)) {
-        $query .= " AND m.id IN (SELECT membro_id FROM membros_membros_pastorais WHERE pastoral_id = ?)";
+        // Verificar se JOIN já existe
+        $hasJoin = strpos($query, 'LEFT JOIN membros_membros_pastorais mp') !== false;
+        
+        if (!$hasJoin) {
+            // Adicionar JOIN antes do WHERE
+            $query = str_replace(
+                'WHERE 1=1',
+                'LEFT JOIN membros_membros_pastorais mp ON m.id = mp.membro_id WHERE 1=1',
+                $query
+            );
+        }
+        $query .= " AND mp.pastoral_id = ?";
         $params[] = $pastoral;
     }
     
-    // Filtro de função - implementado
+    // Filtro de função - Otimizado: usar JOIN em vez de subquery
     if (!empty($funcao)) {
-        $query .= " AND m.id IN (SELECT membro_id FROM membros_membros_pastorais WHERE funcao_id = ?)";
+        // Verificar se JOIN já existe
+        $hasJoin = strpos($query, 'LEFT JOIN membros_membros_pastorais mp') !== false;
+        
+        if (!$hasJoin) {
+            // Adicionar JOIN antes do WHERE
+            $query = str_replace(
+                'WHERE 1=1',
+                'LEFT JOIN membros_membros_pastorais mp ON m.id = mp.membro_id WHERE 1=1',
+                $query
+            );
+        }
+        $query .= " AND mp.funcao_id = ?";
         $params[] = $funcao;
     }
     
@@ -123,15 +145,37 @@ try {
         $countParams[] = $status;
     }
     
-    // Filtro de pastoral - implementado
+    // Filtro de pastoral - Otimizado: usar JOIN em vez de subquery
     if (!empty($pastoral)) {
-        $countQuery .= " AND m.id IN (SELECT membro_id FROM membros_membros_pastorais WHERE pastoral_id = ?)";
+        // Verificar se JOIN já existe
+        $hasJoin = strpos($countQuery, 'LEFT JOIN membros_membros_pastorais mp') !== false;
+        
+        if (!$hasJoin) {
+            // Adicionar JOIN antes do WHERE
+            $countQuery = str_replace(
+                'WHERE 1=1',
+                'LEFT JOIN membros_membros_pastorais mp ON m.id = mp.membro_id WHERE 1=1',
+                $countQuery
+            );
+        }
+        $countQuery .= " AND mp.pastoral_id = ?";
         $countParams[] = $pastoral;
     }
     
-    // Filtro de função - implementado
+    // Filtro de função - Otimizado: usar JOIN em vez de subquery
     if (!empty($funcao)) {
-        $countQuery .= " AND m.id IN (SELECT membro_id FROM membros_membros_pastorais WHERE funcao_id = ?)";
+        // Verificar se JOIN já existe
+        $hasJoin = strpos($countQuery, 'LEFT JOIN membros_membros_pastorais mp') !== false;
+        
+        if (!$hasJoin) {
+            // Adicionar JOIN antes do WHERE
+            $countQuery = str_replace(
+                'WHERE 1=1',
+                'LEFT JOIN membros_membros_pastorais mp ON m.id = mp.membro_id WHERE 1=1',
+                $countQuery
+            );
+        }
+        $countQuery .= " AND mp.funcao_id = ?";
         $countParams[] = $funcao;
     }
     
