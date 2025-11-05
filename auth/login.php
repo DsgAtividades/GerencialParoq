@@ -72,7 +72,11 @@ try {
             $redirect = "projetos-modulos/pastoral_social/login.php";
         } elseif ($module === 'obras') {
             $redirect = "projetos-modulos/obras/index.php";
-        } else {
+        }
+        elseif($module === 'membros') {
+            $redirect = "projetos-modulos/membros/index1.html";
+        }
+        else {
             $redirect = "modules/$module/index.php";
         }
 
