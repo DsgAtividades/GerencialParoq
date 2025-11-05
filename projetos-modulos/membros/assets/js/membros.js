@@ -796,8 +796,8 @@ function atualizarTabelaMembros() {
             </td>
             <td>
                 <div>
-                    ${membro.email ? `<div><i class="fas fa-envelope"></i> ${membro.email}</div>` : ''}
-                    ${membro.celular_whatsapp ? `<div><i class="fas fa-phone"></i> ${membro.celular_whatsapp}</div>` : ''}
+                    ${membro.email ? `<div><i class="fas fa-envelope"></i> ${window.Sanitizer ? window.Sanitizer.escapeHtml(membro.email) : membro.email}</div>` : ''}
+                    ${membro.telefone ? `<div><i class="fas fa-phone"></i> ${window.Sanitizer ? window.Sanitizer.escapeHtml(membro.telefone) : membro.telefone}</div>` : ''}
                 </div>
             </td>
             <td>
