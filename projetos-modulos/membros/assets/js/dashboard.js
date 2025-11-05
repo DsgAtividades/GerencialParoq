@@ -7,6 +7,18 @@
 // CONFIGURAÇÕES DO DASHBOARD
 // =====================================================
 
+// Detectar automaticamente o caminho base da API se CONFIG não estiver definido
+if (typeof CONFIG === 'undefined') {
+    function detectApiBasePath() {
+        const path = window.location.pathname;
+        const basePath = path.replace(/\/[^\/]*\.php$/, '').replace(/\/index\.html$/, '');
+        return basePath + '/api/';
+    }
+    var CONFIG = {
+        apiBaseUrl: detectApiBasePath()
+    };
+}
+
 const DashboardConfig = {
     charts: {
         membrosPorStatus: 'chart-membros-status',

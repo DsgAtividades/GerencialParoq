@@ -394,12 +394,12 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Utilitários devem ser carregados primeiro -->
-    <script src="assets/js/sanitizer.js"></script>
-    <script src="assets/js/validator.js"></script>
-    <script src="assets/js/api.js"></script>
-    <script src="assets/js/modals.js"></script>
-    <script src="assets/js/table.js"></script>
-    <script src="assets/js/membros.js"></script>
+    <script src="assets/js/sanitizer.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/validator.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/api.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/modals.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/table.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/membros.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
 

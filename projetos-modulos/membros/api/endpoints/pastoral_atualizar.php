@@ -51,7 +51,7 @@ try {
     $camposPermitidos = [
         'nome',
         'tipo',
-        'comunidade_capelania',
+        'comunidade_ou_capelania',
         'finalidade_descricao',
         'whatsapp_grupo_link',
         'email_grupo',

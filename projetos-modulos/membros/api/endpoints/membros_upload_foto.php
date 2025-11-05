@@ -124,8 +124,14 @@ try {
             $urlArquivo = '/' . $urlArquivo;
         }
     } else {
-        // Fallback: usar caminho fixo baseado na estrutura conhecida
-        $urlArquivo = '/PROJETOS/GerencialParoq/projetos-modulos/membros/uploads/fotos/' . $nomeArquivo;
+        // Fallback: construir URL relativa ao projeto
+        $scriptPath = $_SERVER['SCRIPT_NAME'];
+        $basePath = dirname(dirname(dirname($scriptPath))); // Voltar 3 níveis: api/endpoints -> api -> projetos-modulos/membros
+        $urlArquivo = $basePath . '/uploads/fotos/' . $nomeArquivo;
+        
+        // Normalizar barras
+        $urlArquivo = str_replace('\\', '/', $urlArquivo);
+        $urlArquivo = preg_replace('#/+#', '/', $urlArquivo);
     }
     
     error_log("URL do arquivo construída: " . $urlArquivo);

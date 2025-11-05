@@ -43,7 +43,7 @@ try {
             p.id,
             p.nome,
             p.tipo,
-            p.comunidade_capelania,
+            p.comunidade_ou_capelania,
             p.dia_semana,
             p.horario,
             p.local_reuniao,
@@ -53,7 +53,7 @@ try {
             COUNT(mp.membro_id) as total_membros
         FROM membros_pastorais p
         LEFT JOIN membros_membros_pastorais mp ON p.id = mp.pastoral_id
-        GROUP BY p.id, p.nome, p.tipo, p.comunidade_capelania, p.dia_semana, p.horario, p.local_reuniao, p.coordenador_id, p.vice_coordenador_id, p.created_at
+        GROUP BY p.id, p.nome, p.tipo, p.comunidade_ou_capelania, p.dia_semana, p.horario, p.local_reuniao, p.coordenador_id, p.vice_coordenador_id, p.created_at
         ORDER BY p.nome
     ";
     
@@ -99,7 +99,7 @@ try {
             'id' => $pastoral['id'],
             'nome' => $pastoral['nome'],
             'tipo' => $pastoral['tipo'],
-            'comunidade' => $pastoral['comunidade_capelania'],
+            'comunidade' => $pastoral['comunidade_ou_capelania'],
             'total_membros' => (int)$pastoral['total_membros'],
             'total_coordenadores' => 0, // Será calculado separadamente se necessário
             'dia_semana' => $pastoral['dia_semana'],

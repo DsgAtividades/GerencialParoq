@@ -6,8 +6,16 @@
 // =====================================================
 // CONFIGURAÇÕES GLOBAIS
 // =====================================================
+
+// Detectar automaticamente o caminho base da API
+function detectApiBasePath() {
+    const path = window.location.pathname;
+    const basePath = path.replace(/\/[^\/]*\.php$/, '').replace(/\/index\.html$/, '');
+    return basePath + '/api/';
+}
+
 const CONFIG = {
-    apiBaseUrl: '/PROJETOS/GerencialParoq/projetos-modulos/membros/api/',
+    apiBaseUrl: detectApiBasePath(),
     itemsPerPage: 20,
     currentPage: 1,
     totalPages: 1,
@@ -1987,7 +1995,7 @@ function abrirModalPastoral() {
                             <div class="form-row">
                                 <div class="form-group col-md-12">
                                     <label for="pastoral-comunidade">Comunidade/Capelania</label>
-                                    <input type="text" class="form-control" id="pastoral-comunidade" name="comunidade_capelania" placeholder="Ex: Matriz, Capela São José">
+                                    <input type="text" class="form-control" id="pastoral-comunidade" name="comunidade_ou_capelania" placeholder="Ex: Matriz, Capela São José">
                                 </div>
                             </div>
 
@@ -2059,7 +2067,7 @@ async function salvarNovaPastoral() {
     const dados = {
         nome: formData.get('nome'),
         tipo: formData.get('tipo'),
-        comunidade_capelania: formData.get('comunidade_capelania') || null,
+        comunidade_ou_capelania: formData.get('comunidade_ou_capelania') || null,
         finalidade_descricao: formData.get('finalidade_descricao') || null,
         whatsapp_grupo_link: formData.get('whatsapp_grupo_link') || null,
         email_grupo: formData.get('email_grupo') || null,

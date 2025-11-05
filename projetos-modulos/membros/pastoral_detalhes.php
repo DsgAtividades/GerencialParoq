@@ -257,7 +257,7 @@ $module_description = 'Informações completas da pastoral';
                     <div class="form-row">
                         <div class="form-group">
                             <label for="edit-comunidade">Comunidade/Capelania</label>
-                            <input type="text" id="edit-comunidade" name="comunidade_capelania" placeholder="Ex: Matriz, Capela São José">
+                            <input type="text" id="edit-comunidade" name="comunidade_ou_capelania" placeholder="Ex: Matriz, Capela São José">
                         </div>
                     </div>
 

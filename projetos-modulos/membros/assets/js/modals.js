@@ -775,7 +775,9 @@ async function uploadFotoMembro(membroId = null) {
     
     try {
         // Usar o mesmo padrão de URL dos outros endpoints
-        const url = '/PROJETOS/GerencialParoq/projetos-modulos/membros/api/membros/upload-foto';
+        const path = window.location.pathname;
+        const basePath = path.replace(/\/[^\/]*\.php$/, '').replace(/\/index\.html$/, '');
+        const url = basePath + '/api/membros/upload-foto';
         
         const response = await fetch(url, {
             method: 'POST',

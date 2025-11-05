@@ -26,11 +26,11 @@ class Membro {
 
         // Filtros
         if (!empty($params['search'])) {
-            $where[] = "(nome_completo ILIKE ? OR email ILIKE ? OR celular_whatsapp ILIKE ?)";
-            $searchTerm = '%' . $params['search'] . '%';
+            $where[] = "(LOWER(nome_completo) LIKE ? OR LOWER(email) LIKE ? OR celular_whatsapp LIKE ?)";
+            $searchTerm = '%' . strtolower($params['search']) . '%';
             $bindings[] = $searchTerm;
             $bindings[] = $searchTerm;
-            $bindings[] = $searchTerm;
+            $bindings[] = '%' . $params['search'] . '%'; // Telefone não precisa lowercase
         }
 
         if (!empty($params['status'])) {
@@ -40,7 +40,7 @@ class Membro {
 
         if (isset($params['paroquiano'])) {
             $where[] = "paroquiano = ?";
-            $bindings[] = $params['paroquiano'] ? 'true' : 'false';
+            $bindings[] = $params['paroquiano'] ? 1 : 0;
         }
 
         if (!empty($params['pastoral_id'])) {

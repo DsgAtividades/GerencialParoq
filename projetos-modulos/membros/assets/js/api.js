@@ -7,8 +7,16 @@
 // CONFIGURAÇÕES DA API
 // =====================================================
 
+// Detectar automaticamente o caminho base
+function detectBasePath() {
+    const path = window.location.pathname;
+    // Remover /index.php ou qualquer arquivo final
+    const basePath = path.replace(/\/[^\/]*\.php$/, '').replace(/\/index\.html$/, '');
+    return basePath + '/api/';
+}
+
 const APIConfig = {
-    baseUrl: '/PROJETOS/GerencialParoq/projetos-modulos/membros/api/',
+    baseUrl: detectBasePath(),
     timeout: 30000,
     retryAttempts: 3,
     retryDelay: 1000
