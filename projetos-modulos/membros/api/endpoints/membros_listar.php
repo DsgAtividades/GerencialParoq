@@ -38,6 +38,7 @@ try {
             m.paroquiano,
             m.comunidade_ou_capelania,
             m.foto_url,
+            m.data_entrada,
             m.created_at,
             GROUP_CONCAT(DISTINCT p.nome SEPARATOR ', ') as pastorais
         FROM membros_membros m
