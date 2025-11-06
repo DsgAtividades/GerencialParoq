@@ -235,6 +235,15 @@ class Cache {
     }
     
     /**
+     * Obter diretório de cache
+     * 
+     * @return string Diretório de cache
+     */
+    public function getCacheDir() {
+        return $this->cacheDir;
+    }
+    
+    /**
      * Obter caminho do arquivo de cache
      * 
      * @param string $key Chave do cache

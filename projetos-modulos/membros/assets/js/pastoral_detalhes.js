@@ -763,7 +763,6 @@ function preencherFormularioEdicao() {
     
     document.getElementById('edit-nome').value = pastoral.nome || '';
     document.getElementById('edit-tipo').value = pastoral.tipo || '';
-    document.getElementById('edit-comunidade').value = pastoral.comunidade_ou_capelania || pastoral.comunidade || '';
     document.getElementById('edit-finalidade').value = pastoral.finalidade_descricao || '';
     document.getElementById('edit-whatsapp').value = pastoral.whatsapp_grupo_link || '';
     document.getElementById('edit-email').value = pastoral.email_grupo || '';

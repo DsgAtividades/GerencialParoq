@@ -5,8 +5,11 @@
  * URL: /api/pastorais
  */
 
-require_once '../config/database.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../utils/Response.php';
+require_once __DIR__ . '/../utils/Cache.php';
 
+ob_start(); // Iniciar buffer de output
 try {
     // Obter dados do body
     $input = json_decode(file_get_contents('php://input'), true);
@@ -49,7 +52,6 @@ try {
     
     // Campos opcionais
     $camposOpcionais = [
-        'comunidade_ou_capelania',
         'finalidade_descricao',
         'whatsapp_grupo_link',
         'email_grupo',
@@ -101,6 +103,22 @@ try {
         Response::error('Erro ao recuperar pastoral criada', 500);
     }
     
+    // Invalidar cache de pastorais após criar nova pastoral
+    try {
+        $cache = new Cache();
+        // Deletar todas as chaves de cache relacionadas a pastorais
+        $cacheFiles = glob($cache->getCacheDir() . '*pastorais*');
+        foreach ($cacheFiles as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
+        }
+        error_log("pastorais_criar.php: Cache de pastorais invalidado");
+    } catch (Exception $cacheError) {
+        error_log("pastorais_criar.php: Erro ao invalidar cache: " . $cacheError->getMessage());
+        // Não falhar a criação por causa do cache
+    }
+    
     // Buscar nome do coordenador se houver
     if (!empty($pastoral['coordenador_id'])) {
         $coordQuery = "SELECT nome_completo, apelido FROM membros_membros WHERE id = ?";
@@ -123,10 +141,21 @@ try {
         }
     }
     
+    ob_end_clean();
     Response::success($pastoral, 'Pastoral criada com sucesso');
     
+} catch (PDOException $e) {
+    ob_end_clean();
+    error_log("Erro ao criar pastoral (PDO): " . $e->getMessage());
+    Response::error('Erro ao conectar com banco de dados', 500);
 } catch (Exception $e) {
+    ob_end_clean();
     error_log("Erro ao criar pastoral: " . $e->getMessage());
+    error_log("Erro ao criar pastoral trace: " . $e->getTraceAsString());
     Response::error('Erro interno do servidor: ' . $e->getMessage(), 500);
+} catch (Throwable $e) {
+    ob_end_clean();
+    error_log("Erro fatal ao criar pastoral: " . $e->getMessage());
+    Response::error('Erro interno do servidor', 500);
 }
 ?>

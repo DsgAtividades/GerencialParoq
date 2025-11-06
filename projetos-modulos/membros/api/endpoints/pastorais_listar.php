@@ -27,15 +27,20 @@ try {
     $db = new MembrosDatabase();
     $cache = new Cache();
     
+    // Verificar se deve ignorar cache (parâmetro _nocache)
+    $ignoreCache = isset($_GET['_nocache']) && $_GET['_nocache'] !== '';
+    
     // Gerar chave de cache
     $cacheKey = $cache->generateKey('pastorais_listar', $_GET);
     
-    // Tentar obter do cache
-    $cachedPastorais = $cache->get($cacheKey);
-    if ($cachedPastorais !== null) {
-        ob_end_clean();
-        Response::success($cachedPastorais);
-        exit;
+    // Tentar obter do cache apenas se não for forçado
+    if (!$ignoreCache) {
+        $cachedPastorais = $cache->get($cacheKey);
+        if ($cachedPastorais !== null) {
+            ob_end_clean();
+            Response::success($cachedPastorais);
+            exit;
+        }
     }
     
     // Verificar se a coluna comunidade_ou_capelania existe
@@ -59,16 +64,20 @@ try {
             p.coordenador_id,
             p.vice_coordenador_id,
             p.created_at,
-            COUNT(mp.membro_id) as total_membros
+            COUNT(DISTINCT mp.membro_id) as total_membros
         FROM membros_pastorais p
-        LEFT JOIN membros_membros_pastorais mp ON p.id = mp.pastoral_id
-        GROUP BY p.id, p.nome, p.tipo, {$comunidadeGroupBy} p.dia_semana, p.horario, p.local_reuniao, p.coordenador_id, p.vice_coordenador_id, p.created_at
+        LEFT JOIN membros_membros_pastorais mp ON p.id = mp.pastoral_id AND mp.status = 'ativo'
+        GROUP BY p.id
         ORDER BY p.nome
     ";
+    
+    error_log("pastorais_listar.php: Query SQL: " . $query);
     
     $stmt = $db->prepare($query);
     $stmt->execute();
     $pastorais = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    error_log("pastorais_listar.php: Total de pastorais retornadas pela query: " . count($pastorais));
     
     // Buscar nomes dos coordenadores de uma vez para melhor performance
     $coordenadoresIds = array_values(array_filter(array_unique(array_map(function($id) {
@@ -123,10 +132,9 @@ try {
     }, $pastorais);
     
     error_log("pastorais_listar.php: Retornando " . count($pastoraisFormatadas) . " pastorais formatadas");
+    error_log("pastorais_listar.php: IDs das pastorais: " . implode(', ', array_column($pastoraisFormatadas, 'id')));
     foreach ($pastoraisFormatadas as $p) {
-        if ($p['coordenador_nome']) {
-            error_log("pastorais_listar.php: Pastoral '{$p['nome']}' tem coordenador: {$p['coordenador_nome']}");
-        }
+        error_log("pastorais_listar.php: Pastoral ID: {$p['id']}, Nome: {$p['nome']}");
     }
     
     // Armazenar no cache por 10 minutos (apenas se não houver erro)

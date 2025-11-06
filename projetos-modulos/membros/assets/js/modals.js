@@ -399,7 +399,7 @@ function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="observacoes_pastorais" class="form-label"><i class="fas fa-sticky-note"></i> Observações Pastorais</label>
+                    <label for="observacoes_pastorais" class="form-label"><i class="fas fa-sticky-note"></i> Observações sobre o membro</label>
                     <textarea class="form-control" id="observacoes_pastorais" name="observacoes_pastorais" 
                               rows="3" placeholder="Observações importantes sobre o membro...">${dadosMembro.observacoes_pastorais || ''}</textarea>
                 </div>

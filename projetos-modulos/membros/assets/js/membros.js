@@ -430,17 +430,22 @@ async function carregarMembros() {
     }
 }
 
-async function carregarPastorais() {
+async function carregarPastorais(forceRefresh = false) {
     try {
-        // Verificar cache
-        const cached = obterDoCache('pastorais');
         let response;
         
-        if (cached) {
-            console.log('Usando pastorais do cache');
-            response = cached;
-        } else {
-            response = await carregarPastoraisAPI();
+        // Verificar cache apenas se não for forçado
+        if (!forceRefresh) {
+            const cached = obterDoCache('pastorais');
+            if (cached) {
+                console.log('Usando pastorais do cache');
+                response = cached;
+            }
+        }
+        
+        // Se não tiver resposta do cache ou for forçado, buscar da API
+        if (!response) {
+            response = await carregarPastoraisAPI(forceRefresh);
             if (response && response.success) {
                 salvarNoCache('pastorais', response);
             }
@@ -1994,13 +1999,6 @@ function abrirModalPastoral() {
 
                             <div class="form-row">
                                 <div class="form-group col-md-12">
-                                    <label for="pastoral-comunidade">Comunidade/Capelania</label>
-                                    <input type="text" class="form-control" id="pastoral-comunidade" name="comunidade_ou_capelania" placeholder="Ex: Matriz, Capela São José">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group col-md-12">
                                     <label for="pastoral-descricao">Finalidade / Descrição</label>
                                     <textarea class="form-control" id="pastoral-descricao" name="finalidade_descricao" rows="3" placeholder="Descreva a finalidade e objetivos desta pastoral..."></textarea>
                                 </div>
@@ -2067,7 +2065,6 @@ async function salvarNovaPastoral() {
     const dados = {
         nome: formData.get('nome'),
         tipo: formData.get('tipo'),
-        comunidade_ou_capelania: formData.get('comunidade_ou_capelania') || null,
         finalidade_descricao: formData.get('finalidade_descricao') || null,
         whatsapp_grupo_link: formData.get('whatsapp_grupo_link') || null,
         email_grupo: formData.get('email_grupo') || null,
@@ -2106,9 +2103,19 @@ async function salvarNovaPastoral() {
             mostrarNotificacao('Pastoral criada com sucesso!', 'success');
             fecharModalPastoral();
             
-            // Limpar cache e recarregar pastorais
+            // Limpar cache local e forçar recarga sem cache
             AppState.apiCache.delete('pastorais');
-            await carregarPastorais();
+            // Limpar cache do localStorage também
+            if (typeof localStorage !== 'undefined') {
+                const keys = Object.keys(localStorage);
+                keys.forEach(key => {
+                    if (key.includes('pastorais') || key.includes('cache')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            }
+            // Forçar recarga sem usar cache
+            await carregarPastorais(true);
         } else {
             mostrarNotificacao(result.error || 'Erro ao criar pastoral', 'error');
             btnSalvar.disabled = false;

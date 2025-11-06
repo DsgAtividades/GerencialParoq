@@ -174,8 +174,8 @@ const MembrosAPI = {
  * API de Pastorais
  */
 const PastoraisAPI = {
-    async listar() {
-        return api.get('pastorais');
+    async listar(params = {}) {
+        return api.get('pastorais', params);
     },
     
     async buscar(id) {
@@ -386,9 +386,10 @@ async function carregarMembrosAPI(params = {}) {
 /**
  * Carrega pastorais com fallback
  */
-async function carregarPastoraisAPI() {
+async function carregarPastoraisAPI(forceRefresh = false) {
     try {
-        return await PastoraisAPI.listar();
+        const params = forceRefresh ? { _nocache: Date.now() } : {};
+        return await PastoraisAPI.listar(params);
     } catch (error) {
         console.error('Erro ao carregar pastorais:', error);
         return await usarDadosMockados('pastorais');

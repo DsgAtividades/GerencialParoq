@@ -255,13 +255,6 @@ $module_description = 'Informações completas da pastoral';
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="edit-comunidade">Comunidade/Capelania</label>
-                            <input type="text" id="edit-comunidade" name="comunidade_ou_capelania" placeholder="Ex: Matriz, Capela São José">
-                        </div>
-                    </div>
-
-                    <div class="form-row">
                         <div class="form-group full-width">
                             <label for="edit-finalidade">Finalidade / Descrição</label>
                             <textarea id="edit-finalidade" name="finalidade_descricao" rows="4" placeholder="Descreva a finalidade e objetivos desta pastoral..."></textarea>
