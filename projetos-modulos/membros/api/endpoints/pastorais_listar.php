@@ -71,10 +71,13 @@ try {
     $pastorais = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Buscar nomes dos coordenadores de uma vez para melhor performance
-    $coordenadoresIds = array_values(array_filter(array_unique(array_map('trim', array_merge(
+    $coordenadoresIds = array_values(array_filter(array_unique(array_map(function($id) {
+        return $id ? trim($id) : null;
+    }, array_merge(
         array_column($pastorais, 'coordenador_id'),
         array_column($pastorais, 'vice_coordenador_id')
     )))));
+    $coordenadoresIds = array_filter($coordenadoresIds); // Remove nulls
     $coordenadoresMap = [];
     if (!empty($coordenadoresIds)) {
         error_log("pastorais_listar.php: Buscando coordenadores para IDs: " . implode(', ', $coordenadoresIds));

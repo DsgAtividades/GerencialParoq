@@ -320,37 +320,115 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
             <!-- Relatórios -->
             <section id="relatorios" class="content-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-chart-bar"></i> Relatórios</h2>
+                    <h2><i class="fas fa-chart-bar"></i> Relatórios e Análises</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary" onclick="carregarRelatorios()">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                        </button>
+                    </div>
                 </div>
 
-                <div class="reports-grid">
-                    <div class="report-card" onclick="gerarRelatorio('membros')">
-                        <div class="report-icon">
-                            <i class="fas fa-users"></i>
+                <!-- Grid de Relatórios - 2 colunas por linha -->
+                <div class="relatorios-dashboard-grid">
+                    <!-- R1: Membros por Pastoral -->
+                    <div class="relatorio-card">
+                        <div class="relatorio-header">
+                            <h3><i class="fas fa-church"></i> Membros por Pastoral</h3>
                         </div>
-                        <h3>Relatório de Membros</h3>
-                        <p>Lista completa de membros com filtros</p>
+                        <div class="relatorio-body">
+                            <canvas id="chart-membros-pastoral"></canvas>
+                            <div class="relatorio-footer">
+                                <span id="total-pastorais" class="relatorio-total">-</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="report-card" onclick="gerarRelatorio('frequencia')">
-                        <div class="report-icon">
-                            <i class="fas fa-chart-line"></i>
+
+                    <!-- R2: Membros por Status -->
+                    <div class="relatorio-card">
+                        <div class="relatorio-header">
+                            <h3><i class="fas fa-user-check"></i> Membros por Status</h3>
                         </div>
-                        <h3>Relatório de Frequência</h3>
-                        <p>Análise de presença e participação</p>
+                        <div class="relatorio-body">
+                            <canvas id="chart-membros-status"></canvas>
+                            <div class="relatorio-footer">
+                                <span id="total-status" class="relatorio-total">-</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="report-card" onclick="gerarRelatorio('pastorais')">
-                        <div class="report-icon">
-                            <i class="fas fa-church"></i>
+
+                    <!-- R3: Membros por Gênero -->
+                    <div class="relatorio-card">
+                        <div class="relatorio-header">
+                            <h3><i class="fas fa-venus-mars"></i> Membros por Gênero</h3>
                         </div>
-                        <h3>Relatório de Pastorais</h3>
-                        <p>Estatísticas por pastoral</p>
+                        <div class="relatorio-body">
+                            <canvas id="chart-membros-genero"></canvas>
+                            <div class="relatorio-footer">
+                                <span id="total-genero" class="relatorio-total">-</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="report-card" onclick="gerarRelatorio('aniversariantes')">
-                        <div class="report-icon">
-                            <i class="fas fa-birthday-cake"></i>
+
+                    <!-- R4: Faixa Etária -->
+                    <div class="relatorio-card">
+                        <div class="relatorio-header">
+                            <h3><i class="fas fa-birthday-cake"></i> Faixa Etária</h3>
                         </div>
-                        <h3>Aniversariantes</h3>
-                        <p>Lista de aniversariantes do mês</p>
+                        <div class="relatorio-body">
+                            <canvas id="chart-faixa-etaria"></canvas>
+                            <div class="relatorio-footer">
+                                <span id="total-faixa-etaria" class="relatorio-total">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- R5: Crescimento Temporal -->
+                    <div class="relatorio-card">
+                        <div class="relatorio-header">
+                            <h3><i class="fas fa-chart-line"></i> Crescimento Temporal</h3>
+                        </div>
+                        <div class="relatorio-body">
+                            <canvas id="chart-crescimento"></canvas>
+                            <div class="relatorio-footer">
+                                <span class="relatorio-subtitle">Últimos 12 meses</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- R6: Membros sem Pastoral -->
+                    <div class="relatorio-card">
+                        <div class="relatorio-header">
+                            <h3><i class="fas fa-user-times"></i> Membros sem Pastoral</h3>
+                        </div>
+                        <div class="relatorio-body">
+                            <div class="relatorio-number-card">
+                                <div class="number-display" id="numero-sem-pastoral">-</div>
+                                <div class="number-label">membros</div>
+                            </div>
+                            <div class="relatorio-list" id="lista-sem-pastoral">
+                                <div class="loading-item">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- R7: Aniversariantes do Mês -->
+                    <div class="relatorio-card">
+                        <div class="relatorio-header">
+                            <h3><i class="fas fa-birthday-cake"></i> Aniversariantes do Mês</h3>
+                        </div>
+                        <div class="relatorio-body">
+                            <div class="relatorio-number-card">
+                                <div class="number-display" id="numero-aniversariantes">-</div>
+                                <div class="number-label">aniversariantes</div>
+                            </div>
+                            <div class="relatorio-list" id="lista-aniversariantes">
+                                <div class="loading-item">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando...
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -400,6 +478,7 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
     <script src="assets/js/modals.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/table.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/membros.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/relatorios.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
 
