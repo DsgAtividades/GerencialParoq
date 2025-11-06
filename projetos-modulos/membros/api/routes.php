@@ -208,6 +208,63 @@ switch ($path) {
             Response::error('Método não permitido', 405);
         }
         break;
+    
+    // ====== RELATÓRIOS ======
+    case 'relatorios/membros-por-pastoral':
+        if ($method === 'GET') {
+            include 'endpoints/relatorios/membros_por_pastoral.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'relatorios/membros-por-status':
+        if ($method === 'GET') {
+            include 'endpoints/relatorios/membros_por_status.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'relatorios/membros-por-genero':
+        if ($method === 'GET') {
+            include 'endpoints/relatorios/membros_por_genero.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'relatorios/membros-por-faixa-etaria':
+        if ($method === 'GET') {
+            include 'endpoints/relatorios/membros_por_faixa_etaria.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'relatorios/crescimento-temporal':
+        if ($method === 'GET') {
+            include 'endpoints/relatorios/crescimento_temporal.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'relatorios/membros-sem-pastoral':
+        if ($method === 'GET') {
+            include 'endpoints/relatorios/membros_sem_pastoral.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'relatorios/aniversariantes':
+        if ($method === 'GET') {
+            include 'endpoints/relatorios/aniversariantes.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
         
     default:
         // Verificar rota de evento por ID ANTES de todas as outras
