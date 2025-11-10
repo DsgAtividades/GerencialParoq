@@ -58,12 +58,96 @@ const AppState = {
 // =====================================================
 // INICIALIZAÇÃO
 // =====================================================
+// =====================================================
+// CONFIGURAÇÃO DE EVENT DELEGATION (uma vez no início)
+// =====================================================
+
+/**
+ * Configura event delegation para os botões de ação da tabela
+ * Isso garante que os botões funcionem mesmo quando criados dinamicamente
+ */
+function configurarEventDelegationTabela() {
+    // Usar o elemento pai (table ou tbody) para event delegation
+    const tabela = document.querySelector('#tabela-membros');
+    if (!tabela) {
+        setTimeout(configurarEventDelegationTabela, 500);
+        return;
+    }
+    
+    // Remover listener anterior se existir (usar uma função nomeada para poder remover)
+    if (tabela._handleTabelaClick) {
+        tabela.removeEventListener('click', tabela._handleTabelaClick);
+    }
+    
+    // Criar função nomeada para poder remover depois
+    tabela._handleTabelaClick = handleTabelaClick;
+    
+    // Adicionar event delegation
+    tabela.addEventListener('click', tabela._handleTabelaClick, true); // Usar capture phase
+}
+
+/**
+ * Handler para cliques na tabela (event delegation)
+ */
+function handleTabelaClick(e) {
+    // Encontrar o botão clicado (pode ser o botão ou um ícone dentro dele)
+    const button = e.target.closest('button');
+    if (!button) {
+        return;
+    }
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const id = button.getAttribute('data-membro-id');
+    if (!id) {
+        return;
+    }
+    
+    // Verificar qual botão foi clicado
+    if (button.classList.contains('btn-visualizar-membro')) {
+        console.log('Ação: Visualizar membro');
+        if (window.visualizarMembro && typeof window.visualizarMembro === 'function') {
+            window.visualizarMembro(id);
+        } else {
+            alert('Função visualizarMembro não encontrada');
+            console.error('window.visualizarMembro:', typeof window.visualizarMembro);
+        }
+    } else if (button.classList.contains('btn-editar-membro')) {
+        if (window.editarMembro && typeof window.editarMembro === 'function') {
+            try {
+                window.editarMembro(id);
+            } catch (error) {
+                console.error('Erro ao editar membro:', error);
+                alert('Erro ao editar membro: ' + (error.message || 'Erro desconhecido'));
+            }
+        } else {
+            alert('Função editarMembro não encontrada');
+            console.error('window.editarMembro:', typeof window.editarMembro);
+        }
+    } else if (button.classList.contains('btn-excluir-membro')) {
+        console.log('Ação: Excluir membro');
+        if (window.excluirMembro && typeof window.excluirMembro === 'function') {
+            window.excluirMembro(id);
+        } else {
+            alert('Função excluirMembro não encontrada');
+            console.error('window.excluirMembro:', typeof window.excluirMembro);
+        }
+    } else {
+        console.warn('Botão clicado não corresponde a nenhuma ação conhecida');
+        console.warn('Classes do botão:', button.className);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     inicializarAplicacao();
 });
 
 function inicializarAplicacao() {
     configurarNavegacao();
+    
+    // Configurar event delegation para tabela (deve ser feito antes de carregar dados)
+    configurarEventDelegationTabela();
     
     // Limpar cache expirado ao iniciar
     limparCacheExpirado();
@@ -107,6 +191,13 @@ function mostrarSecao(sectionId) {
     navLinks.forEach(link => {
         link.parentElement.classList.remove('active');
     });
+    
+    // Se mudar para seção de membros, garantir que event delegation está configurado
+    if (sectionId === 'membros') {
+        setTimeout(() => {
+            configurarEventDelegationTabela();
+        }, 100);
+    }
     
     // Mostrar seção selecionada
     const targetSection = document.getElementById(sectionId);
@@ -228,6 +319,51 @@ async function fetchComCache(url, options = {}) {
     }
     
     return data;
+}
+
+// =====================================================
+// SISTEMA DE REFRESH AUTOMÁTICO
+// =====================================================
+
+/**
+ * Função centralizada para refresh após operações CRUD
+ * Limpa cache e recarrega os dados
+ */
+function refreshDados(manterPagina = false) {
+    // Limpar cache de membros
+    if (AppState.apiCache) {
+        // Limpar todas as entradas de cache relacionadas a membros
+        const keysToDelete = [];
+        AppState.apiCache.forEach((value, key) => {
+            if (key.includes('membros')) {
+                keysToDelete.push(key);
+            }
+        });
+        keysToDelete.forEach(key => AppState.apiCache.delete(key));
+    }
+    
+    // Limpar cache de membros individuais
+    if (AppState.cacheMembros) {
+        AppState.cacheMembros.clear();
+    }
+    
+    // Se não deve manter a página, voltar para a primeira página
+    if (!manterPagina && AppState.paginacao) {
+        AppState.paginacao.page = 1;
+    }
+    
+    // Recarregar membros
+    if (typeof carregarMembros === 'function') {
+        carregarMembros();
+    }
+    
+    // Recarregar dashboard se estiver na seção de dashboard
+    const secaoAtiva = document.querySelector('.content-section.active');
+    if (secaoAtiva && secaoAtiva.id === 'dashboard') {
+        if (typeof carregarDashboard === 'function') {
+            carregarDashboard();
+        }
+    }
 }
 
 // =====================================================
@@ -818,19 +954,27 @@ function atualizarTabelaMembros() {
             </td>
             <td>
                 <div class="d-flex gap-1">
-                    <button class="btn btn-sm btn-secondary" onclick="window.visualizarMembro('${membro.id}')" title="Visualizar">
+                    <button class="btn btn-sm btn-secondary btn-visualizar-membro" data-membro-id="${membro.id}" title="Visualizar">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-primary" onclick="window.editarMembro('${membro.id}')" title="Editar">
+                    <button class="btn btn-sm btn-primary btn-editar-membro" data-membro-id="${membro.id}" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="window.excluirMembro('${membro.id}')" title="Excluir">
+                    <button class="btn btn-sm btn-danger btn-excluir-membro" data-membro-id="${membro.id}" title="Excluir">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
             </td>
         </tr>
     `).join('');
+    
+    // Garantir que event delegation está configurado
+    setTimeout(() => {
+        const tabela = document.querySelector('#tabela-membros');
+        if (tabela && !tabela._handleTabelaClick) {
+            configurarEventDelegationTabela();
+        }
+    }, 100);
     
     // Atualizar contador de registros
     const totalRegistros = document.getElementById('total-registros');
@@ -886,36 +1030,148 @@ async function visualizarMembro(id) {
  * Edita membro
  */
 async function editarMembro(id) {
+    // Validação inicial
+    if (!id) {
+        console.error('ID inválido para edição:', id);
+        alert('ID inválido para edição');
+        return;
+    }
+    
+    // Verificar se abrirModalMembro está disponível (tentar window primeiro, depois escopo local)
+    const abrirModalMembroFn = window.abrirModalMembro || (typeof abrirModalMembro !== 'undefined' ? abrirModalMembro : null);
+    
+    if (!abrirModalMembroFn || typeof abrirModalMembroFn !== 'function') {
+        console.error('ERRO: abrirModalMembro não está definida!');
+        console.error('window.abrirModalMembro:', typeof window.abrirModalMembro);
+        console.error('abrirModalMembro (local):', typeof abrirModalMembro);
+        console.error('Funções disponíveis em window:', Object.keys(window).filter(k => k.toLowerCase().includes('modal')));
+        alert('Erro: Função abrirModalMembro não encontrada. Verifique se modals.js foi carregado.');
+        return;
+    }
+    
+    console.log('abrirModalMembro encontrada e disponível');
+    
     try {
+        
         // Verificar cache primeiro (mais rápido)
-        const dadosCache = obterDadosDoCache(id);
+        let dadosCache = null;
+        if (typeof obterDadosDoCache === 'function') {
+            try {
+                dadosCache = obterDadosDoCache(id);
+                console.log('Cache verificado, resultado:', dadosCache ? 'encontrado' : 'não encontrado');
+            } catch (cacheError) {
+                console.warn('Erro ao verificar cache:', cacheError);
+                dadosCache = null;
+            }
+        } else {
+            console.warn('obterDadosDoCache não está disponível');
+        }
+        
         if (dadosCache) {
             console.log('Usando dados do cache para edição rápida');
-            abrirModalMembro(dadosCache, 'editar');
-            return;
+            console.log('Dados do cache:', dadosCache);
+            try {
+                abrirModalMembroFn(dadosCache, 'editar');
+                console.log('Modal aberto com sucesso usando cache');
+                return;
+            } catch (modalError) {
+                console.error('Erro ao abrir modal com cache:', modalError);
+                console.error('Stack trace:', modalError.stack);
+                // Continuar para buscar da API se o modal falhar
+            }
+        } else {
+            console.log('Cache vazio ou inválido, buscando da API...');
         }
         
         // Se não estiver no cache, mostrar indicador de carregamento
-        mostrarIndicadorCarregamento('Carregando dados do membro...');
+        if (typeof mostrarIndicadorCarregamento === 'function') {
+            mostrarIndicadorCarregamento('Carregando dados do membro...');
+        }
         
         // Buscar da API
         console.log('Buscando dados da API...');
-        const response = await MembrosAPI.buscar(id);
+        console.log('MembrosAPI disponível?', typeof MembrosAPI !== 'undefined');
+        console.log('MembrosAPI.buscar disponível?', typeof MembrosAPI !== 'undefined' && typeof MembrosAPI.buscar === 'function');
+        
+        // Verificar se MembrosAPI está disponível
+        if (typeof MembrosAPI === 'undefined' || !MembrosAPI.buscar) {
+            console.error('ERRO: MembrosAPI não está definida!');
+            console.error('Tipo de MembrosAPI:', typeof MembrosAPI);
+            alert('Erro: API não encontrada. Verifique se api.js foi carregado.');
+            if (typeof ocultarIndicadorCarregamento === 'function') {
+                ocultarIndicadorCarregamento();
+            }
+            return;
+        }
+        
+        console.log('Chamando MembrosAPI.buscar com ID:', id);
+        let response;
+        try {
+            response = await MembrosAPI.buscar(id);
+            console.log('Resposta recebida da API:', response);
+            console.log('Response.success:', response?.success);
+            console.log('Response.data existe?', !!response?.data);
+        } catch (apiError) {
+            console.error('ERRO ao chamar MembrosAPI.buscar:', apiError);
+            console.error('Stack trace:', apiError.stack);
+            if (typeof ocultarIndicadorCarregamento === 'function') {
+                ocultarIndicadorCarregamento();
+            }
+            alert('Erro ao buscar dados do membro: ' + (apiError.message || 'Erro desconhecido'));
+            return;
+        }
         
         // Ocultar indicador
-        ocultarIndicadorCarregamento();
+        if (typeof ocultarIndicadorCarregamento === 'function') {
+            ocultarIndicadorCarregamento();
+        }
         
         if (response && response.success) {
+            console.log('Dados recebidos com sucesso, salvando no cache...');
             // Salvar no cache para próximas edições
-            salvarDadosNoCache(id, response.data);
-            abrirModalMembro(response.data, 'editar');
+            if (typeof salvarDadosNoCache === 'function') {
+                salvarDadosNoCache(id, response.data);
+            } else {
+                console.warn('salvarDadosNoCache não está disponível');
+            }
+            
+            console.log('Chamando abrirModalMembro...');
+            console.log('Dados a serem passados:', response.data);
+            console.log('abrirModalMembroFn é função?', typeof abrirModalMembroFn === 'function');
+            console.log('window.abrirModalMembro:', typeof window.abrirModalMembro);
+            
+            try {
+                abrirModalMembroFn(response.data, 'editar');
+                console.log('abrirModalMembro chamado com sucesso');
+            } catch (modalError) {
+                console.error('ERRO ao chamar abrirModalMembro:', modalError);
+                console.error('Stack trace:', modalError.stack);
+                alert('Erro ao abrir modal de edição: ' + (modalError.message || 'Erro desconhecido'));
+            }
         } else {
-            mostrarNotificacao('Erro ao carregar dados do membro: ' + (response?.error || 'Erro desconhecido'), 'error');
+            const errorMsg = response?.error || 'Erro desconhecido';
+            console.error('Erro na resposta da API:', errorMsg);
+            console.error('Resposta completa:', response);
+            if (typeof mostrarNotificacao === 'function') {
+                mostrarNotificacao('Erro ao carregar dados do membro: ' + errorMsg, 'error');
+            } else {
+                alert('Erro ao carregar dados do membro: ' + errorMsg);
+            }
         }
     } catch (error) {
-        ocultarIndicadorCarregamento();
-        console.error('Erro ao editar membro:', error);
-        mostrarNotificacao('Erro ao carregar dados do membro: ' + error.message, 'error');
+        console.error('ERRO CAPTURADO em editarMembro:', error);
+        console.error('Stack trace:', error.stack);
+        
+        if (typeof ocultarIndicadorCarregamento === 'function') {
+            ocultarIndicadorCarregamento();
+        }
+        
+        const errorMsg = error.message || 'Erro desconhecido';
+        if (typeof mostrarNotificacao === 'function') {
+            mostrarNotificacao('Erro ao carregar dados do membro: ' + errorMsg, 'error');
+        } else {
+            alert('Erro ao carregar dados do membro: ' + errorMsg);
+        }
     }
 }
 
@@ -924,38 +1180,107 @@ async function editarMembro(id) {
  * Exclui membro
  */
 function excluirMembro(id) {
-    console.log('excluirMembro chamado com ID:', id);
+    console.log('=== excluirMembro CHAMADO ===');
+    console.log('ID recebido:', id);
     console.log('Tipo do ID:', typeof id);
     console.log('ID é undefined?', id === undefined);
     console.log('ID é null?', id === null);
     console.log('ID é string vazia?', id === '');
     
+    // Validação inicial
     if (!id) {
         console.error('ID inválido para exclusão:', id);
-        mostrarNotificacao('ID inválido para exclusão', 'error');
+        alert('ID inválido para exclusão');
         return;
     }
     
-    const membro = AppState.membros.find(m => m.id === id);
-    if (membro) {
-        if (confirm(`Tem certeza que deseja excluir o membro "${membro.nome_completo}"?`)) {
-            excluirMembroAPI(id)
+    // Verificar se excluirMembroAPI está disponível
+    if (typeof excluirMembroAPI !== 'function') {
+        console.error('ERRO: excluirMembroAPI não está definida!');
+        alert('Erro: Função excluirMembroAPI não encontrada. Verifique se api.js foi carregado.');
+        return;
+    }
+    
+    // Buscar membro (do estado ou tentar buscar da API)
+    let membro = AppState.membros ? AppState.membros.find(m => m.id === id) : null;
+    
+    // Se não encontrou no estado, tentar buscar da API
+    if (!membro) {
+        console.log('Membro não encontrado no AppState, tentando buscar da API...');
+        if (typeof MembrosAPI !== 'undefined' && MembrosAPI.buscar) {
+            MembrosAPI.buscar(id)
                 .then(response => {
-                    if (response.success) {
-                        mostrarNotificacao('Membro excluído com sucesso', 'success');
-                        carregarMembros(); // Recarregar lista
+                    if (response && response.success) {
+                        membro = response.data;
+                        confirmarExclusao(membro, id);
                     } else {
-                        mostrarNotificacao('Erro ao excluir membro', 'error');
+                        console.error('Membro não encontrado na API para ID:', id);
+                        alert('Membro não encontrado');
                     }
                 })
                 .catch(error => {
-                    console.error('Erro ao excluir membro:', error);
-                    mostrarNotificacao('Erro ao excluir membro', 'error');
+                    console.error('Erro ao buscar membro:', error);
+                    // Continuar mesmo sem nome, usando ID
+                    confirmarExclusao({ nome_completo: 'este membro' }, id);
                 });
+        } else {
+            // Se não conseguir buscar, usar nome genérico
+            confirmarExclusao({ nome_completo: 'este membro' }, id);
         }
     } else {
-        console.error('Membro não encontrado no AppState para ID:', id);
-        mostrarNotificacao('Membro não encontrado', 'error');
+        confirmarExclusao(membro, id);
+    }
+}
+
+/**
+ * Confirma e executa exclusão do membro
+ */
+function confirmarExclusao(membro, id) {
+    const nome = membro.nome_completo || 'este membro';
+    
+    if (confirm(`Tem certeza que deseja excluir o membro "${nome}"?\n\nEsta ação não pode ser desfeita.`)) {
+        console.log('Usuário confirmou exclusão, chamando API...');
+        
+        excluirMembroAPI(id)
+            .then(response => {
+                console.log('Resposta da API:', response);
+                if (response && response.success) {
+                    if (typeof mostrarNotificacao === 'function') {
+                        mostrarNotificacao('Membro excluído com sucesso', 'success');
+                    } else {
+                        alert('Membro excluído com sucesso');
+                    }
+                    
+                    // Refresh automático dos dados
+                    if (typeof refreshDados === 'function') {
+                        refreshDados(true); // Manter página atual
+                    } else if (typeof carregarMembros === 'function') {
+                        carregarMembros();
+                    } else {
+                        location.reload(); // Fallback: recarregar página
+                    }
+                } else {
+                    const errorMsg = response?.error || 'Erro desconhecido';
+                    console.error('Erro na resposta da API:', errorMsg);
+                    if (typeof mostrarNotificacao === 'function') {
+                        mostrarNotificacao('Erro ao excluir membro: ' + errorMsg, 'error');
+                    } else {
+                        alert('Erro ao excluir membro: ' + errorMsg);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('ERRO CAPTURADO em excluirMembro:', error);
+                console.error('Stack trace:', error.stack);
+                const errorMsg = error.message || 'Erro desconhecido';
+                if (typeof mostrarNotificacao === 'function') {
+                    mostrarNotificacao('Erro ao excluir membro: ' + errorMsg, 'error');
+                } else {
+                    alert('Erro ao excluir membro: ' + errorMsg);
+                }
+            });
+    } else {
+        console.log('Usuário cancelou exclusão');
     }
 }
 
@@ -2478,10 +2803,14 @@ function exportarMembrosFormato(formato) {
 // =====================================================
 
 // Exportar funções de ação dos membros para uso global
+// Garantir que as funções estejam disponíveis no escopo global
 window.visualizarMembro = visualizarMembro;
 window.exportarMembros = exportarMembros;
 window.exportarMembrosFormato = exportarMembrosFormato;
 window.editarMembro = editarMembro;
 window.excluirMembro = excluirMembro;
+window.confirmarExclusao = confirmarExclusao;
 window.carregarMembros = carregarMembros;
+window.refreshDados = refreshDados;
+
 

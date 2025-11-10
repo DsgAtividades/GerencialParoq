@@ -330,32 +330,38 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
 
                 <!-- Grid de Relatórios - 2 colunas por linha -->
                 <div class="relatorios-dashboard-grid">
-                    <!-- R1: Membros por Pastoral -->
-                    <div class="relatorio-card">
+
+                 <!-- R5: Crescimento Temporal -->
+                 <div class="relatorio-card">
                         <div class="relatorio-header">
-                            <h3><i class="fas fa-church"></i> Membros por Pastoral</h3>
+                            <h3><i class="fas fa-chart-line"></i> Crescimento Temporal</h3>
                         </div>
                         <div class="relatorio-body">
-                            <canvas id="chart-membros-pastoral"></canvas>
+                            <canvas id="chart-crescimento"></canvas>
                             <div class="relatorio-footer">
-                                <span id="total-pastorais" class="relatorio-total">-</span>
+                                <span class="relatorio-subtitle">Últimos 12 meses</span>
+                            </div>
+                        </div>
+                    </div>
+                                        <!-- R7: Aniversariantes do Mês -->
+                                        <div class="relatorio-card">
+                        <div class="relatorio-header">
+                            <h3><i class="fas fa-birthday-cake"></i> Aniversariantes do Mês</h3>
+                        </div>
+                        <div class="relatorio-body">
+                            <div class="relatorio-number-card">
+                                <div class="number-display" id="numero-aniversariantes">-</div>
+                                <div class="number-label">aniversariantes</div>
+                            </div>
+                            <div class="relatorio-list" id="lista-aniversariantes">
+                                <div class="loading-item">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando...
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- R2: Membros por Status -->
-                    <div class="relatorio-card">
-                        <div class="relatorio-header">
-                            <h3><i class="fas fa-user-check"></i> Membros por Status</h3>
-                        </div>
-                        <div class="relatorio-body">
-                            <canvas id="chart-membros-status"></canvas>
-                            <div class="relatorio-footer">
-                                <span id="total-status" class="relatorio-total">-</span>
-                            </div>
-                        </div>
-                    </div>
-
+                    
                     <!-- R3: Membros por Gênero -->
                     <div class="relatorio-card">
                         <div class="relatorio-header">
@@ -368,7 +374,7 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                             </div>
                         </div>
                     </div>
-
+                    
                     <!-- R4: Faixa Etária -->
                     <div class="relatorio-card">
                         <div class="relatorio-header">
@@ -381,16 +387,17 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                             </div>
                         </div>
                     </div>
-
-                    <!-- R5: Crescimento Temporal -->
+                    
+                    
+                    <!-- R2: Membros por Status -->
                     <div class="relatorio-card">
                         <div class="relatorio-header">
-                            <h3><i class="fas fa-chart-line"></i> Crescimento Temporal</h3>
+                            <h3><i class="fas fa-user-check"></i> Membros por Status</h3>
                         </div>
                         <div class="relatorio-body">
-                            <canvas id="chart-crescimento"></canvas>
+                            <canvas id="chart-membros-status"></canvas>
                             <div class="relatorio-footer">
-                                <span class="relatorio-subtitle">Últimos 12 meses</span>
+                                <span id="total-status" class="relatorio-total">-</span>
                             </div>
                         </div>
                     </div>
@@ -413,23 +420,7 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                         </div>
                     </div>
 
-                    <!-- R7: Aniversariantes do Mês -->
-                    <div class="relatorio-card">
-                        <div class="relatorio-header">
-                            <h3><i class="fas fa-birthday-cake"></i> Aniversariantes do Mês</h3>
-                        </div>
-                        <div class="relatorio-body">
-                            <div class="relatorio-number-card">
-                                <div class="number-display" id="numero-aniversariantes">-</div>
-                                <div class="number-label">aniversariantes</div>
-                            </div>
-                            <div class="relatorio-list" id="lista-aniversariantes">
-                                <div class="loading-item">
-                                    <i class="fas fa-spinner fa-spin"></i> Carregando...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </section>
 

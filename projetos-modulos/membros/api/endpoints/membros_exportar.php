@@ -90,6 +90,11 @@ try {
     $stmt->execute($params);
     $membros = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    error_log("Exportar: Query executada - " . count($membros) . " membros encontrados");
+    if (count($membros) > 0) {
+        error_log("Exportar: Primeiro membro - " . json_encode($membros[0]));
+    }
+    
     // Exportar conforme formato solicitado
     if ($formato === 'pdf') {
         exportarPDF($membros, $busca, $status, $pastoral);
@@ -347,7 +352,7 @@ function exportarCSV($membros, $busca = '', $status = '', $pastoral = '') {
 }
 
 /**
- * Exporta membros em formato PDF
+ * Exporta membros em formato PDF - Implementação própria sem dependências
  */
 function exportarPDF($membros, $busca = '', $status = '', $pastoral = '') {
     // Limpar buffer antes de gerar arquivo binário
@@ -355,101 +360,284 @@ function exportarPDF($membros, $busca = '', $status = '', $pastoral = '') {
         ob_end_clean();
     }
     
+    error_log("PDF Export: Iniciando exportação PDF");
+    error_log("PDF Export: Total de membros recebidos: " . count($membros));
+    
+    if (empty($membros)) {
+        error_log("PDF Export: AVISO - Nenhum membro para exportar!");
+        http_response_code(400);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Nenhum membro encontrado para exportar.';
+        exit;
+    }
+    
     $nomeArquivo = 'membros_' . date('Y-m-d_His') . '.pdf';
     
-    // Usar SimplePDF diretamente (não depende de arquivos de fonte externos)
-    $pdf = new SimplePDF();
-    $pdf->AddPage('L', 'A4'); // Landscape para mais colunas
-    
-    // Título
-    $pdf->SetFont('Arial', 'B', 16);
-    $pdf->Cell(0, 10, 'Relatorio de Membros', 0, 1, 'C');
-    $pdf->Ln(5);
-    
-    // Informações de filtro (se houver)
-    if (!empty($busca) || !empty($status) || !empty($pastoral)) {
-        $pdf->SetFont('Arial', 'I', 10);
-        $filtros = [];
-        if (!empty($busca)) $filtros[] = "Busca: {$busca}";
-        if (!empty($status)) $filtros[] = "Status: " . traduzirStatus($status);
-        if (!empty($pastoral)) $filtros[] = "Pastoral: {$pastoral}";
-        $pdf->Cell(0, 5, 'Filtros aplicados: ' . implode(' | ', $filtros), 0, 1);
-        $pdf->Ln(3);
-    }
-    
-    // Cabeçalhos da tabela
-    $pdf->SetFont('Arial', 'B', 10);
-    $pdf->SetFillColor(68, 114, 196);
-    $pdf->SetTextColor(255, 255, 255);
-    
-    $larguras = [40, 30, 35, 25, 25, 15, 20, 20];
-    $cabecalhos = ['Nome', 'Email', 'Telefone', 'Nascimento', 'Entrada', 'Sexo', 'Status', 'Paroquiano'];
-    
-    foreach ($cabecalhos as $i => $cabecalho) {
-        $pdf->Cell($larguras[$i], 7, $cabecalho, 1, 0, 'C', true);
-    }
-    $pdf->Ln();
-    
-    // Dados
-    $pdf->SetFont('Arial', '', 9);
-    $pdf->SetTextColor(0, 0, 0);
-    $pdf->SetFillColor(240, 240, 240);
-    
-    $fill = false;
-    foreach ($membros as $membro) {
-        // Verificar se precisa de nova página (A4 Landscape: 297mm altura)
-        if ($pdf->GetY() > 280) {
-            $pdf->AddPage('L', 'A4');
-            // Reimprimir cabeçalhos
-            $pdf->SetFont('Arial', 'B', 10);
-            $pdf->SetFillColor(68, 114, 196);
-            $pdf->SetTextColor(255, 255, 255);
-            foreach ($cabecalhos as $i => $cabecalho) {
-                $pdf->Cell($larguras[$i], 7, $cabecalho, 1, 0, 'C', true);
-            }
-            $pdf->Ln();
-            $pdf->SetFont('Arial', '', 9);
-            $pdf->SetTextColor(0, 0, 0);
-            $pdf->SetFillColor(240, 240, 240);
-            $fill = false;
-        }
-        
-        $pdf->Cell($larguras[0], 6, mb_substr($membro['nome_completo'] ?? '', 0, 25), 1, 0, 'L', $fill);
-        $pdf->Cell($larguras[1], 6, mb_substr($membro['email'] ?? '', 0, 20), 1, 0, 'L', $fill);
-        $pdf->Cell($larguras[2], 6, mb_substr($membro['telefone'] ?? '', 0, 15), 1, 0, 'L', $fill);
-        $pdf->Cell($larguras[3], 6, $membro['data_nascimento'] ?? '', 1, 0, 'C', $fill);
-        $pdf->Cell($larguras[4], 6, $membro['data_entrada'] ?? '', 1, 0, 'C', $fill);
-        $pdf->Cell($larguras[5], 6, $membro['sexo'] ?? '', 1, 0, 'C', $fill);
-        $pdf->Cell($larguras[6], 6, mb_substr(traduzirStatus($membro['status'] ?? ''), 0, 12), 1, 0, 'C', $fill);
-        $pdf->Cell($larguras[7], 6, $membro['paroquiano'] ? 'Sim' : 'Nao', 1, 1, 'C', $fill);
-        
-        $fill = !$fill;
-    }
-    
-    // Rodapé
-    $pdf->SetY(-15);
-    $pdf->SetFont('Arial', 'I', 8);
-    $pdf->Cell(0, 10, 'Total de membros: ' . count($membros) . ' | Gerado em ' . date('d/m/Y H:i:s'), 0, 0, 'C');
-    
-    // Debug: verificar se há páginas e elementos
-    $reflection = new ReflectionClass($pdf);
-    $pagesProperty = $reflection->getProperty('pages');
-    $pagesProperty->setAccessible(true);
-    $pages = $pagesProperty->getValue($pdf);
-    
-    error_log("PDF Debug: Total de páginas: " . count($pages));
-    foreach ($pages as $pageNum => $pageData) {
-        error_log("PDF Debug: Página $pageNum tem " . count($pageData['elements']) . " elementos");
-    }
-    
-    // Headers PDF - DEVE ser enviado ANTES de qualquer output
+    // Usar implementação própria de PDF (sem dependências de arquivos de fonte)
+    gerarPDFCompleto($membros, $busca, $status, $pastoral, $nomeArquivo);
+}
+
+/**
+ * Gera PDF completo com tabela de membros - Implementação própria
+ */
+function gerarPDFCompleto($membros, $busca, $status, $pastoral, $nomeArquivo) {
+    // Headers PDF
     header('Content-Type: application/pdf');
     header('Content-Disposition: attachment; filename="' . $nomeArquivo . '"');
     header('Cache-Control: max-age=0');
     header('Pragma: public');
     
-    // Output
-    $pdf->Output('D', $nomeArquivo);
+    // Inicializar variáveis para construção do PDF
+    $objects = [];
+    $offsets = [];
+    $objNum = 1;
+    
+    // Objeto 1: Catalog
+    $objects[$objNum++] = "<<\n/Type /Catalog\n/Pages 2 0 R\n>>";
+    
+    // Objeto 2: Pages (será atualizado depois)
+    $pageObjStart = $objNum++;
+    $objects[$pageObjStart] = ""; // Será preenchido depois
+    
+    // Preparar conteúdo das páginas
+    $pageContents = [];
+    $currentPage = 0;
+    $pageHeight = 842; // A4 portrait height em pontos
+    $pageWidth = 595; // A4 portrait width em pontos
+    $margin = 40;
+    $yPosFromTop = 50; // Posição Y do topo (em pontos do topo)
+    
+    // Função auxiliar para converter texto para ISO-8859-1 e escapar
+    $escapeText = function($text) {
+        $text = mb_convert_encoding($text, 'ISO-8859-1', 'UTF-8');
+        return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
+    };
+    
+    // Função para converter Y do topo para Y do PDF (PDF tem Y=0 na parte inferior)
+    $pdfY = function($yFromTop) use ($pageHeight) {
+        return $pageHeight - $yFromTop;
+    };
+    
+    // Função para adicionar texto ao conteúdo
+    $addText = function(&$content, $x, $yFromTop, $text, $size = 10, $align = 'L', $textColor = null) use ($escapeText, $pdfY) {
+        $text = $escapeText($text);
+        $y = $pdfY($yFromTop);
+        $content .= "BT\n";
+        $content .= "/F1 $size Tf\n";
+        // Definir cor do texto (se especificada)
+        if ($textColor !== null) {
+            $content .= "$textColor[0] $textColor[1] $textColor[2] rg\n";
+        } else {
+            $content .= "0 0 0 rg\n"; // Cor preta padrão
+        }
+        if ($align == 'C') {
+            // Centralizar (aproximado)
+            $textWidth = strlen($text) * $size * 0.6;
+            $x = $x - ($textWidth / 2);
+        } elseif ($align == 'R') {
+            $textWidth = strlen($text) * $size * 0.6;
+            $x = $x - $textWidth;
+        }
+        $content .= "1 0 0 1 $x $y Tm\n";
+        $content .= "($text) Tj\n";
+        $content .= "ET\n";
+    };
+    
+    // Função para adicionar retângulo (célula)
+    $addRect = function(&$content, $x, $yFromTop, $w, $h, $fill = false, $stroke = true, $header = false) use ($pdfY) {
+        $y = $pdfY($yFromTop + $h); // Converter para coordenada inferior do retângulo
+        if ($fill) {
+            if ($header) {
+                $content .= "0.27 0.45 0.77 rg\n"; // Cor azul para cabeçalho
+            } else {
+                $content .= "0.94 0.95 0.96 rg\n"; // Cor cinza claro para linhas
+            }
+            $content .= "$x $y $w $h re f\n";
+        }
+        if ($stroke) {
+            $content .= "0 0 0 RG\n"; // Cor preta
+            $content .= "0.5 w\n"; // Largura da linha
+            $content .= "$x $y $w $h re S\n";
+        }
+    };
+    
+    // Iniciar primeira página
+    $currentPage++;
+    $content = "q\n";
+    
+    // Título
+    $addText($content, $pageWidth / 2, $yPosFromTop, 'Relatorio de Membros', 18, 'C');
+    $yPosFromTop += 30;
+    
+    // Filtros (se houver)
+    if (!empty($busca) || !empty($status) || !empty($pastoral)) {
+        $filtros = [];
+        if (!empty($busca)) $filtros[] = "Busca: " . $escapeText($busca);
+        if (!empty($status)) $filtros[] = "Status: " . $escapeText(traduzirStatus($status));
+        if (!empty($pastoral)) $filtros[] = "Pastoral: " . $escapeText($pastoral);
+        $addText($content, $margin, $yPosFromTop, 'Filtros: ' . implode(' | ', $filtros), 9);
+        $yPosFromTop += 20;
+    }
+    
+    // Cabeçalhos da tabela
+    $xStart = $margin;
+    // Larguras ajustadas para caber na página (595 pontos - 80 de margens = 515 pontos disponíveis)
+    // Ajustadas para garantir que todas as colunas caibam corretamente e os cabeçalhos sejam legíveis
+    $colWidths = [95, 80, 65, 58, 58, 38, 55, 62]; // Total: 511 pontos (com margem de segurança)
+    $cabecalhos = ['Nome', 'Email', 'Telefone', 'Nascimento', 'Entrada', 'Sexo', 'Status', 'Paroquiano'];
+    $headerY = $yPosFromTop;
+    
+    // Desenhar cabeçalhos
+    $x = $xStart;
+    foreach ($cabecalhos as $i => $cabecalho) {
+        $addRect($content, $x, $headerY, $colWidths[$i], 15, true, true, true);
+        // Texto branco para cabeçalho - alinhado à esquerda
+        $addText($content, $x + 2, $headerY + 12, $cabecalho, 9, 'L', [1, 1, 1]);
+        $x += $colWidths[$i];
+    }
+    $yPosFromTop += 20;
+    
+    // Dados dos membros
+    $rowNum = 0;
+    foreach ($membros as $membro) {
+        // Verificar se precisa de nova página
+        if ($yPosFromTop > ($pageHeight - 50)) {
+            // Finalizar página atual
+            $content .= "Q\n";
+            $pageContents[] = $content;
+            
+            // Nova página
+            $currentPage++;
+            $content = "q\n";
+            $yPosFromTop = 50;
+            
+            // Reimprimir cabeçalhos
+            $x = $xStart;
+            foreach ($cabecalhos as $i => $cabecalho) {
+                $addRect($content, $x, $yPosFromTop, $colWidths[$i], 15, true, true, true);
+                // Texto branco para cabeçalho - alinhado à esquerda
+                $addText($content, $x + 2, $yPosFromTop + 12, $cabecalho, 9, 'L', [1, 1, 1]);
+                $x += $colWidths[$i];
+            }
+            $yPosFromTop += 20;
+        }
+        
+        // Dados da linha
+        $fill = ($rowNum % 2 == 0);
+        $x = $xStart;
+        $rowY = $yPosFromTop;
+        
+        // Nome
+        $nome = substr($membro['nome_completo'] ?? '', 0, 30);
+        $addRect($content, $x, $rowY, $colWidths[0], 12, $fill, true);
+        $addText($content, $x + 2, $rowY + 9, $nome, 8);
+        $x += $colWidths[0];
+        
+        // Email
+        $email = substr($membro['email'] ?? '', 0, 25);
+        $addRect($content, $x, $rowY, $colWidths[1], 12, $fill, true);
+        $addText($content, $x + 2, $rowY + 9, $email, 8);
+        $x += $colWidths[1];
+        
+        // Telefone
+        $telefone = substr($membro['telefone'] ?? '', 0, 20);
+        $addRect($content, $x, $rowY, $colWidths[2], 12, $fill, true);
+        $addText($content, $x + 2, $rowY + 9, $telefone, 8);
+        $x += $colWidths[2];
+        
+        // Data Nascimento - centralizar corretamente
+        $dataNasc = $membro['data_nascimento'] ?? '';
+        $addRect($content, $x, $rowY, $colWidths[3], 12, $fill, true);
+        $addText($content, $x + ($colWidths[3] / 2), $rowY + 9, $dataNasc, 8, 'C');
+        $x += $colWidths[3];
+        
+        // Data Entrada - centralizar corretamente
+        $dataEntrada = $membro['data_entrada'] ?? '';
+        $addRect($content, $x, $rowY, $colWidths[4], 12, $fill, true);
+        $addText($content, $x + ($colWidths[4] / 2), $rowY + 9, $dataEntrada, 8, 'C');
+        $x += $colWidths[4];
+        
+        // Sexo - centralizar corretamente
+        $sexo = $membro['sexo'] ?? '';
+        $addRect($content, $x, $rowY, $colWidths[5], 12, $fill, true);
+        $addText($content, $x + ($colWidths[5] / 2), $rowY + 9, $sexo, 8, 'C');
+        $x += $colWidths[5];
+        
+        // Status - centralizar corretamente
+        $status_texto = traduzirStatus($membro['status'] ?? '');
+        $addRect($content, $x, $rowY, $colWidths[6], 12, $fill, true);
+        $addText($content, $x + ($colWidths[6] / 2), $rowY + 9, $status_texto, 8, 'C');
+        $x += $colWidths[6];
+        
+        // Paroquiano - centralizar corretamente
+        $paroquiano = ($membro['paroquiano'] ?? 0) ? 'Sim' : 'Nao';
+        $addRect($content, $x, $rowY, $colWidths[7], 12, $fill, true);
+        $addText($content, $x + ($colWidths[7] / 2), $rowY + 9, $paroquiano, 8, 'C');
+        
+        $yPosFromTop += 12;
+        $rowNum++;
+    }
+    
+    // Rodapé na última página
+    $content .= "Q\n";
+    $pageContents[] = $content;
+    
+    // Adicionar rodapé na última página
+    $lastPageContent = $pageContents[count($pageContents) - 1];
+    $lastPageContent = rtrim($lastPageContent, "Q\n");
+    $rodape = "Total de membros: " . count($membros) . " | Gerado em " . date('d/m/Y H:i:s');
+    $rodapeY = $pageHeight - 20; // 20 pontos do topo = rodapé (convertido para coordenada PDF)
+    $rodapeText = $escapeText($rodape);
+    $lastPageContent .= "BT\n/F1 8 Tf\n1 0 0 1 " . ($pageWidth / 2 - 100) . " $rodapeY Tm\n($rodapeText) Tj\nET\n";
+    $lastPageContent .= "Q\n";
+    $pageContents[count($pageContents) - 1] = $lastPageContent;
+    
+    // Criar objetos de página
+    $pageKids = [];
+    foreach ($pageContents as $pageIdx => $pageContent) {
+        $contentObjNum = $objNum++;
+        $pageObjNum = $objNum++;
+        
+        $objects[$contentObjNum] = "<<\n/Length " . strlen($pageContent) . "\n>>\nstream\n$pageContent\nendstream";
+        $objects[$pageObjNum] = "<<\n/Type /Page\n/Parent $pageObjStart 0 R\n/MediaBox [0 0 $pageWidth $pageHeight]\n/Contents $contentObjNum 0 R\n/Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> /F2 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >>\n>>";
+        
+        $pageKids[] = "$pageObjNum 0 R";
+    }
+    
+    // Atualizar objeto Pages
+    $objects[$pageObjStart] = "<<\n/Type /Pages\n/Kids [" . implode(' ', $pageKids) . "]\n/Count " . count($pageContents) . "\n>>";
+    
+    // Construir PDF final
+    $pdf = "%PDF-1.4\n";
+    $maxObjNum = max(array_keys($objects));
+    
+    // Escrever objetos
+    foreach (range(1, $maxObjNum) as $i) {
+        if (isset($objects[$i])) {
+            $offsets[$i] = strlen($pdf);
+            $pdf .= "$i 0 obj\n";
+            $pdf .= $objects[$i];
+            $pdf .= "\nendobj\n";
+        }
+    }
+    
+    // Xref table
+    $xrefStart = strlen($pdf);
+    $pdf .= "xref\n0 " . ($maxObjNum + 1) . "\n";
+    $pdf .= "0000000000 65535 f \n";
+    foreach (range(1, $maxObjNum) as $i) {
+        if (isset($offsets[$i])) {
+            $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
+        }
+    }
+    
+    // Trailer
+    $pdf .= "trailer\n";
+    $pdf .= "<<\n/Size " . ($maxObjNum + 1) . "\n/Root 1 0 R\n>>\n";
+    $pdf .= "startxref\n$xrefStart\n";
+    $pdf .= "%%EOF\n";
+    
+    echo $pdf;
     exit;
 }
 
@@ -468,8 +656,10 @@ function traduzirStatus($status) {
 }
 
 /**
- * Classe PDF simples para gerar PDFs básicos
+ * Classe SimplePDF removida - agora usando FPDF do módulo hamburger
+ * Esta classe não está mais em uso
  */
+/*
 class SimplePDF {
     private $pages = [];
     private $currentPage = 0;
@@ -677,6 +867,22 @@ class SimplePDF {
                     // Text
                     if (!empty($element['text'])) {
                         $text = $element['text'];
+                        
+                        // Converter UTF-8 para ISO-8859-1 (Latin-1) que é suportado pela fonte Helvetica
+                        // Se a função iconv estiver disponível, usar ela, senão usar mb_convert_encoding
+                        if (function_exists('iconv')) {
+                            $text = @iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $text);
+                            if ($text === false) {
+                                // Se falhar, tentar sem TRANSLIT
+                                $text = @iconv('UTF-8', 'ISO-8859-1//IGNORE', $element['text']);
+                                if ($text === false) {
+                                    $text = $element['text'];
+                                }
+                            }
+                        } else {
+                            $text = mb_convert_encoding($element['text'], 'ISO-8859-1', 'UTF-8');
+                        }
+                        
                         // Escapar caracteres especiais do PDF
                         $text = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
                         
@@ -686,26 +892,37 @@ class SimplePDF {
                         // Posicionamento do texto
                         // No PDF, Y=0 está no canto inferior esquerdo
                         // A célula está em $y (que é o canto inferior esquerdo após inversão)
+                        // $h já está em pontos (convertido acima)
                         // Para centralizar o texto verticalmente na célula:
                         // - Centro vertical da célula = Y + (altura / 2)
                         // - O texto é posicionado pela linha de base (baseline)
-                        // - Ajustar para que a linha de base fique no centro menos metade do tamanho da fonte
+                        // - Ajustar para que a linha de base fique no centro
                         $textX = $x + 3;
-                        // Centralizar verticalmente: centro da célula menos metade da altura do texto
-                        // A linha de base fica ~70% da altura da fonte acima do Y especificado
-                        $textY = $y + ($h / 2) - ($fontSizePt * 0.7); // 0.7 é aproximadamente a altura da linha de base
+                        // Centralizar verticalmente: centro da célula
+                        // A linha de base do texto precisa estar no centro vertical da célula
+                        // No PDF, o texto é posicionado pela linha de base
+                        // Centro da célula em pontos: $y + ($h / 2)
+                        // Ajustar para que a linha de base fique no centro menos uma fração do tamanho da fonte
+                        // A linha de base fica aproximadamente 70% da altura da fonte acima do Y especificado
+                        $textY = $y + ($h / 2) + ($fontSizePt * 0.25);
                         
                         if ($element['align'] == 'C') {
                             // Centralizar: estimar largura do texto
-                            $textWidth = mb_strlen($text, 'UTF-8') * $fontSizePt * 0.5;
+                            $textWidth = strlen($text) * $fontSizePt * 0.5; // Usar strlen para ISO-8859-1
                             $textX = $x + ($w / 2) - ($textWidth / 2);
                         } elseif ($element['align'] == 'R') {
                             // Alinhar à direita
-                            $textWidth = mb_strlen($text, 'UTF-8') * $fontSizePt * 0.5;
+                            $textWidth = strlen($text) * $fontSizePt * 0.5;
                             $textX = $x + $w - $textWidth - 3;
                         } else {
                             // Alinhar à esquerda (padrão)
                             $textX = $x + 3;
+                        }
+                        
+                        // Garantir que o texto não saia da página (com margem de segurança)
+                        if ($textY < 10 || $textY > ($pageHeightPt - 10)) {
+                            error_log("PDF: Texto fora da página - textY: $textY, pageHeightPt: $pageHeightPt, texto: " . substr($element['text'], 0, 30));
+                            continue; // Pular este elemento se estiver fora da página
                         }
                         
                         // Text color
@@ -713,13 +930,24 @@ class SimplePDF {
                         $g = $element['textColor'][1] / 255;
                         $b = $element['textColor'][2] / 255;
                         
+                        // Debug: logar primeiros elementos para verificar
+                        static $debugCount = 0;
+                        if ($debugCount < 5) {
+                            error_log("PDF Render: Elemento $debugCount - textX: $textX, textY: $textY, texto: " . substr($text, 0, 30) . ", fontSizePt: $fontSizePt");
+                            $debugCount++;
+                        }
+                        
                         // Renderizar texto
-                        // IMPORTANTE: No PDF, Td é relativo, então precisamos resetar o cursor primeiro
-                        // Usar matriz de transformação de texto (Tm) para posicionamento absoluto
-                        // Tm: [a b c d e f] onde e,f são a posição X,Y
+                        // IMPORTANTE: No PDF, a ordem dos operadores é crítica
+                        // 1. BT (Begin Text)
+                        // 2. Definir cor do texto (rg para RGB fill color)
+                        // 3. Definir fonte e tamanho (Tf)
+                        // 4. Posicionar texto (Tm)
+                        // 5. Desenhar texto (Tj)
+                        // 6. ET (End Text)
                         $content .= "BT\n"; // Begin Text
+                        $content .= "$r $g $b rg\n"; // Cor do texto (RGB) - DEVE vir antes de Tf
                         $content .= "/F1 $fontSizePt Tf\n"; // Definir fonte e tamanho
-                        $content .= "$r $g $b rg\n"; // Cor do texto (RGB)
                         // Resetar matriz de texto e posicionar absolutamente
                         // Matriz: [1 0 0 1 x y] = identidade com translação
                         $content .= "1 0 0 1 $textX $textY Tm\n"; // Matriz de transformação (posição absoluta)
@@ -783,4 +1011,5 @@ class SimplePDF {
         return $pdf;
     }
 }
+*/
 ?>

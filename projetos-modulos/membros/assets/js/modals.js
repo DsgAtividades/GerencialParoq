@@ -92,8 +92,33 @@ function abrirModal(titulo, conteudo, botoes = [], opcoes = {}) {
             if (typeof botao.onclick === 'function') {
                 btn.addEventListener('click', botao.onclick);
             } else if (typeof botao.onclick === 'string') {
-                // Se for string, avaliar (não ideal, mas mantido para compatibilidade)
-                btn.onclick = new Function(botao.onclick);
+                // Se for string, tentar encontrar a função no escopo global
+                // Exemplos: 'salvarMembro()', 'fecharModal()', 'criarMembro()'
+                const funcaoNome = botao.onclick.replace(/\(\)$/, ''); // Remove '()' do final
+                
+                if (typeof window[funcaoNome] === 'function') {
+                    // Função encontrada no escopo global, usar diretamente
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                            window[funcaoNome]();
+                        } catch (error) {
+                            console.error('Erro ao executar função:', funcaoNome, error);
+                            alert('Erro ao executar ação: ' + (error.message || 'Erro desconhecido'));
+                        }
+                    });
+                } else {
+                    // Fallback: tentar usar new Function (menos seguro)
+                    try {
+                        btn.onclick = new Function('return ' + botao.onclick);
+                    } catch (error) {
+                        console.error('Erro ao criar função:', error);
+                        btn.onclick = function() {
+                            alert('Função ' + funcaoNome + ' não encontrada');
+                        };
+                    }
+                }
             }
             
             modalFooter.appendChild(btn);
@@ -463,7 +488,7 @@ function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
                 <div id="documentos-container">
                     ${Array.isArray(dadosMembro.documentos) && dadosMembro.documentos.length > 0 
                         ? dadosMembro.documentos.map((doc, index) => criarHtmlDocumento(doc, index, isVisualizacao)).join('')
-                        : !isVisualizacao ? criarHtmlDocumento(null, 0, false) : '<p class="text-muted">Nenhum documento cadastrado</p>'
+                        : '<p class="text-muted">Nenhum documento cadastrado. Clique em "Adicionar Documento" para cadastrar.</p>'
                     }
                 </div>
                 ${!isVisualizacao ? `
@@ -976,10 +1001,12 @@ async function criarMembro() {
         if (response && response.success) {
             mostrarNotificacao('Membro criado com sucesso!', 'success');
             fecharModal();
-            carregarMembros(); // Recarregar lista
-            // Limpar cache para garantir dados atualizados
-            if (typeof limparCacheMembros === 'function') {
-                limparCacheMembros();
+            
+            // Refresh automático dos dados
+            if (typeof refreshDados === 'function') {
+                refreshDados(false); // Não manter página, voltar para primeira página
+            } else if (typeof carregarMembros === 'function') {
+                carregarMembros();
             }
         } else {
             const errorMessage = response?.error || 'Erro desconhecido';
@@ -1115,7 +1142,9 @@ async function criarMembro() {
  * Salva membro (edição)
  */
 async function salvarMembro() {
-    if (!validarFormulario('form-membro')) return;
+    if (!validarFormulario('form-membro')) {
+        return;
+    }
     
     const membroIdElement = document.getElementById('membro-id');
     if (!membroIdElement) {
@@ -1196,10 +1225,12 @@ async function salvarMembro() {
         if (response && response.success) {
             mostrarNotificacao('Membro atualizado com sucesso!', 'success');
             fecharModal();
-            carregarMembros(); // Recarregar lista
-            // Invalidar cache do membro específico
-            if (typeof invalidarCacheMembro === 'function') {
-                invalidarCacheMembro(membroId);
+            
+            // Refresh automático dos dados
+            if (typeof refreshDados === 'function') {
+                refreshDados(true); // Manter página atual
+            } else if (typeof carregarMembros === 'function') {
+                carregarMembros();
             }
         } else {
             const errorMessage = response?.error || 'Erro desconhecido';
@@ -1841,4 +1872,10 @@ function getStatusText(status) {
 }
 
 // Exportar funções para o escopo global
+window.abrirModalMembro = abrirModalMembro;
+window.abrirModal = abrirModal;
+window.fecharModal = fecharModal;
+window.salvarMembro = salvarMembro;
+window.criarMembro = criarMembro;
 window.toggleSecaoPastoral = toggleSecaoPastoral;
+

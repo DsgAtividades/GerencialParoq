@@ -40,7 +40,7 @@ async function carregarRelatorios() {
     try {
         // Carregar todos os relatórios em paralelo
         await Promise.all([
-            carregarMembrosPorPastoral(),
+
             carregarMembrosPorStatus(),
             carregarMembrosPorGenero(),
             carregarMembrosPorFaixaEtaria(),
@@ -55,85 +55,6 @@ async function carregarRelatorios() {
         mostrarErroGeral('Erro ao carregar alguns relatórios. Verifique o console para mais detalhes.');
     }
 }
-
-/**
- * R1: Membros por Pastoral
- */
-async function carregarMembrosPorPastoral() {
-    try {
-        const url = `${getApiBaseUrl()}relatorios/membros-por-pastoral`;
-        console.log('Carregando membros por pastoral:', url);
-        
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('Resposta membros por pastoral:', result);
-        
-        if (result.success && result.data) {
-            const data = result.data;
-            
-            // Atualizar total
-            const totalElement = document.getElementById('total-pastorais');
-            if (totalElement) {
-                totalElement.textContent = `${data.total} membros em ${data.pastorais} pastorais`;
-            }
-            
-            // Criar gráfico pizza
-            const ctx = document.getElementById('chart-membros-pastoral');
-            if (ctx) {
-                if (charts.membrosPastoral) {
-                    charts.membrosPastoral.destroy();
-                }
-                
-                charts.membrosPastoral = new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: data.labels,
-                        datasets: data.datasets
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    boxWidth: 12,
-                                    font: {
-                                        size: 10
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const label = context.label || '';
-                                        const value = context.parsed || 0;
-                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                        const percentage = ((value / total) * 100).toFixed(1);
-                                        return `${label}: ${value} (${percentage}%)`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        } else {
-            console.warn('Resposta sem dados válidos:', result);
-        }
-    } catch (error) {
-        console.error('Erro ao carregar membros por pastoral:', error);
-        const ctx = document.getElementById('chart-membros-pastoral');
-        if (ctx && ctx.parentElement) {
-            ctx.parentElement.innerHTML = '<div class="relatorio-list-empty">Erro ao carregar dados</div>';
-        }
-    }
-}
-
 /**
  * R2: Membros por Status
  */
