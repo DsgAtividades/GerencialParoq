@@ -239,11 +239,34 @@ async function escSalvar(eventoId){
         const resp = await fetch(`api/eventos/${eventoId}/funcoes`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ funcoes }) });
         const j = await resp.json();
         if (j.success) {
-            // Recarregar detalhes para obter IDs reais e atualizar a UI sem fechar
-            const detalhe = await escalasCarregarEventoDetalhe(eventoId);
-            escRenderFuncoes(eventoId, detalhe.funcoes || []);
+            // Mostrar notificação de sucesso
+            if (typeof mostrarNotificacao === 'function') {
+                mostrarNotificacao('Escala salva com sucesso!', 'success');
+            }
+            // Fechar o modal
+            escFecharDetalhe();
+            // Recarregar a semana para atualizar a visualização
+            const pastoralId = window.pastoralId || (window.PastoralState?.pastoral?.id);
+            if (pastoralId) {
+                escalasCarregarSemana(pastoralId);
+            }
+        } else {
+            const errorMessage = j.error || 'Erro ao salvar escala';
+            if (typeof mostrarNotificacao === 'function') {
+                mostrarNotificacao(errorMessage, 'error');
+            } else {
+                alert(errorMessage);
+            }
         }
-    } catch(e){ console.error('Erro ao salvar escala:', e); }
+    } catch(e){ 
+        console.error('Erro ao salvar escala:', e);
+        const errorMessage = 'Erro ao salvar escala: ' + (e.message || 'Erro desconhecido');
+        if (typeof mostrarNotificacao === 'function') {
+            mostrarNotificacao(errorMessage, 'error');
+        } else {
+            alert(errorMessage);
+        }
+    }
 }
 
 async function escExcluirEvento(eventoId){
@@ -293,4 +316,12 @@ window.escalasAbrirModalEvento = escalasAbrirModalEvento;
 window.escalasSalvarEvento = escalasSalvarEvento;
 window.escalasAbrirModalEventoDetalhe = escalasAbrirModalEventoDetalhe;
 window.escalasCarregarSemana = escalasCarregarSemana;
+window.escSalvar = escSalvar;
+window.escFecharDetalhe = escFecharDetalhe;
+window.escAdicionarFuncao = escAdicionarFuncao;
+window.escExcluirEvento = escExcluirEvento;
+window.escDrag = escDrag;
+window.escDrop = escDrop;
+window.escAllow = escAllow;
+window.escRemoverMembro = escRemoverMembro;
 

@@ -385,6 +385,17 @@ switch ($path) {
                 Response::error('Método não permitido', 405);
             }
         }
+        // Rota: detalhes do evento (GET) - DEVE VIR ANTES da rota de funções
+        elseif (preg_match('/^eventos\/([a-f0-9\-]{36})$/', $path, $matches)) {
+            $evento_id = $matches[1];
+            if ($method === 'GET') {
+                include 'endpoints/escalas_evento_detalhes.php';
+            } elseif ($method === 'DELETE') {
+                include 'endpoints/escalas_evento_excluir.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
         // Rota: salvar funcoes/atribuicoes do evento
         elseif (preg_match('/^eventos\/([a-f0-9\-]{36})\/funcoes$/', $path, $matches)) {
             $evento_id = $matches[1];

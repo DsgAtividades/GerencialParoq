@@ -22,7 +22,8 @@ try {
         Response::error('Evento não encontrado', 404);
     }
     
-    $funStmt = $db->prepare("SELECT * FROM membros_escalas_funcoes WHERE evento_id = ? ORDER BY ordem, nome");
+    // Selecionar apenas colunas que existem (verificar estrutura da tabela)
+    $funStmt = $db->prepare("SELECT id, evento_id, nome_funcao as nome, ordem, created_at FROM membros_escalas_funcoes WHERE evento_id = ? ORDER BY ordem, nome_funcao");
     $funStmt->execute([$evento_id]);
     $funcoes = $funStmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -54,7 +55,6 @@ try {
     Response::success(['evento' => $evento, 'funcoes' => $funcoes]);
 } catch (Exception $e) {
     error_log('Erro ao buscar detalhes do evento: ' . $e->getMessage());
-    Response::error('Erro interno do servidor', 500);
+    error_log('Stack trace: ' . $e->getTraceAsString());
+    Response::error('Erro interno do servidor: ' . $e->getMessage(), 500);
 }
-?>
-

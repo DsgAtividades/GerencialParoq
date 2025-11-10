@@ -19,7 +19,7 @@ try {
     $ev->execute([$evento_id]);
     $evento = $ev->fetch(PDO::FETCH_ASSOC);
     if (!$evento) { http_response_code(404); echo 'Evento não encontrado'; exit; }
-    $fx = $db->prepare("SELECT id, nome FROM membros_escalas_funcoes WHERE evento_id = ? ORDER BY ordem, nome");
+    $fx = $db->prepare("SELECT id, nome_funcao as nome FROM membros_escalas_funcoes WHERE evento_id = ? ORDER BY ordem, nome_funcao");
     $fx->execute([$evento_id]);
     $funcoes = $fx->fetchAll(PDO::FETCH_ASSOC);
     $conteudo = [];
@@ -39,5 +39,3 @@ try {
     http_response_code(500);
     echo 'Erro na exportação';
 }
-?>
-

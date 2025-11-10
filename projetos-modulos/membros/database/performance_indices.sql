@@ -200,9 +200,9 @@ ON membros_contatos_membro(tipo);
 CREATE INDEX IF NOT EXISTS idx_documentos_membro 
 ON membros_documentos_membro(membro_id);
 
--- Índice para buscar por tipo
+-- Índice para buscar por tipo de documento
 CREATE INDEX IF NOT EXISTS idx_documentos_tipo 
-ON membros_documentos_membro(tipo);
+ON membros_documentos_membro(tipo_documento);
 
 -- =====================================================
 -- TABELA: membros_consentimentos_lgpd
@@ -219,6 +219,106 @@ ON membros_consentimentos_lgpd(finalidade);
 -- Índice para buscar consentimentos ativos
 CREATE INDEX IF NOT EXISTS idx_lgpd_consentimento 
 ON membros_consentimentos_lgpd(consentimento);
+
+-- =====================================================
+-- TABELA: membros_formacoes
+-- =====================================================
+
+-- Índice para buscar formações por nome
+CREATE INDEX IF NOT EXISTS idx_formacoes_nome 
+ON membros_formacoes(nome);
+
+-- Índice para buscar por tipo
+CREATE INDEX IF NOT EXISTS idx_formacoes_tipo 
+ON membros_formacoes(tipo);
+
+-- Índice para buscar formações ativas
+CREATE INDEX IF NOT EXISTS idx_formacoes_ativo 
+ON membros_formacoes(ativo);
+
+-- =====================================================
+-- TABELA: membros_membros_formacoes
+-- =====================================================
+
+-- Índice para buscar formações por membro
+CREATE INDEX IF NOT EXISTS idx_membros_formacoes_membro 
+ON membros_membros_formacoes(membro_id);
+
+-- Índice para buscar membros por formação
+CREATE INDEX IF NOT EXISTS idx_membros_formacoes_formacao 
+ON membros_membros_formacoes(formacao_id);
+
+-- Índice para buscar por data de conclusão
+CREATE INDEX IF NOT EXISTS idx_membros_formacoes_data_conclusao 
+ON membros_membros_formacoes(data_conclusao);
+
+-- =====================================================
+-- TABELA: membros_checkins
+-- =====================================================
+
+-- Índice para buscar check-ins por membro
+CREATE INDEX IF NOT EXISTS idx_checkins_membro 
+ON membros_checkins(membro_id);
+
+-- Índice para buscar check-ins por evento
+CREATE INDEX IF NOT EXISTS idx_checkins_evento 
+ON membros_checkins(evento_id);
+
+-- Índice para buscar por data
+CREATE INDEX IF NOT EXISTS idx_checkins_data 
+ON membros_checkins(data_checkin);
+
+-- Índice composto para buscar check-ins de membro por data
+CREATE INDEX IF NOT EXISTS idx_checkins_membro_data 
+ON membros_checkins(membro_id, data_checkin);
+
+-- =====================================================
+-- TABELA: membros_alocacoes
+-- =====================================================
+
+-- Índice para buscar alocações por membro
+CREATE INDEX IF NOT EXISTS idx_alocacoes_membro 
+ON membros_alocacoes(membro_id);
+
+-- Índice para buscar alocações por evento
+CREATE INDEX IF NOT EXISTS idx_alocacoes_evento 
+ON membros_alocacoes(evento_id);
+
+-- Índice para buscar alocações por função
+CREATE INDEX IF NOT EXISTS idx_alocacoes_funcao 
+ON membros_alocacoes(funcao_id);
+
+-- Índice para buscar por data
+CREATE INDEX IF NOT EXISTS idx_alocacoes_data 
+ON membros_alocacoes(data_alocacao);
+
+-- Índice para buscar por status
+CREATE INDEX IF NOT EXISTS idx_alocacoes_status 
+ON membros_alocacoes(status);
+
+-- =====================================================
+-- TABELA: membros_candidaturas
+-- =====================================================
+
+-- Índice para buscar candidaturas por membro
+CREATE INDEX IF NOT EXISTS idx_candidaturas_membro 
+ON membros_candidaturas(membro_id);
+
+-- Índice para buscar candidaturas por pastoral
+CREATE INDEX IF NOT EXISTS idx_candidaturas_pastoral 
+ON membros_candidaturas(pastoral_id);
+
+-- Índice para buscar candidaturas por função
+CREATE INDEX IF NOT EXISTS idx_candidaturas_funcao 
+ON membros_candidaturas(funcao_id);
+
+-- Índice para buscar por status
+CREATE INDEX IF NOT EXISTS idx_candidaturas_status 
+ON membros_candidaturas(status);
+
+-- Índice para buscar por data
+CREATE INDEX IF NOT EXISTS idx_candidaturas_data 
+ON membros_candidaturas(data_candidatura);
 
 -- =====================================================
 -- VERIFICAR ÍNDICES CRIADOS

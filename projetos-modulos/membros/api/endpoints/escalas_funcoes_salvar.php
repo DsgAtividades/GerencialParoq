@@ -25,11 +25,11 @@ try {
         $nome = trim($f['nome'] ?? '');
         $ordem = $idx;
         if ($fid) {
-            $upd = $db->prepare("UPDATE membros_escalas_funcoes SET nome = ?, ordem = ? WHERE id = ? AND evento_id = ?");
+            $upd = $db->prepare("UPDATE membros_escalas_funcoes SET nome_funcao = ?, ordem = ? WHERE id = ? AND evento_id = ?");
             $upd->execute([$nome, $ordem, $fid, $evento_id]);
         } else {
             $fid = uuid_v4();
-            $ins = $db->prepare("INSERT INTO membros_escalas_funcoes (id, evento_id, nome, ordem) VALUES (?, ?, ?, ?)");
+            $ins = $db->prepare("INSERT INTO membros_escalas_funcoes (id, evento_id, nome_funcao, ordem) VALUES (?, ?, ?, ?)");
             $ins->execute([$fid, $evento_id, $nome, $ordem]);
         }
         // Reconciliar membros: estratégia simples = limpar e inserir
@@ -46,7 +46,6 @@ try {
     Response::success(['evento_id' => $evento_id], 'Escala salva com sucesso');
 } catch (Exception $e) {
     error_log('Erro ao salvar funcoes/atribuicoes: ' . $e->getMessage());
-    Response::error('Erro interno do servidor', 500);
+    error_log('Stack trace: ' . $e->getTraceAsString());
+    Response::error('Erro interno do servidor: ' . $e->getMessage(), 500);
 }
-?>
-

@@ -6,21 +6,40 @@ O arquivo `criar_tabelas_membros.sql` contém todas as tabelas necessárias para
 
 ## 🗄️ Tabelas Criadas
 
-O script cria **13 tabelas** principais:
+O script cria **21 tabelas** principais:
 
+**Tabelas Principais:**
 1. **membros_membros** - Tabela principal de membros paroquiais
 2. **membros_funcoes** - Funções/cargos dentro das pastorais
 3. **membros_pastorais** - Pastorais da paróquia
-4. **membros_membros_pastorais** - Relacionamento N:N entre membros e pastorais
-5. **membros_eventos** - Eventos gerais da paróquia
-6. **membros_eventos_pastorais** - Relacionamento N:N entre eventos e pastorais
-7. **membros_escalas_eventos** - Escalas de eventos
-8. **membros_escalas_funcoes** - Funções dentro de escalas
-9. **membros_escalas_funcao_membros** - Membros atribuídos a funções
-10. **membros_escalas_logs** - Logs de ações nas escalas
-11. **membros_consentimentos_lgpd** - Consentimentos LGPD
-12. **membros_auditoria_logs** - Logs de auditoria geral
-13. **membros_anexos** - Anexos de membros (fotos, documentos)
+4. **membros_eventos** - Eventos gerais da paróquia
+5. **membros_formacoes** - Catálogo de formações disponíveis
+
+**Tabelas de Relacionamento:**
+6. **membros_membros_pastorais** - Relacionamento N:N entre membros e pastorais
+7. **membros_eventos_pastorais** - Relacionamento N:N entre eventos e pastorais
+8. **membros_membros_formacoes** - Relacionamento N:N entre membros e formações
+
+**Tabelas de Dados Relacionados:**
+9. **membros_enderecos_membro** - Endereços dos membros (permite múltiplos)
+10. **membros_contatos_membro** - Contatos dos membros (permite múltiplos)
+11. **membros_documentos_membro** - Documentos dos membros (permite múltiplos)
+
+**Tabelas de Escalas:**
+12. **membros_escalas_eventos** - Escalas de eventos
+13. **membros_escalas_funcoes** - Funções dentro de escalas
+14. **membros_escalas_funcao_membros** - Membros atribuídos a funções
+15. **membros_escalas_logs** - Logs de ações nas escalas
+
+**Tabelas de Operações:**
+16. **membros_checkins** - Check-ins de membros em eventos
+17. **membros_alocacoes** - Alocações de membros em eventos e funções
+18. **membros_candidaturas** - Candidaturas de membros para pastorais/funções
+
+**Tabelas de Sistema:**
+19. **membros_consentimentos_lgpd** - Consentimentos LGPD
+20. **membros_auditoria_logs** - Logs de auditoria geral
+21. **membros_anexos** - Anexos de membros e outras entidades (fotos, documentos)
 
 ## 🚀 Como Usar
 
@@ -120,7 +139,7 @@ Após executar o script, verifique se todas as tabelas foram criadas:
 SHOW TABLES LIKE 'membros_%';
 ```
 
-Deve retornar 13 tabelas.
+Deve retornar 21 tabelas.
 
 ## 📚 Documentação Relacionada
 

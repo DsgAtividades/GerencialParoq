@@ -7,7 +7,7 @@ Esta pasta contém os scripts SQL e PHP para gerenciamento do banco de dados do 
 ### 🗄️ Scripts SQL
 
 #### `criar_tabelas_membros.sql` ⭐ **PRINCIPAL**
-Script completo para criar todas as 13 tabelas do módulo Membros.
+Script completo para criar todas as 21 tabelas do módulo Membros.
 
 **Conteúdo:**
 - Tabela principal `membros_membros`
@@ -89,21 +89,40 @@ php aplicar_indices.php
 
 ## 📊 Estrutura das Tabelas
 
-O módulo possui **13 tabelas principais**:
+O módulo possui **21 tabelas principais**:
 
+**Tabelas Principais:**
 1. **membros_membros** - Tabela principal de membros
 2. **membros_funcoes** - Funções/cargos
 3. **membros_pastorais** - Pastorais
-4. **membros_membros_pastorais** - Relacionamento N:N membros-pastorais
-5. **membros_eventos** - Eventos gerais
-6. **membros_eventos_pastorais** - Relacionamento N:N eventos-pastorais
-7. **membros_escalas_eventos** - Escalas de eventos
-8. **membros_escalas_funcoes** - Funções em escalas
-9. **membros_escalas_funcao_membros** - Membros em funções
-10. **membros_escalas_logs** - Logs de escalas
-11. **membros_consentimentos_lgpd** - Consentimentos LGPD
-12. **membros_auditoria_logs** - Logs de auditoria
-13. **membros_anexos** - Anexos (fotos, documentos)
+4. **membros_eventos** - Eventos gerais
+5. **membros_formacoes** - Catálogo de formações
+
+**Tabelas de Relacionamento:**
+6. **membros_membros_pastorais** - Relacionamento N:N membros-pastorais
+7. **membros_eventos_pastorais** - Relacionamento N:N eventos-pastorais
+8. **membros_membros_formacoes** - Relacionamento N:N membros-formações
+
+**Tabelas de Dados Relacionados:**
+9. **membros_enderecos_membro** - Endereços dos membros
+10. **membros_contatos_membro** - Contatos dos membros
+11. **membros_documentos_membro** - Documentos dos membros
+
+**Tabelas de Escalas:**
+12. **membros_escalas_eventos** - Escalas de eventos
+13. **membros_escalas_funcoes** - Funções em escalas
+14. **membros_escalas_funcao_membros** - Membros em funções
+15. **membros_escalas_logs** - Logs de escalas
+
+**Tabelas de Operações:**
+16. **membros_checkins** - Check-ins de membros
+17. **membros_alocacoes** - Alocações de membros
+18. **membros_candidaturas** - Candidaturas de membros
+
+**Tabelas de Sistema:**
+19. **membros_consentimentos_lgpd** - Consentimentos LGPD
+20. **membros_auditoria_logs** - Logs de auditoria
+21. **membros_anexos** - Anexos (fotos, documentos)
 
 ---
 
@@ -124,7 +143,7 @@ Após executar os scripts, verifique as tabelas:
 SHOW TABLES LIKE 'membros_%';
 ```
 
-Deve retornar 13 tabelas.
+Deve retornar 21 tabelas.
 
 Verifique os índices:
 
