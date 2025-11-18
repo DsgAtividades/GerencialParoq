@@ -153,7 +153,7 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                             <canvas id="chart-pastorais"></canvas>
                         </div>
                         <div class="chart-card">
-                            <h3>Novas Adesões (Últimos 6 meses)</h3>
+                            <h3>Novas Adesões (Últimos 12 meses)</h3>
                             <canvas id="chart-adesoes"></canvas>
                         </div>
                     </div>
@@ -176,10 +176,13 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                 <div class="section-header">
                     <h2><i class="fas fa-users"></i> Gestão de Membros</h2>
                     <div class="section-actions">
+                        <button class="btn btn-info" onclick="importarMembros()" id="btn-importar-membros" style="display: none;">
+                            <i class="fas fa-file-upload"></i> Importar
+                        </button>
                         <button class="btn btn-secondary" onclick="exportarMembros()">
                             <i class="fas fa-download"></i> Exportar
                         </button>
-                        <button class="btn btn-primary" onclick="abrirModalMembro()">
+                        <button class="btn btn-primary" id="btn-novo-membro" onclick="abrirModalMembro()" style="display: none;">
                             <i class="fas fa-plus"></i> Novo Membro
                         </button>
                     </div>
@@ -265,7 +268,7 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                 <div class="section-header">
                     <h2><i class="fas fa-church"></i> Gestão de Pastorais</h2>
                     <div class="section-actions">
-                        <button class="btn btn-primary" onclick="abrirModalPastoral()">
+                        <button class="btn btn-primary" id="btn-nova-pastoral" onclick="abrirModalPastoral()" style="display: none;">
                             <i class="fas fa-plus"></i> Nova Pastoral
                         </button>
                     </div>
@@ -331,18 +334,7 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                 <!-- Grid de Relatórios - 2 colunas por linha -->
                 <div class="relatorios-dashboard-grid">
 
-                 <!-- R5: Crescimento Temporal -->
-                 <div class="relatorio-card">
-                        <div class="relatorio-header">
-                            <h3><i class="fas fa-chart-line"></i> Crescimento Temporal</h3>
-                        </div>
-                        <div class="relatorio-body">
-                            <canvas id="chart-crescimento"></canvas>
-                            <div class="relatorio-footer">
-                                <span class="relatorio-subtitle">Últimos 12 meses</span>
-                            </div>
-                        </div>
-                    </div>
+
                                         <!-- R7: Aniversariantes do Mês -->
                                         <div class="relatorio-card">
                         <div class="relatorio-header">
@@ -466,8 +458,10 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
     <script src="assets/js/sanitizer.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/validator.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/api.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/permissions.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/modals.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/table.js?v=<?php echo time(); ?>"></script>
+    <script src="assets/js/importar.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/membros.js?v=<?php echo time(); ?>"></script>
     <script src="assets/js/relatorios.js?v=<?php echo time(); ?>"></script>
 </body>

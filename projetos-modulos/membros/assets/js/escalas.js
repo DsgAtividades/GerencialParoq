@@ -270,9 +270,26 @@ async function escSalvar(eventoId){
 }
 
 async function escExcluirEvento(eventoId){
-    if (!confirm('Tem certeza que deseja excluir este evento de escala? Esta ação não pode ser desfeita.')) {
-        return;
+    // Verificar se mostrarAlertConfirmacao está disponível
+    if (typeof mostrarAlertConfirmacao === 'function') {
+        mostrarAlertConfirmacao(
+            'Confirmar Exclusão de Escala',
+            'Tem certeza que deseja excluir este evento de escala? Esta ação não pode ser desfeita.',
+            () => executarExclusaoEscala(eventoId)
+        );
+    } else {
+        // Fallback para confirm nativo
+        if (!confirm('Tem certeza que deseja excluir este evento de escala? Esta ação não pode ser desfeita.')) {
+            return;
+        }
+        executarExclusaoEscala(eventoId);
     }
+}
+
+/**
+ * Executa a exclusão do evento de escala
+ */
+async function executarExclusaoEscala(eventoId) {
     try {
         const resp = await fetch(`api/eventos/${eventoId}`, { method: 'DELETE' });
         const j = await resp.json();

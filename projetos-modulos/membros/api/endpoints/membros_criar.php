@@ -7,6 +7,16 @@
 
 require_once '../config/database.php';
 require_once 'utils/Validation.php';
+require_once 'escalas_helpers.php';
+require_once 'utils/Permissions.php';
+
+// Iniciar sessão se não estiver iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Verificar permissão de administrador para criar membros
+Permissions::requireAdmin('criar membros');
 
 try {
     $db = new MembrosDatabase();
@@ -38,6 +48,12 @@ try {
     if (empty($nome_completo)) {
         error_log("membros_criar.php: Nome completo está vazio após trim");
         Response::error('Nome completo não pode estar vazio. Este campo é obrigatório no banco de dados.', 400);
+    }
+    
+    // Validar tamanho mínimo do nome completo (3 caracteres)
+    if (strlen($nome_completo) < 3) {
+        error_log("membros_criar.php: Nome completo muito curto: " . strlen($nome_completo) . " caracteres");
+        Response::error('Nome completo deve ter pelo menos 3 caracteres.', 400);
     }
     
     // Validar email se fornecido
@@ -94,14 +110,8 @@ try {
         $input['sexo'] = null;
     }
     
-    // Gerar UUID para o membro
-    $membro_id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-        mt_rand(0, 0xffff),
-        mt_rand(0, 0x0fff) | 0x4000,
-        mt_rand(0, 0x3fff) | 0x8000,
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-    );
+    // Gerar UUID para o membro (usando função RFC 4122)
+    $membro_id = uuid_v4();
     
     // Iniciar transação
     $db->beginTransaction();
@@ -158,13 +168,7 @@ try {
         if (isset($input['enderecos']) && is_array($input['enderecos'])) {
             foreach ($input['enderecos'] as $endereco) {
                 if (isset($endereco['rua']) && !empty($endereco['rua'])) {
-                    $endereco_id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-                        mt_rand(0, 0xffff),
-                        mt_rand(0, 0x0fff) | 0x4000,
-                        mt_rand(0, 0x3fff) | 0x8000,
-                        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-                    );
+                    $endereco_id = uuid_v4();
                     
                     $stmt = $db->prepare("
                         INSERT INTO membros_enderecos_membro 
@@ -192,13 +196,7 @@ try {
         if (isset($input['contatos']) && is_array($input['contatos'])) {
             foreach ($input['contatos'] as $contato) {
                 if (isset($contato['tipo']) && isset($contato['valor']) && !empty($contato['valor'])) {
-                    $contato_id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-                        mt_rand(0, 0xffff),
-                        mt_rand(0, 0x0fff) | 0x4000,
-                        mt_rand(0, 0x3fff) | 0x8000,
-                        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-                    );
+                    $contato_id = uuid_v4();
                     
                     $stmt = $db->prepare("
                         INSERT INTO membros_contatos_membro 
@@ -221,13 +219,7 @@ try {
         if (isset($input['documentos']) && is_array($input['documentos'])) {
             foreach ($input['documentos'] as $documento) {
                 if (isset($documento['tipo_documento']) && isset($documento['numero']) && !empty($documento['numero'])) {
-                    $documento_id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-                        mt_rand(0, 0xffff),
-                        mt_rand(0, 0x0fff) | 0x4000,
-                        mt_rand(0, 0x3fff) | 0x8000,
-                        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-                    );
+                    $documento_id = uuid_v4();
                     
                     $stmt = $db->prepare("
                         INSERT INTO membros_documentos_membro 
@@ -254,62 +246,92 @@ try {
         
         // Se foto_url foi fornecido (URL do arquivo), criar anexo agora que temos o membro_id
         if (isset($input['foto_url']) && !empty($input['foto_url'])) {
-            // Se foto_url é uma URL (não UUID), significa que foi feito upload mas anexo ainda não foi criado
-            if (strpos($input['foto_url'], '/uploads/fotos/') !== false) {
-                // Extrair nome do arquivo da URL
-                $nomeArquivo = basename($input['foto_url']);
-                $caminhoArquivo = __DIR__ . '/../../uploads/fotos/' . $nomeArquivo;
-                
-                // Verificar se arquivo existe
-                if (file_exists($caminhoArquivo)) {
-                    // Gerar UUID para o anexo
-                    $anexoId = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-                        mt_rand(0, 0xffff),
-                        mt_rand(0, 0x0fff) | 0x4000,
-                        mt_rand(0, 0x3fff) | 0x8000,
-                        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-                    );
+            try {
+                // Se foto_url é uma URL (não UUID), significa que foi feito upload mas anexo ainda não foi criado
+                if (strpos($input['foto_url'], '/uploads/fotos/') !== false) {
+                    // Extrair nome do arquivo da URL
+                    $nomeArquivo = basename($input['foto_url']);
+                    $caminhoArquivo = __DIR__ . '/../../uploads/fotos/' . $nomeArquivo;
                     
-                    // Obter informações do arquivo
-                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                    $mimeType = finfo_file($finfo, $caminhoArquivo);
-                    finfo_close($finfo);
-                    $tamanho = filesize($caminhoArquivo);
+                    // Verificar se arquivo existe
+                    if (!file_exists($caminhoArquivo)) {
+                        error_log("membros_criar.php: Arquivo de foto não encontrado: " . $caminhoArquivo);
+                        // Não falhar a criação do membro por causa da foto, apenas logar o erro
+                    } else {
+                        // Gerar UUID para o anexo (usando função RFC 4122)
+                        $anexoId = uuid_v4();
+                        
+                        // Obter informações do arquivo
+                        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                        if ($finfo === false) {
+                            error_log("membros_criar.php: Erro ao abrir finfo para foto");
+                            throw new Exception('Erro ao processar informações do arquivo de foto');
+                        }
+                        $mimeType = finfo_file($finfo, $caminhoArquivo);
+                        finfo_close($finfo);
+                        
+                        if ($mimeType === false) {
+                            error_log("membros_criar.php: Erro ao obter MIME type da foto");
+                            throw new Exception('Erro ao identificar tipo do arquivo de foto');
+                        }
+                        
+                        $tamanho = filesize($caminhoArquivo);
+                        if ($tamanho === false) {
+                            error_log("membros_criar.php: Erro ao obter tamanho da foto");
+                            throw new Exception('Erro ao obter tamanho do arquivo de foto');
+                        }
+                        
+                        // Criar anexo
+                        $stmt = $db->prepare("
+                            INSERT INTO membros_anexos 
+                            (id, entidade_tipo, entidade_id, nome_arquivo, tipo_arquivo, tamanho_bytes, url_arquivo, descricao) 
+                            VALUES (?, 'membro', ?, ?, ?, ?, ?, ?)
+                        ");
+                        $stmt->execute([
+                            $anexoId,
+                            $membro_id,
+                            $nomeArquivo,
+                            $mimeType,
+                            $tamanho,
+                            $input['foto_url'],
+                            'Foto do membro'
+                        ]);
+                        
+                        // Atualizar foto_url com ID do anexo
+                        $stmt = $db->prepare("UPDATE membros_membros SET foto_url = ? WHERE id = ?");
+                        $stmt->execute([$anexoId, $membro_id]);
+                        
+                        error_log("membros_criar.php: Foto processada com sucesso. Anexo ID: " . $anexoId);
+                    }
+                } elseif (preg_match('/^[a-f0-9\-]{36}$/', $input['foto_url'])) {
+                    // Se foto_url é um UUID (ID de anexo), atualizar o anexo com o membro_id
+                    $stmt = $db->prepare("SELECT id, url_arquivo FROM membros_anexos WHERE id = ? AND entidade_tipo = 'membro'");
+                    $stmt->execute([$input['foto_url']]);
+                    $anexo = $stmt->fetch(PDO::FETCH_ASSOC);
                     
-                    // Criar anexo
-                    $stmt = $db->prepare("
-                        INSERT INTO membros_anexos 
-                        (id, entidade_tipo, entidade_id, nome_arquivo, tipo_arquivo, tamanho_bytes, url_arquivo, descricao) 
-                        VALUES (?, 'membro', ?, ?, ?, ?, ?, ?)
-                    ");
-                    $stmt->execute([
-                        $anexoId,
-                        $membro_id,
-                        $nomeArquivo,
-                        $mimeType,
-                        $tamanho,
-                        $input['foto_url'],
-                        'Foto do membro'
-                    ]);
-                    
-                    // Atualizar foto_url com ID do anexo
-                    $stmt = $db->prepare("UPDATE membros_membros SET foto_url = ? WHERE id = ?");
-                    $stmt->execute([$anexoId, $membro_id]);
+                    if ($anexo) {
+                        // Atualizar anexo com o membro_id
+                        $stmt = $db->prepare("UPDATE membros_anexos SET entidade_id = ? WHERE id = ?");
+                        $stmt->execute([$membro_id, $input['foto_url']]);
+                        
+                        // Atualizar foto_url com a URL completa do arquivo
+                        $stmt = $db->prepare("UPDATE membros_membros SET foto_url = ? WHERE id = ?");
+                        $stmt->execute([$anexo['url_arquivo'], $membro_id]);
+                        
+                        error_log("membros_criar.php: Anexo existente vinculado ao membro. Anexo ID: " . $input['foto_url']);
+                    } else {
+                        error_log("membros_criar.php: Aviso - Anexo com UUID fornecido não encontrado: " . $input['foto_url']);
+                        // Não falhar a criação do membro, apenas logar o aviso
+                    }
+                } else {
+                    error_log("membros_criar.php: Aviso - Formato de foto_url não reconhecido: " . $input['foto_url']);
+                    // Não falhar a criação do membro, apenas logar o aviso
                 }
-            } elseif (preg_match('/^[a-f0-9\-]{36}$/', $input['foto_url'])) {
-                // Se foto_url é um UUID (ID de anexo), atualizar o anexo com o membro_id
-                $stmt = $db->prepare("UPDATE membros_anexos SET entidade_id = ? WHERE id = ? AND entidade_tipo = 'membro'");
-                $stmt->execute([$membro_id, $input['foto_url']]);
-                
-                // Atualizar foto_url com a URL completa do arquivo
-                $stmt = $db->prepare("SELECT url_arquivo FROM membros_anexos WHERE id = ?");
-                $stmt->execute([$input['foto_url']]);
-                $anexo = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($anexo) {
-                    $stmt = $db->prepare("UPDATE membros_membros SET foto_url = ? WHERE id = ?");
-                    $stmt->execute([$anexo['url_arquivo'], $membro_id]);
-                }
+            } catch (Exception $e) {
+                // Logar erro mas não falhar a criação do membro por causa da foto
+                error_log("membros_criar.php: Erro ao processar foto: " . $e->getMessage());
+                error_log("membros_criar.php: Stack trace: " . $e->getTraceAsString());
+                // Continuar sem falhar - o membro será criado sem a foto
             }
         }
         

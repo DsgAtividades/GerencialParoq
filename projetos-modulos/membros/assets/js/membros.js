@@ -327,42 +327,202 @@ async function fetchComCache(url, options = {}) {
 
 /**
  * Função centralizada para refresh após operações CRUD
- * Limpa cache e recarrega os dados
+ * Limpa cache e recarrega os dados de forma inteligente
+ * 
+ * @param {boolean} manterPagina - Se true, mantém a página atual. Se false, volta para página 1
+ * @param {string[]} tiposRefresh - Tipos de dados para atualizar: 'membros', 'pastorais', 'dashboard', 'relatorios', 'todos'
  */
-function refreshDados(manterPagina = false) {
-    // Limpar cache de membros
-    if (AppState.apiCache) {
-        // Limpar todas as entradas de cache relacionadas a membros
-        const keysToDelete = [];
-        AppState.apiCache.forEach((value, key) => {
-            if (key.includes('membros')) {
-                keysToDelete.push(key);
-            }
-        });
-        keysToDelete.forEach(key => AppState.apiCache.delete(key));
+function refreshDados(manterPagina = false, tiposRefresh = ['membros']) {
+    // Proteção contra múltiplas chamadas simultâneas
+    if (refreshDados._emExecucao) {
+        console.log('refreshDados já está em execução, ignorando chamada duplicada');
+        return;
     }
+    refreshDados._emExecucao = true;
     
-    // Limpar cache de membros individuais
-    if (AppState.cacheMembros) {
-        AppState.cacheMembros.clear();
-    }
-    
-    // Se não deve manter a página, voltar para a primeira página
-    if (!manterPagina && AppState.paginacao) {
-        AppState.paginacao.page = 1;
-    }
-    
-    // Recarregar membros
-    if (typeof carregarMembros === 'function') {
-        carregarMembros();
-    }
-    
-    // Recarregar dashboard se estiver na seção de dashboard
-    const secaoAtiva = document.querySelector('.content-section.active');
-    if (secaoAtiva && secaoAtiva.id === 'dashboard') {
-        if (typeof carregarDashboard === 'function') {
-            carregarDashboard();
+    try {
+        // Se 'todos' foi especificado, atualizar todas as abas
+        if (tiposRefresh.includes('todos')) {
+            tiposRefresh = ['membros', 'pastorais', 'dashboard', 'relatorios', 'eventos', 'escalas'];
         }
+        
+        // Limpar cache de membros
+        if (tiposRefresh.includes('membros')) {
+            if (AppState.apiCache) {
+                // Limpar todas as entradas de cache relacionadas a membros
+                const keysToDelete = [];
+                AppState.apiCache.forEach((value, key) => {
+                    if (key.includes('membros') || key.includes('membro')) {
+                        keysToDelete.push(key);
+                    }
+                });
+                keysToDelete.forEach(key => AppState.apiCache.delete(key));
+            }
+            
+            // Limpar cache de membros individuais
+            if (AppState.cacheMembros) {
+                AppState.cacheMembros.clear();
+            }
+            
+            // Quando membros são modificados, também limpar cache relacionado
+            // (porque o total de membros por pastoral pode mudar, e eventos/escalas podem ser afetados)
+            if (AppState.apiCache) {
+                AppState.apiCache.delete('pastorais');
+                // Limpar cache de eventos e escalas (podem ter membros atribuídos)
+                const keysToDelete = [];
+                AppState.apiCache.forEach((value, key) => {
+                    if (key.includes('evento') || key.includes('escala') || key.includes('calendario')) {
+                        keysToDelete.push(key);
+                    }
+                });
+                keysToDelete.forEach(key => AppState.apiCache.delete(key));
+            }
+            
+            // Se não deve manter a página, voltar para a primeira página
+            if (!manterPagina && AppState.paginacao) {
+                AppState.paginacao.page = 1;
+            }
+        }
+        
+        // Limpar cache de pastorais
+        if (tiposRefresh.includes('pastorais')) {
+            if (AppState.apiCache) {
+                AppState.apiCache.delete('pastorais');
+                // Limpar todas as entradas relacionadas a pastorais
+                const keysToDelete = [];
+                AppState.apiCache.forEach((value, key) => {
+                    if (key.includes('pastoral') || key.includes('pastorais')) {
+                        keysToDelete.push(key);
+                    }
+                });
+                keysToDelete.forEach(key => AppState.apiCache.delete(key));
+                
+                // Quando pastorais são modificadas, também limpar cache de eventos e escalas
+                // (porque eventos e escalas estão vinculados a pastorais)
+                const keysRelacionadas = [];
+                AppState.apiCache.forEach((value, key) => {
+                    if (key.includes('evento') || key.includes('escala') || key.includes('calendario')) {
+                        keysRelacionadas.push(key);
+                    }
+                });
+                keysRelacionadas.forEach(key => AppState.apiCache.delete(key));
+            }
+        }
+        
+        // Limpar cache de dashboard
+        if (tiposRefresh.includes('dashboard')) {
+            if (AppState.apiCache) {
+                AppState.apiCache.delete('dashboard-data');
+                // Limpar cache relacionado a dashboard
+                const keysToDelete = [];
+                AppState.apiCache.forEach((value, key) => {
+                    if (key.includes('dashboard') || key.includes('stats') || key.includes('estatisticas') || 
+                        key.includes('crescimento') || key.includes('adesoes')) {
+                        keysToDelete.push(key);
+                    }
+                });
+                keysToDelete.forEach(key => AppState.apiCache.delete(key));
+            }
+        }
+        
+        // Limpar cache de relatórios
+        if (tiposRefresh.includes('relatorios')) {
+            if (AppState.apiCache) {
+                const keysToDelete = [];
+                AppState.apiCache.forEach((value, key) => {
+                    if (key.includes('relatorio') || key.includes('relatorios') || 
+                        key.includes('crescimento') || key.includes('aniversariantes') ||
+                        key.includes('genero') || key.includes('status') || key.includes('faixa')) {
+                        keysToDelete.push(key);
+                    }
+                });
+                keysToDelete.forEach(key => AppState.apiCache.delete(key));
+            }
+        }
+        
+        // Recarregar dados baseado nos tipos solicitados
+        const promessas = [];
+        
+        // Recarregar membros
+        if (tiposRefresh.includes('membros') && typeof carregarMembros === 'function') {
+            promessas.push(
+                Promise.resolve(carregarMembros()).catch(err => {
+                    console.error('Erro ao recarregar membros:', err);
+                })
+            );
+        }
+        
+        // Recarregar pastorais (sempre, independente da seção ativa)
+        if (tiposRefresh.includes('pastorais')) {
+            if (typeof carregarPastorais === 'function') {
+                promessas.push(
+                    Promise.resolve(carregarPastorais(true)).catch(err => {
+                        console.error('Erro ao recarregar pastorais:', err);
+                    })
+                );
+            }
+            // Recarregar tabela de pastorais se existir
+            if (typeof carregarPastoraisTabela === 'function') {
+                promessas.push(
+                    Promise.resolve(carregarPastoraisTabela()).catch(err => {
+                        console.error('Erro ao recarregar tabela de pastorais:', err);
+                    })
+                );
+            }
+        }
+        
+        // Recarregar dashboard (sempre, independente da seção ativa)
+        if (tiposRefresh.includes('dashboard')) {
+            if (typeof carregarDashboard === 'function') {
+                promessas.push(
+                    Promise.resolve(carregarDashboard()).catch(err => {
+                        console.error('Erro ao recarregar dashboard:', err);
+                    })
+                );
+            }
+        }
+        
+        // Recarregar relatórios (sempre, independente da seção ativa)
+        if (tiposRefresh.includes('relatorios')) {
+            if (typeof carregarRelatorios === 'function') {
+                promessas.push(
+                    Promise.resolve(carregarRelatorios()).catch(err => {
+                        console.error('Erro ao recarregar relatórios:', err);
+                    })
+                );
+            }
+        }
+        
+        // Recarregar eventos se necessário (para manter consistência)
+        if (tiposRefresh.includes('eventos')) {
+            if (typeof carregarEventosCalendario === 'function') {
+                promessas.push(
+                    Promise.resolve(carregarEventosCalendario()).catch(err => {
+                        console.error('Erro ao recarregar eventos:', err);
+                    })
+                );
+            }
+        }
+        
+        // Recarregar escalas se necessário (para manter consistência)
+        if (tiposRefresh.includes('escalas')) {
+            if (typeof carregarEscalas === 'function') {
+                promessas.push(
+                    Promise.resolve(carregarEscalas()).catch(err => {
+                        console.error('Erro ao recarregar escalas:', err);
+                    })
+                );
+            }
+        }
+        
+        // Aguardar todas as operações de recarregamento
+        Promise.all(promessas).finally(() => {
+            refreshDados._emExecucao = false;
+        });
+        
+    } catch (error) {
+        console.error('Erro em refreshDados:', error);
+        refreshDados._emExecucao = false;
     }
 }
 
@@ -459,20 +619,27 @@ async function carregarDashboard() {
         }
         
         // Carregar dados principais em paralelo
-        const [statsResponse, pastoralResponse] = await Promise.all([
+        const [statsResponse, pastoralResponse, crescimentoResponse] = await Promise.all([
             carregarDashboardAPI(),
-            DashboardAPI.membrosPorPastoral()
+            DashboardAPI.membrosPorPastoral(),
+            fetch(`${CONFIG.apiBaseUrl}relatorios/crescimento-temporal`).then(r => r.json()).catch(() => null)
         ]);
         
-        // Dados de adesões mockados (até criar endpoint específico)
-        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
-        const quantidades = [2, 5, 3, 7, 4, 6];
+        // Processar dados de crescimento temporal (novas adesões)
+        let adesoesMensais = { labels: [], data: [] };
+        if (crescimentoResponse && crescimentoResponse.success && crescimentoResponse.data) {
+            const crescimentoData = crescimentoResponse.data;
+            adesoesMensais = {
+                labels: crescimentoData.labels || [],
+                data: crescimentoData.datasets?.[0]?.data || []
+            };
+        }
         
         // Combinar todos os dados
         const dashboardData = {
             ...(statsResponse?.data || statsResponse || {}),
             membros_por_pastoral: pastoralResponse?.data || pastoralResponse || { labels: [], data: [] },
-            adesoes_mensais: { labels: meses, data: quantidades }
+            adesoes_mensais: adesoesMensais
         };
         
         // Salvar no cache
@@ -781,18 +948,22 @@ function atualizarGraficos(dados) {
         adesoesQuantidade = dados.adesoes_mensais.data || [];
     }
     
+    // Garantir que temos dados válidos (pelo menos arrays vazios)
+    if (!Array.isArray(adesoesMes)) adesoesMes = [];
+    if (!Array.isArray(adesoesQuantidade)) adesoesQuantidade = [];
+    
     console.log('Dados para gráfico de adesões:', { adesoesMes, adesoesQuantidade });
     
-    // Gráfico de novas adesões
+    // Gráfico de novas adesões (Crescimento Temporal - últimos 12 meses)
     criarOuAtualizarGrafico('chart-adesoes', 'adesoes', {
         type: 'line',
         data: {
             labels: adesoesMes,
             datasets: [{
-                label: 'Novas Adesões',
+                label: 'Novos Membros',
                 data: adesoesQuantidade,
-                borderColor: '#2c5aa0',
-                backgroundColor: 'rgba(44, 90, 160, 0.1)',
+                borderColor: '#36A2EB',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
                 tension: 0.4,
                 fill: true
             }]
@@ -806,8 +977,11 @@ function atualizarGraficos(dados) {
             },
             plugins: {
                 legend: {
-                    display: true,
-                    position: 'top'
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
                 }
             },
             scales: {
@@ -824,6 +998,10 @@ function atualizarGraficos(dados) {
                     title: {
                         display: true,
                         text: 'Quantidade'
+                    },
+                    ticks: {
+                        stepSize: 1,
+                        precision: 0
                     }
                 }
             },
@@ -982,6 +1160,13 @@ function atualizarTabelaMembros() {
         const total = AppState.paginacao?.total || AppState.membros?.length || 0;
         const texto = total === 1 ? '1 registro' : `${total} registros`;
         totalRegistros.textContent = texto;
+    }
+    
+    // Reaplicar controles de permissão após atualizar tabela
+    if (window.PermissionsManager && window.PermissionsManager.applyPermissionControls) {
+        setTimeout(() => {
+            window.PermissionsManager.applyPermissionControls();
+        }, 100);
     }
 }
 
@@ -1180,6 +1365,11 @@ async function editarMembro(id) {
  * Exclui membro
  */
 function excluirMembro(id) {
+    // Verificar permissão antes de excluir
+    if (window.PermissionsManager && !window.PermissionsManager.requirePermission('excluir membros', null)) {
+        return;
+    }
+    
     console.log('=== excluirMembro CHAMADO ===');
     console.log('ID recebido:', id);
     console.log('Tipo do ID:', typeof id);
@@ -1238,10 +1428,14 @@ function excluirMembro(id) {
 function confirmarExclusao(membro, id) {
     const nome = membro.nome_completo || 'este membro';
     
-    if (confirm(`Tem certeza que deseja excluir o membro "${nome}"?\n\nEsta ação não pode ser desfeita.`)) {
-        console.log('Usuário confirmou exclusão, chamando API...');
-        
-        excluirMembroAPI(id)
+    // Verificar se mostrarAlertConfirmacao está disponível
+    if (typeof mostrarAlertConfirmacao === 'function') {
+        mostrarAlertConfirmacao(
+            'Confirmar Exclusão',
+            `Tem certeza que deseja excluir o membro "${nome}"?\n\nEsta ação não pode ser desfeita.`,
+            () => {
+                console.log('Usuário confirmou exclusão, chamando API...');
+                excluirMembroAPI(id)
             .then(response => {
                 console.log('Resposta da API:', response);
                 if (response && response.success) {
@@ -1251,9 +1445,9 @@ function confirmarExclusao(membro, id) {
                         alert('Membro excluído com sucesso');
                     }
                     
-                    // Refresh automático dos dados
+                    // Refresh automático dos dados - atualizar todas as abas
                     if (typeof refreshDados === 'function') {
-                        refreshDados(true); // Manter página atual
+                        refreshDados(true, ['todos']); // Manter página atual, atualizar todas as abas
                     } else if (typeof carregarMembros === 'function') {
                         carregarMembros();
                     } else {
@@ -1279,8 +1473,52 @@ function confirmarExclusao(membro, id) {
                     alert('Erro ao excluir membro: ' + errorMsg);
                 }
             });
+        });
     } else {
-        console.log('Usuário cancelou exclusão');
+        // Fallback para confirm nativo
+        if (confirm(`Tem certeza que deseja excluir o membro "${nome}"?\n\nEsta ação não pode ser desfeita.`)) {
+            console.log('Usuário confirmou exclusão, chamando API...');
+            excluirMembroAPI(id)
+                .then(response => {
+                    console.log('Resposta da API:', response);
+                    if (response && response.success) {
+                        if (typeof mostrarNotificacao === 'function') {
+                            mostrarNotificacao('Membro excluído com sucesso', 'success');
+                        } else {
+                            alert('Membro excluído com sucesso');
+                        }
+                        
+                        // Refresh automático dos dados - atualizar todas as abas
+                        if (typeof refreshDados === 'function') {
+                            refreshDados(true, ['todos']); // Manter página atual, atualizar todas as abas
+                        } else if (typeof carregarMembros === 'function') {
+                            carregarMembros();
+                        } else {
+                            location.reload(); // Fallback: recarregar página
+                        }
+                    } else {
+                        const errorMsg = response?.error || 'Erro desconhecido';
+                        console.error('Erro na resposta da API:', errorMsg);
+                        if (typeof mostrarNotificacao === 'function') {
+                            mostrarNotificacao('Erro ao excluir membro: ' + errorMsg, 'error');
+                        } else {
+                            alert('Erro ao excluir membro: ' + errorMsg);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('ERRO CAPTURADO em excluirMembro:', error);
+                    console.error('Stack trace:', error.stack);
+                    const errorMsg = error.message || 'Erro desconhecido';
+                    if (typeof mostrarNotificacao === 'function') {
+                        mostrarNotificacao('Erro ao excluir membro: ' + errorMsg, 'error');
+                    } else {
+                        alert('Erro ao excluir membro: ' + errorMsg);
+                    }
+                });
+        } else {
+            console.log('Usuário cancelou exclusão');
+        }
     }
 }
 
@@ -2203,12 +2441,27 @@ async function editarEventoGeral(eventoId) {
  * Confirma e exclui um evento geral
  */
 function confirmarExcluirEvento(eventoId) {
-    abrirModalConfirmacao(
-        'Confirmar Exclusão',
-        'Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.',
-        () => excluirEventoGeral(eventoId),
-        null
-    );
+    // Verificar se mostrarAlertConfirmacao está disponível
+    if (typeof mostrarAlertConfirmacao === 'function') {
+        mostrarAlertConfirmacao(
+            'Confirmar Exclusão',
+            'Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.',
+            () => excluirEventoGeral(eventoId)
+        );
+    } else if (typeof abrirModalConfirmacao === 'function') {
+        // Fallback para modal antigo
+        abrirModalConfirmacao(
+            'Confirmar Exclusão',
+            'Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.',
+            () => excluirEventoGeral(eventoId),
+            null
+        );
+    } else {
+        // Fallback para confirm nativo
+        if (confirm('Tem certeza que deseja excluir este evento? Esta ação não pode ser desfeita.')) {
+            excluirEventoGeral(eventoId);
+        }
+    }
 }
 
 /**
@@ -2376,6 +2629,11 @@ function abrirModalPastoral() {
 }
 
 async function salvarNovaPastoral() {
+    // Verificar permissão antes de criar
+    if (window.PermissionsManager && !window.PermissionsManager.requirePermission('criar pastorais', null)) {
+        return;
+    }
+    
     const form = document.getElementById('form-nova-pastoral');
     if (!form) return;
     
@@ -2428,19 +2686,22 @@ async function salvarNovaPastoral() {
             mostrarNotificacao('Pastoral criada com sucesso!', 'success');
             fecharModalPastoral();
             
-            // Limpar cache local e forçar recarga sem cache
-            AppState.apiCache.delete('pastorais');
-            // Limpar cache do localStorage também
-            if (typeof localStorage !== 'undefined') {
-                const keys = Object.keys(localStorage);
-                keys.forEach(key => {
-                    if (key.includes('pastorais') || key.includes('cache')) {
-                        localStorage.removeItem(key);
-                    }
-                });
+            // Usar refreshDados para atualizar todas as abas de forma consistente
+            if (typeof refreshDados === 'function') {
+                refreshDados(false, ['todos']);
+            } else {
+                // Fallback: limpar cache manualmente
+                AppState.apiCache.delete('pastorais');
+                if (typeof localStorage !== 'undefined') {
+                    const keys = Object.keys(localStorage);
+                    keys.forEach(key => {
+                        if (key.includes('pastorais') || key.includes('cache')) {
+                            localStorage.removeItem(key);
+                        }
+                    });
+                }
+                await carregarPastorais(true);
             }
-            // Forçar recarga sem usar cache
-            await carregarPastorais(true);
         } else {
             mostrarNotificacao(result.error || 'Erro ao criar pastoral', 'error');
             btnSalvar.disabled = false;

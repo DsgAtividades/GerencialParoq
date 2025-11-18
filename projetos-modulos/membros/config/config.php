@@ -49,6 +49,3 @@ define('SESSION_TIMEOUT', 3600); // 1 hora em segundos
 // Configurações de segurança
 define('PASSWORD_MIN_LENGTH', 4);
 define('USERNAME_MIN_LENGTH', 3);
-?>
-
-

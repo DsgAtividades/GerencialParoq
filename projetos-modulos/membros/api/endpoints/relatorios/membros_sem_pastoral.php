@@ -24,6 +24,7 @@ try {
         SELECT COUNT(*) as total
         FROM membros_membros m
         WHERE m.status != 'bloqueado'
+            AND m.status IS NOT NULL
             AND m.id NOT IN (
                 SELECT DISTINCT membro_id 
                 FROM membros_membros_pastorais 
@@ -45,12 +46,13 @@ try {
             m.created_at
         FROM membros_membros m
         WHERE m.status != 'bloqueado'
+            AND m.status IS NOT NULL
             AND m.id NOT IN (
                 SELECT DISTINCT membro_id 
                 FROM membros_membros_pastorais 
                 WHERE status = 'ativo'
             )
-        ORDER BY m.nome_completo
+        ORDER BY m.nome_completo ASC
         LIMIT 20
     ";
     

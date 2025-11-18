@@ -20,6 +20,11 @@ require_once 'utils/Response.php';
 require_once 'utils/Validation.php';
 require_once __DIR__ . '/../config/database.php';
 
+// Iniciar sessão se não estiver iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Obter método e URI
 $method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -87,6 +92,14 @@ if (!$isExportacao) {
 
 // Roteamento
 switch ($path) {
+    case 'check-permissions':
+        if ($method === 'GET') {
+            include 'endpoints/check_permissions.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
     case 'dashboard/agregado':
         if ($method === 'GET') {
             include 'endpoints/dashboard_agregado.php';
@@ -138,6 +151,26 @@ switch ($path) {
     case 'pastorais/vincular-membro':
         if ($method === 'POST') {
             include 'endpoints/pastorais_vincular_membro.php';
+        } else {
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'pastorais/remover-membro':
+        error_log("Routes: Rota pastorais/remover-membro detectada - Método: $method, Path: $path");
+        if ($method === 'DELETE') {
+            error_log("Routes: Incluindo endpoints/pastorais_remover_membro.php");
+            include 'endpoints/pastorais_remover_membro.php';
+        } else {
+            error_log("Routes: Método não permitido para pastorais/remover-membro: $method");
+            Response::error('Método não permitido', 405);
+        }
+        break;
+        
+    case 'membros/importar':
+        if ($method === 'POST') {
+            error_log("Routes: Rota específica para membros/importar detectada");
+            include 'endpoints/membros_importar.php';
         } else {
             Response::error('Método não permitido', 405);
         }
@@ -342,6 +375,15 @@ switch ($path) {
         }
         // Verificar se é uma rota de detalhes da pastoral com sub-recursos (membros, coordenadores)
         // Aceita UUIDs, IDs numéricos ou IDs com prefixo (ex: pastoral-2)
+        // Ex: /api/pastorais/{pastoral_id}/faixa-etaria
+        elseif (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)\/faixa-etaria$/', $path, $matches)) {
+            $pastoral_id = $matches[1];
+            if ($method === 'GET') {
+                include 'endpoints/pastorais_faixa_etaria.php';
+            } else {
+                Response::error('Método não permitido', 405);
+            }
+        }
         elseif (preg_match('/^pastorais\/([a-f0-9\-]+|[a-z]+\-\d+|\d+)\/(membros|coordenadores)$/', $path, $matches)) {
             $pastoral_id = $matches[1];
             $resource = $matches[2];

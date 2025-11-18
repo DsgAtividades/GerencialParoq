@@ -155,6 +155,3 @@ function testMembrosConnection() {
         return false;
     }
 }
-?>
-
-

@@ -56,9 +56,88 @@ async function carregarDadosPastoral(pastoralId) {
             fetch(`api/pastorais/${pastoralId}/eventos`)
         ]);
         
-        const pastoralJson = await pastoralResponse.json();
-        const membrosJson = await membrosResponse.json();
-        const eventosJson = await eventosResponse.json();
+        // ===== LOGS DETALHADOS PARA DEBUG =====
+        console.log('=== VERIFICAÇÃO DE RESPOSTAS ===');
+        console.log('1. Pastoral Response:', {
+            ok: pastoralResponse.ok,
+            status: pastoralResponse.status,
+            statusText: pastoralResponse.statusText,
+            contentType: pastoralResponse.headers.get('content-type'),
+            url: pastoralResponse.url
+        });
+        console.log('2. Membros Response:', {
+            ok: membrosResponse.ok,
+            status: membrosResponse.status,
+            statusText: membrosResponse.statusText,
+            contentType: membrosResponse.headers.get('content-type'),
+            url: membrosResponse.url
+        });
+        console.log('3. Eventos Response:', {
+            ok: eventosResponse.ok,
+            status: eventosResponse.status,
+            statusText: eventosResponse.statusText,
+            contentType: eventosResponse.headers.get('content-type'),
+            url: eventosResponse.url
+        });
+        
+        // Verificar se as respostas são válidas antes de parsear
+        if (!pastoralResponse.ok) {
+            const errorText = await pastoralResponse.text();
+            console.error('✗ ERRO HTTP ao carregar pastoral:', pastoralResponse.status, errorText);
+            throw new Error(`Erro HTTP ao carregar pastoral: ${pastoralResponse.status}`);
+        }
+        if (!membrosResponse.ok) {
+            const errorText = await membrosResponse.text();
+            console.error('✗ ERRO HTTP ao carregar membros:', membrosResponse.status, errorText);
+            throw new Error(`Erro HTTP ao carregar membros: ${membrosResponse.status}`);
+        }
+        if (!eventosResponse.ok) {
+            const errorText = await eventosResponse.text();
+            console.error('✗ ERRO HTTP ao carregar eventos:', eventosResponse.status, errorText);
+            throw new Error(`Erro HTTP ao carregar eventos: ${eventosResponse.status}`);
+        }
+        
+        // Ler conteúdo como texto primeiro para verificar
+        const pastoralText = await pastoralResponse.text();
+        const membrosText = await membrosResponse.text();
+        const eventosText = await eventosResponse.text();
+        
+        console.log('=== CONTEÚDO DAS RESPOSTAS (primeiros 200 chars) ===');
+        console.log('1. Pastoral:', pastoralText.substring(0, 200));
+        console.log('2. Membros:', membrosText.substring(0, 200));
+        console.log('3. Eventos:', eventosText.substring(0, 200));
+        
+        // Tentar parsear JSON e verificar se é válido
+        let pastoralJson, membrosJson, eventosJson;
+        
+        try {
+            pastoralJson = JSON.parse(pastoralText);
+            console.log('✓ Pastoral JSON válido');
+        } catch (e) {
+            console.error('✗ ERRO ao parsear Pastoral JSON:', e.message);
+            console.error('Resposta completa Pastoral:', pastoralText);
+            throw new Error(`Erro ao parsear resposta da pastoral: ${e.message}`);
+        }
+        
+        try {
+            membrosJson = JSON.parse(membrosText);
+            console.log('✓ Membros JSON válido');
+        } catch (e) {
+            console.error('✗ ERRO ao parsear Membros JSON:', e.message);
+            console.error('Resposta completa Membros:', membrosText);
+            throw new Error(`Erro ao parsear resposta dos membros: ${e.message}`);
+        }
+        
+        try {
+            eventosJson = JSON.parse(eventosText);
+            console.log('✓ Eventos JSON válido');
+        } catch (e) {
+            console.error('✗ ERRO ao parsear Eventos JSON:', e.message);
+            console.error('Resposta completa Eventos:', eventosText);
+            throw new Error(`Erro ao parsear resposta dos eventos: ${e.message}`);
+        }
+        
+        console.log('=== TODAS AS RESPOSTAS SÃO JSON VÁLIDO ===');
         
         if (!pastoralJson.success) {
             mostrarNotificacao('Erro ao carregar dados da pastoral', 'error');
@@ -134,6 +213,10 @@ function atualizarInterface() {
     atualizarTabelaMembros(); // Já atualiza o contador internamente
     atualizarTabelaEventos(); // Já atualiza o contador internamente
     atualizarCoordenadores();
+    // Carregar gráfico de faixa etária após um pequeno delay para garantir que o DOM está pronto
+    setTimeout(() => {
+        carregarFaixaEtariaPastoral();
+    }, 300);
 }
 
 /**
@@ -322,13 +405,49 @@ function atualizarTabelaMembros() {
                 <button class="btn btn-sm btn-secondary" onclick="visualizarMembro('${membro.id}')" title="Visualizar">
                     <i class="fas fa-eye"></i>
                 </button>
+                <button class="btn btn-sm btn-danger btn-remover-membro-pastoral" 
+                        data-membro-id="${membro.id}"
+                        data-membro-nome="${(window.Sanitizer ? window.Sanitizer.escapeHtml(membro.nome_completo || 'este membro') : (membro.nome_completo || 'este membro'))}"
+                        title="Remover da Pastoral">
+                    <i class="fas fa-user-minus"></i>
+                </button>
                 </div>
             </td>
         </tr>
     `).join('');
     
+    // Configurar event listeners para botões de remover usando event delegation
+    const tabelaMembros = document.getElementById('tabela-membros');
+    if (tabelaMembros) {
+        // Remover listener anterior se existir
+        if (tabelaMembros._removerMembroHandler) {
+            tabelaMembros.removeEventListener('click', tabelaMembros._removerMembroHandler);
+        }
+        
+        // Adicionar novo listener
+        const handler = function(e) {
+            const btn = e.target.closest('.btn-remover-membro-pastoral');
+            if (btn) {
+                e.preventDefault();
+                const membroId = btn.dataset.membroId;
+                const membroNome = btn.dataset.membroNome;
+                removerMembroPastoral(membroId, membroNome);
+            }
+        };
+        
+        tabelaMembros.addEventListener('click', handler);
+        tabelaMembros._removerMembroHandler = handler;
+    }
+    
     // Atualizar contador - sempre atualizar, mesmo se elemento não existir ainda
     const totalMembros = document.getElementById('total-membros-pastoral');
+    
+    // Reaplicar controles de permissão após atualizar tabela
+    if (window.PermissionsManager && window.PermissionsManager.applyPermissionControls) {
+        setTimeout(() => {
+            window.PermissionsManager.applyPermissionControls();
+        }, 100);
+    }
     if (totalMembros) {
         const total = membros.length;
         const texto = total === 1 ? '1 membro' : `${total} membros`;
@@ -384,16 +503,23 @@ function atualizarTabelaEventos() {
                 <button class="btn btn-sm btn-primary" onclick="verDetalhesEvento('${evento.id}')" title="Ver Detalhes">
                     <i class="fas fa-eye"></i>
                 </button>
-                <button class="btn btn-sm btn-warning" onclick="editarEvento('${evento.id}')" title="Editar">
+                <button class="btn btn-sm btn-warning btn-editar-evento" onclick="editarEvento('${evento.id}')" title="Editar">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn btn-sm btn-danger" onclick="excluirEvento('${evento.id}')" title="Excluir">
+                <button class="btn btn-sm btn-danger btn-excluir-evento" onclick="excluirEvento('${evento.id}')" title="Excluir">
                     <i class="fas fa-trash"></i>
                 </button>
                 </div>
             </td>
         </tr>
     `).join('');
+    
+    // Reaplicar controles de permissão após atualizar tabela
+    if (window.PermissionsManager && window.PermissionsManager.applyPermissionControls) {
+        setTimeout(() => {
+            window.PermissionsManager.applyPermissionControls();
+        }, 100);
+    }
     
     // Atualizar contador - sempre atualizar, mesmo se elemento não existir ainda
     const totalEventos = document.getElementById('total-eventos-pastoral');
@@ -638,33 +764,40 @@ function editarEvento(eventoId) {
  * Exclui um evento
  */
 async function excluirEvento(eventoId) {
-    if (!confirm('Tem certeza que deseja excluir este evento?')) {
-        return;
-    }
-    
     const pastoralId = PastoralState.pastoral?.id;
     if (!pastoralId) {
         mostrarNotificacao('Erro: Pastoral não identificada', 'error');
         return;
     }
     
-    try {
-        const response = await fetch(`api/pastorais/${pastoralId}/eventos/${eventoId}`, {
-            method: 'DELETE'
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            mostrarNotificacao('Evento excluído com sucesso!', 'success');
-            await carregarEventosPastoral(pastoralId);
-        } else {
-            mostrarNotificacao(result.error || 'Erro ao excluir evento', 'error');
+    // Buscar nome do evento para exibir na confirmação
+    const evento = PastoralState.eventos?.find(e => e.id === eventoId);
+    const nomeEvento = evento?.nome || 'este evento';
+    
+    // Mostrar alert de confirmação
+    mostrarAlertConfirmacao(
+        'Confirmar Exclusão',
+        `Tem certeza que deseja excluir o evento "${nomeEvento}"? Esta ação não pode ser desfeita.`,
+        async () => {
+            try {
+                const response = await fetch(`api/pastorais/${pastoralId}/eventos/${eventoId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    mostrarNotificacao('Evento excluído com sucesso!', 'success');
+                    await carregarEventosPastoral(pastoralId);
+                } else {
+                    mostrarNotificacao(result.error || 'Erro ao excluir evento', 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir evento:', error);
+                mostrarNotificacao('Erro ao excluir evento: ' + error.message, 'error');
+            }
         }
-    } catch (error) {
-        console.error('Erro ao excluir evento:', error);
-        mostrarNotificacao('Erro ao excluir evento: ' + error.message, 'error');
-    }
+    );
 }
 
 /**
@@ -711,6 +844,218 @@ function atualizarCoordenadores() {
     }
     
     container.innerHTML = html;
+}
+
+/**
+ * Carrega e renderiza o gráfico de faixa etária dos membros da pastoral
+ */
+async function carregarFaixaEtariaPastoral() {
+    try {
+        // Verificar se Chart.js está disponível
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js não está disponível. Aguardando...');
+            setTimeout(() => {
+                if (typeof Chart !== 'undefined') {
+                    carregarFaixaEtariaPastoral();
+                } else {
+                    console.error('Chart.js não foi carregado após timeout');
+                }
+            }, 500);
+            return;
+        }
+        
+        const pastoralId = window.pastoralId;
+        if (!pastoralId) {
+            console.error('ID da pastoral não encontrado');
+            return;
+        }
+        
+        console.log('Carregando faixa etária para pastoral:', pastoralId);
+        
+        const response = await fetch(`api/pastorais/${pastoralId}/faixa-etaria`);
+        
+        // ===== LOGS DETALHADOS PARA DEBUG =====
+        console.log('=== VERIFICAÇÃO DE RESPOSTA (Faixa Etária) ===');
+        console.log('Response:', {
+            ok: response.ok,
+            status: response.status,
+            statusText: response.statusText,
+            contentType: response.headers.get('content-type'),
+            url: response.url
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('✗ ERRO HTTP ao carregar faixa etária:', response.status, errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Ler como texto primeiro para verificar
+        const responseText = await response.text();
+        console.log('Conteúdo da resposta (primeiros 200 chars):', responseText.substring(0, 200));
+        
+        // Tentar parsear JSON
+        let result;
+        try {
+            result = JSON.parse(responseText);
+            console.log('✓ Faixa Etária JSON válido');
+            console.log('Resposta da API:', result);
+        } catch (e) {
+            console.error('✗ ERRO ao parsear Faixa Etária JSON:', e.message);
+            console.error('Resposta completa:', responseText);
+            throw new Error(`Erro ao parsear resposta da faixa etária: ${e.message}`);
+        }
+        
+        if (result.success && result.data) {
+            const data = result.data;
+            const ctx = document.getElementById('chart-faixa-etaria-pastoral');
+            
+            if (!ctx) {
+                console.error('Canvas chart-faixa-etaria-pastoral não encontrado no DOM');
+                // Tentar novamente após um delay
+                setTimeout(() => {
+                    carregarFaixaEtariaPastoral();
+                }, 500);
+                return;
+            }
+            
+            // Verificar se temos dados válidos
+            const labels = data.labels || [];
+            const datasets = data.datasets || [];
+            
+            console.log('Dados do gráfico:', { labels, datasets });
+            
+            // Destruir gráfico existente se houver
+            if (window.chartFaixaEtariaPastoral) {
+                window.chartFaixaEtariaPastoral.destroy();
+                window.chartFaixaEtariaPastoral = null;
+            }
+            
+            // Se não houver dados, criar gráfico vazio com mensagem
+            if (labels.length === 0 || !datasets[0] || datasets[0].data.length === 0) {
+                console.log('Nenhum dado de faixa etária disponível');
+                // Criar gráfico vazio para manter o espaço
+                window.chartFaixaEtariaPastoral = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Sem dados'],
+                        datasets: [{
+                            label: 'Membros',
+                            data: [0],
+                            backgroundColor: ['#e0e0e0']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                left: 10,
+                                right: 10
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    precision: 0,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+            
+            // Criar novo gráfico com dados
+            window.chartFaixaEtariaPastoral = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 10,
+                            bottom: 10,
+                            left: 10,
+                            right: 10
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' membro(s)';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            console.log('Gráfico de faixa etária criado com sucesso');
+        } else {
+            console.error('Erro na resposta da API:', result);
+            const ctx = document.getElementById('chart-faixa-etaria-pastoral');
+            if (ctx && ctx.parentElement) {
+                ctx.parentElement.innerHTML = '<div class="text-center text-muted p-3">Erro ao carregar dados de faixa etária</div>';
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao carregar faixa etária da pastoral:', error);
+        const ctx = document.getElementById('chart-faixa-etaria-pastoral');
+        if (ctx && ctx.parentElement) {
+            ctx.parentElement.innerHTML = '<div class="text-center text-danger p-3">Erro ao carregar gráfico: ' + error.message + '</div>';
+        }
+    }
 }
 
 /**
@@ -1429,6 +1774,119 @@ function fecharModalAdicionarMembro() {
 }
 
 /**
+ * Remove um membro da pastoral
+ */
+async function removerMembroPastoral(membroId, membroNome) {
+    console.log('removerMembroPastoral: Função chamada', { membroId, membroNome });
+    
+    // Verificar permissão
+    if (window.PermissionsManager && !window.PermissionsManager.canModifyData()) {
+        console.log('removerMembroPastoral: Permissão negada');
+        mostrarNotificacao('Você não tem permissão para remover membros', 'error');
+        return;
+    }
+    
+    // Usar alert customizado para confirmação
+    const nomeExibicao = membroNome || 'este membro';
+    const mensagem = `Tem certeza que deseja remover ${nomeExibicao} desta pastoral?`;
+    
+    // Criar e mostrar alert de confirmação
+    mostrarAlertConfirmacao(
+        'Confirmar Remoção',
+        mensagem,
+        () => {
+            console.log('removerMembroPastoral: Usuário confirmou, executando remoção');
+            executarRemocaoMembro(membroId);
+        }
+    );
+}
+
+/**
+ * Executa a remoção do membro da pastoral
+ */
+async function executarRemocaoMembro(membroId) {
+    try {
+        const pastoralId = PastoralState.pastoral?.id || window.pastoralId;
+        if (!pastoralId) {
+            mostrarNotificacao('ID da pastoral não encontrado', 'error');
+            return;
+        }
+        
+        console.log('removerMembroPastoral: Iniciando requisição', { membroId, pastoralId });
+        
+        const response = await fetch('api/pastorais/remover-membro', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                membro_id: membroId,
+                pastoral_id: pastoralId
+            })
+        });
+        
+        console.log('removerMembroPastoral: Resposta recebida', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            headers: Object.fromEntries(response.headers.entries())
+        });
+        
+        // Ler resposta como texto primeiro para evitar problemas de parse
+        const responseText = await response.text();
+        console.log('removerMembroPastoral: Resposta texto', {
+            length: responseText.length,
+            preview: responseText.substring(0, 200),
+            isEmpty: !responseText || responseText.trim() === ''
+        });
+        
+        // Verificar se a resposta está vazia
+        if (!responseText || responseText.trim() === '') {
+            console.error('removerMembroPastoral: Resposta vazia do servidor');
+            mostrarNotificacao('Erro: Resposta vazia do servidor. Verifique se a rota está configurada corretamente.', 'error');
+            return;
+        }
+        
+        // Tentar parsear JSON
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('removerMembroPastoral: Erro ao parsear JSON', {
+                error: parseError,
+                responseText: responseText.substring(0, 500)
+            });
+            mostrarNotificacao('Erro: Resposta inválida do servidor. ' + parseError.message, 'error');
+            return;
+        }
+        
+        console.log('removerMembroPastoral: Resultado parseado', result);
+        
+        if (result.success) {
+            mostrarNotificacao('Membro removido da pastoral com sucesso!', 'success');
+            
+            // Recarregar dados da pastoral
+            PastoralState.cache.clear();
+            await carregarDadosPastoral(pastoralId);
+            
+            // Recarregar gráfico de faixa etária também
+            setTimeout(() => {
+                carregarFaixaEtariaPastoral();
+            }, 500);
+        } else {
+            mostrarNotificacao(result.error || 'Erro ao remover membro', 'error');
+        }
+    } catch (error) {
+        console.error('removerMembroPastoral: Erro capturado', {
+            error: error,
+            message: error.message,
+            stack: error.stack
+        });
+        mostrarNotificacao('Erro ao remover membro: ' + error.message, 'error');
+    }
+}
+
+/**
  * Filtra membros na lista da pastoral
  */
 function filtrarMembrosPastoral() {
@@ -1570,6 +2028,7 @@ window.fecharModalMembro = fecharModalMembro;
 window.filtrarMembros = filtrarMembros;
 window.adicionarMembroPastoral = adicionarMembroPastoral;
 window.adicionarMembroSelecionado = adicionarMembroSelecionado;
+window.removerMembroPastoral = removerMembroPastoral;
 window.fecharModalAdicionarMembro = fecharModalAdicionarMembro;
 window.filtrarMembrosPastoral = filtrarMembrosPastoral;
 // Funções de eventos

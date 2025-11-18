@@ -7,6 +7,15 @@
 
 require_once '../config/database.php';
 require_once 'utils/Validation.php';
+require_once 'utils/Permissions.php';
+
+// Iniciar sessão se não estiver iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Verificar permissão de administrador para atualizar membros
+Permissions::requireAdmin('atualizar membros');
 
 try {
     $db = new MembrosDatabase();

@@ -199,10 +199,10 @@ CREATE TABLE IF NOT EXISTS membros_eventos_pastorais (
     evento_id VARCHAR(36) NOT NULL COMMENT 'ID do evento (FK membros_eventos)',
     pastoral_id VARCHAR(36) NOT NULL COMMENT 'ID da pastoral (FK membros_pastorais)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
-    -- Índices
+        -- Índices
     INDEX idx_eventos_pastorais_evento (evento_id),
     INDEX idx_eventos_pastorais_pastoral (pastoral_id),
-    -- Constraint: Um evento não pode estar vinculado à mesma pastoral duas vezes
+        -- Constraint: Um evento não pode estar vinculado à mesma pastoral duas vezes
     UNIQUE KEY uk_evento_pastoral (evento_id, pastoral_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Relacionamento N:N entre eventos e pastorais';
 
@@ -213,19 +213,19 @@ CREATE TABLE IF NOT EXISTS membros_escalas_eventos (
     id VARCHAR(36) NOT NULL PRIMARY KEY COMMENT 'UUID da escala',
     titulo VARCHAR(255) NOT NULL COMMENT 'Título/nome da escala',
     descricao TEXT DEFAULT NULL COMMENT 'Descrição da escala',
-    -- Data e Hora
+        -- Data e Hora
     data DATE NOT NULL COMMENT 'Data do evento da escala',
     hora TIME DEFAULT NULL COMMENT 'Hora do evento',
-    -- Pastoral e Local
+        -- Pastoral e Local
     pastoral_id VARCHAR(36) NOT NULL COMMENT 'ID da pastoral (FK membros_pastorais)',
     local VARCHAR(255) DEFAULT NULL COMMENT 'Local do evento',
     observacoes TEXT DEFAULT NULL COMMENT 'Observações sobre a escala',
-    -- Criador
+        -- Criador
     created_by VARCHAR(36) DEFAULT NULL COMMENT 'ID do usuário que criou (FK membros_membros)',
-    -- Auditoria
+        -- Auditoria
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Data de atualização',
-    -- Índices
+        -- Índices
     INDEX idx_escalas_eventos_titulo (titulo),
     INDEX idx_escalas_eventos_data (data),
     INDEX idx_escalas_eventos_pastoral (pastoral_id),
@@ -244,7 +244,7 @@ CREATE TABLE IF NOT EXISTS membros_escalas_funcoes (
     quantidade_necessaria INT DEFAULT 1 COMMENT 'Quantidade necessária de pessoas',
     ordem INT DEFAULT 0 COMMENT 'Ordem de exibição',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
-    -- Índices
+        -- Índices
     INDEX idx_escalas_funcoes_evento (evento_id),
     INDEX idx_escalas_funcoes_nome (nome_funcao)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Funções dentro de uma escala de evento';
@@ -260,11 +260,11 @@ CREATE TABLE IF NOT EXISTS membros_escalas_funcao_membros (
     observacoes TEXT DEFAULT NULL COMMENT 'Observações sobre a atribuição',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Data de atualização',
-    -- Índices
+        -- Índices
     INDEX idx_escalas_funcao_membros_funcao (funcao_id),
     INDEX idx_escalas_funcao_membros_membro (membro_id),
     INDEX idx_escalas_funcao_membros_status (status),
-    -- Constraint: Um membro não pode ter a mesma função duas vezes
+        -- Constraint: Um membro não pode ter a mesma função duas vezes
     UNIQUE KEY uk_funcao_membro (funcao_id, membro_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Membros atribuídos a funções em escalas';
 
@@ -278,7 +278,7 @@ CREATE TABLE IF NOT EXISTS membros_escalas_logs (
     acao VARCHAR(60) NOT NULL COMMENT 'Ação realizada',
     detalhes JSON DEFAULT NULL COMMENT 'Detalhes da ação (JSON)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
-    -- Índices
+        -- Índices
     INDEX idx_escalas_logs_evento (evento_id),
     INDEX idx_escalas_logs_usuario (usuario_id),
     INDEX idx_escalas_logs_acao (acao),
@@ -319,7 +319,7 @@ CREATE TABLE IF NOT EXISTS membros_auditoria_logs (
     ip_address VARCHAR(45) DEFAULT NULL COMMENT 'IP de origem',
     user_agent TEXT DEFAULT NULL COMMENT 'User agent do navegador',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
-    -- Índices
+        -- Índices
     INDEX idx_auditoria_entidade (entidade_tipo, entidade_id),
     INDEX idx_auditoria_acao (acao),
     INDEX idx_auditoria_usuario (usuario_id),
@@ -513,7 +513,7 @@ CREATE TABLE IF NOT EXISTS membros_anexos (
     created_by VARCHAR(36) DEFAULT NULL COMMENT 'ID do usuário que criou',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Data de atualização',
-    -- Índices
+        -- Índices
     INDEX idx_anexos_entidade (entidade_tipo, entidade_id),
     INDEX idx_anexos_membro (membro_id),
     INDEX idx_anexos_tipo (tipo),

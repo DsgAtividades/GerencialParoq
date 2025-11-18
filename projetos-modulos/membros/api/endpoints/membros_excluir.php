@@ -6,6 +6,15 @@
  */
 
 require_once '../config/database.php';
+require_once 'utils/Permissions.php';
+
+// Iniciar sessão se não estiver iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Verificar permissão de administrador para excluir membros
+Permissions::requireAdmin('excluir membros');
 
 try {
     $db = new MembrosDatabase();

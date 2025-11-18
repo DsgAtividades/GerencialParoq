@@ -86,7 +86,19 @@ function abrirModal(titulo, conteudo, botoes = [], opcoes = {}) {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = `btn ${Sanitizer.escapeHtml(botao.classe)}`;
-            Sanitizer.setText(btn, botao.texto);
+            
+            // Se tiver ícone, criar elemento de ícone separadamente
+            if (botao.icone) {
+                const icone = document.createElement('i');
+                icone.className = botao.icone;
+                btn.appendChild(icone);
+                // Adicionar espaço entre ícone e texto se houver texto
+                if (botao.texto) {
+                    btn.appendChild(document.createTextNode(' ' + botao.texto));
+                }
+            } else {
+                Sanitizer.setText(btn, botao.texto);
+            }
             
             // Usar addEventListener em vez de onclick (mais seguro)
             if (typeof botao.onclick === 'function') {
@@ -259,6 +271,13 @@ function abrirModalMembro(membro = null, modo = 'editar') {
             }
         }, 10);
     }
+    
+    // Se for edição, verificar status inicial e mostrar/esconder campo de motivo
+    if (isEdicao) {
+        setTimeout(() => {
+            toggleMotivoBloqueio();
+        }, 100);
+    }
 }
 
 function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
@@ -386,11 +405,12 @@ function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
             <!-- Status e Observações -->
             <div class="form-section">
                 <h6 class="section-title"><i class="fas fa-info-circle"></i> Status e Observações</h6>
+                ${isEdicao ? `
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="status" class="form-label"><i class="fas fa-check-circle"></i> Status</label>
-                            <select class="form-control" id="status" name="status">
+                            <select class="form-control" id="status" name="status" onchange="toggleMotivoBloqueio()">
                                 <option value="ativo" ${dadosMembro.status === 'ativo' ? 'selected' : ''}>Ativo</option>
                                 <option value="afastado" ${dadosMembro.status === 'afastado' ? 'selected' : ''}>Afastado</option>
                                 <option value="em_discernimento" ${dadosMembro.status === 'em_discernimento' ? 'selected' : ''}>Em Discernimento</option>
@@ -398,14 +418,25 @@ function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                                    <div class="row" id="row-motivo-bloqueio" style="display: ${dadosMembro.status === 'bloqueado' ? 'flex' : 'none'};">
+                    <div class="col-md-12">
                         <div class="form-group">
-                            <label for="comunidade_ou_capelania" class="form-label"><i class="fas fa-building"></i> Comunidade/Capelania</label>
-                            <input type="text" class="form-control" id="comunidade_ou_capelania" name="comunidade_ou_capelania" 
-                                   value="${dadosMembro.comunidade_ou_capelania || ''}" placeholder="Nome da comunidade">
+                            <label for="motivo_bloqueio" class="form-label"><i class="fas fa-exclamation-triangle"></i> Motivo do Bloqueio</label>
+                            <textarea class="form-control" id="motivo_bloqueio" name="motivo_bloqueio" 
+                                      rows="3" placeholder="Informe o motivo do bloqueio...">${dadosMembro.motivo_bloqueio || ''}</textarea>
                         </div>
                     </div>
                 </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="data_entrada" class="form-label"><i class="fas fa-calendar-plus"></i> Data de Entrada</label>
+                            <input type="date" class="form-control" id="data_entrada" name="data_entrada" 
+                                   value="${dadosMembro.data_entrada || ''}">
+                        </div>
+                    </div>
+                </div>
+
+                ` : `
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -423,6 +454,7 @@ function criarFormularioMembro(dadosMembro, isEdicao, isVisualizacao, formId) {
                         </div>
                     </div>
                 </div>
+                `}
                 <div class="form-group">
                     <label for="observacoes_pastorais" class="form-label"><i class="fas fa-sticky-note"></i> Observações sobre o membro</label>
                     <textarea class="form-control" id="observacoes_pastorais" name="observacoes_pastorais" 
@@ -937,6 +969,11 @@ function validarFormulario(formId) {
  * Salva membro (criação)
  */
 async function criarMembro() {
+    // Verificar permissão antes de criar
+    if (window.PermissionsManager && !window.PermissionsManager.requirePermission('criar membros', null)) {
+        return;
+    }
+    
     if (!validarFormulario('form-membro')) return;
     
     const formData = new FormData(document.getElementById('form-membro'));
@@ -963,6 +1000,9 @@ async function criarMembro() {
             return;
         }
     }
+    
+    // Definir status como 'ativo' automaticamente ao criar (campo não aparece no formulário)
+    dados.status = 'ativo';
     
     // Fazer upload da foto primeiro (se houver)
     try {
@@ -1002,9 +1042,9 @@ async function criarMembro() {
             mostrarNotificacao('Membro criado com sucesso!', 'success');
             fecharModal();
             
-            // Refresh automático dos dados
+            // Refresh automático dos dados - atualizar todas as abas
             if (typeof refreshDados === 'function') {
-                refreshDados(false); // Não manter página, voltar para primeira página
+                refreshDados(false, ['todos']); // Não manter página, atualizar todas as abas
             } else if (typeof carregarMembros === 'function') {
                 carregarMembros();
             }
@@ -1142,6 +1182,11 @@ async function criarMembro() {
  * Salva membro (edição)
  */
 async function salvarMembro() {
+    // Verificar permissão antes de atualizar
+    if (window.PermissionsManager && !window.PermissionsManager.requirePermission('atualizar membros', null)) {
+        return;
+    }
+    
     if (!validarFormulario('form-membro')) {
         return;
     }
@@ -1161,6 +1206,11 @@ async function salvarMembro() {
     const formData = new FormData(document.getElementById('form-membro'));
     const dados = Object.fromEntries(formData.entries());
     
+    // Limpar motivo_bloqueio se status não for "bloqueado"
+    if (dados.status && dados.status !== 'bloqueado') {
+        dados.motivo_bloqueio = null;
+    }
+    
     // Fazer upload da foto primeiro (se houver)
     try {
         const fotoData = await uploadFotoMembro(membroId);
@@ -1177,6 +1227,19 @@ async function salvarMembro() {
     const camposObrigatorios = [
         { id: 'nome_completo', nome: 'Nome Completo', mensagem: 'O nome completo é obrigatório e não pode estar vazio.' }
     ];
+    
+    // Se status for "bloqueado", motivo_bloqueio é obrigatório
+    if (dados.status === 'bloqueado') {
+        const motivoBloqueio = dados.motivo_bloqueio;
+        if (!motivoBloqueio || motivoBloqueio.trim() === '') {
+            destacarCampoErro('motivo_bloqueio', 'O motivo do bloqueio é obrigatório quando o status é "Bloqueado".');
+            mostrarNotificacao(
+                '<p><strong>❌ Erro ao atualizar membro</strong></p><p><strong>Campo obrigatório não preenchido:</strong> Motivo do Bloqueio</p><p><strong>Solução:</strong> Preencha o motivo do bloqueio antes de salvar.</p>',
+                'error'
+            );
+            return;
+        }
+    }
     
     for (const campo of camposObrigatorios) {
         const valor = dados[campo.id];
@@ -1226,9 +1289,9 @@ async function salvarMembro() {
             mostrarNotificacao('Membro atualizado com sucesso!', 'success');
             fecharModal();
             
-            // Refresh automático dos dados
+            // Refresh automático dos dados - atualizar todas as abas
             if (typeof refreshDados === 'function') {
-                refreshDados(true); // Manter página atual
+                refreshDados(true, ['todos']); // Manter página atual, atualizar todas as abas
             } else if (typeof carregarMembros === 'function') {
                 carregarMembros();
             }
@@ -1445,7 +1508,7 @@ function processarDadosMembro(dados) {
     
     // Apenas converter strings vazias para null para campos opcionais
     // IMPORTANTE: nome_completo NÃO está na lista de opcionais pois é obrigatório
-    const camposOpcionais = ['apelido', 'data_nascimento', 'sexo', 'celular_whatsapp', 'email', 'telefone_fixo', 'rua', 'numero', 'bairro', 'cidade', 'uf', 'cep', 'rg', 'comunidade_ou_capelania', 'data_entrada', 'observacoes_pastorais', 'foto_url', 'motivo_bloqueio', 'frequencia', 'periodo'];
+    const camposOpcionais = ['apelido', 'data_nascimento', 'sexo', 'celular_whatsapp', 'email', 'telefone_fixo', 'rua', 'numero', 'bairro', 'cidade', 'uf', 'cep', 'rg', 'data_entrada', 'observacoes_pastorais', 'foto_url', 'motivo_bloqueio', 'frequencia', 'periodo'];
     
     camposOpcionais.forEach(campo => {
         if (dadosProcessados[campo] === '') {
@@ -1689,6 +1752,124 @@ function removerDestaqueErro(campoId) {
 }
 
 /**
+ * Mostra um alert de confirmação customizado
+ */
+function mostrarAlertConfirmacao(titulo, mensagem, callbackConfirmar) {
+    // Remover alert anterior se existir
+    const alertAnterior = document.getElementById('alert-confirmacao');
+    if (alertAnterior) {
+        alertAnterior.remove();
+    }
+    
+    // Criar overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'alert-confirmacao-overlay';
+    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+    
+    // Criar alert box
+    const alertBox = document.createElement('div');
+    alertBox.id = 'alert-confirmacao';
+    alertBox.style.cssText = 'background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); max-width: 450px; width: 90%; padding: 0; overflow: hidden;';
+    
+    // Header
+    const header = document.createElement('div');
+    header.style.cssText = 'background: linear-gradient(135deg, #2c5aa0, #1e3d6f); color: white; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;';
+    
+    const tituloEl = document.createElement('h4');
+    tituloEl.style.cssText = 'margin: 0; font-size: 1.1rem; font-weight: 600;';
+    if (window.Sanitizer) {
+        window.Sanitizer.setText(tituloEl, titulo);
+    } else {
+        tituloEl.textContent = titulo;
+    }
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.id = 'alert-close-btn';
+    closeBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; line-height: 1; display: flex; align-items: center; justify-content: center;';
+    closeBtn.innerHTML = '&times;';
+    
+    header.appendChild(tituloEl);
+    header.appendChild(closeBtn);
+    
+    // Body
+    const body = document.createElement('div');
+    body.style.cssText = 'padding: 1.5rem; text-align: center;';
+    
+    const iconDiv = document.createElement('div');
+    iconDiv.style.cssText = 'font-size: 3rem; color: #ffc107; margin-bottom: 1rem;';
+    iconDiv.textContent = '⚠️';
+    
+    const mensagemEl = document.createElement('p');
+    mensagemEl.style.cssText = 'margin: 0; color: #333; font-size: 1rem; line-height: 1.5; white-space: pre-line;';
+    if (window.Sanitizer) {
+        window.Sanitizer.setText(mensagemEl, mensagem);
+    } else {
+        mensagemEl.textContent = mensagem;
+    }
+    
+    body.appendChild(iconDiv);
+    body.appendChild(mensagemEl);
+    
+    // Footer com botões
+    const footer = document.createElement('div');
+    footer.style.cssText = 'padding: 1rem 1.5rem; background: #f8f9fa; display: flex; gap: 0.75rem; justify-content: flex-end;';
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.id = 'alert-cancel-btn';
+    cancelBtn.style.cssText = 'padding: 0.5rem 1.5rem; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.95rem; font-weight: 500;';
+    cancelBtn.textContent = 'Cancelar';
+    
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.id = 'alert-confirm-btn';
+    confirmBtn.style.cssText = 'padding: 0.5rem 1.5rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.95rem; font-weight: 500;';
+    confirmBtn.textContent = 'Confirmar';
+    
+    footer.appendChild(cancelBtn);
+    footer.appendChild(confirmBtn);
+    
+    // Montar estrutura
+    alertBox.appendChild(header);
+    alertBox.appendChild(body);
+    alertBox.appendChild(footer);
+    overlay.appendChild(alertBox);
+    document.body.appendChild(overlay);
+    
+    // Função para fechar
+    const fecharAlert = () => {
+        overlay.remove();
+    };
+    
+    // Event listeners
+    document.getElementById('alert-close-btn').onclick = fecharAlert;
+    document.getElementById('alert-cancel-btn').onclick = fecharAlert;
+    document.getElementById('alert-confirm-btn').onclick = () => {
+        fecharAlert();
+        if (callbackConfirmar) {
+            callbackConfirmar();
+        }
+    };
+    
+    // Fechar ao clicar no overlay (fora do alert)
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            fecharAlert();
+        }
+    };
+    
+    // Fechar com ESC
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            fecharAlert();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
+
+/**
  * Mostra notificação (aceita HTML)
  */
 function mostrarNotificacao(mensagem, tipo = 'info', campoErro = null) {
@@ -1871,11 +2052,41 @@ function getStatusText(status) {
     return texts[status] || status;
 }
 
+/**
+ * Mostra/esconde o campo de motivo do bloqueio baseado no status selecionado
+ */
+function toggleMotivoBloqueio() {
+    const statusSelect = document.getElementById('status');
+    const motivoRow = document.getElementById('row-motivo-bloqueio');
+    const motivoInput = document.getElementById('motivo_bloqueio');
+    
+    if (statusSelect && motivoRow) {
+        if (statusSelect.value === 'bloqueado') {
+            motivoRow.style.display = 'flex';
+            if (motivoInput) {
+                motivoInput.required = true;
+            }
+        } else {
+            motivoRow.style.display = 'none';
+            if (motivoInput) {
+                motivoInput.required = false;
+                // Limpar o campo quando não for bloqueado
+                if (motivoInput.value) {
+                    motivoInput.value = '';
+                }
+            }
+        }
+    }
+}
+
 // Exportar funções para o escopo global
 window.abrirModalMembro = abrirModalMembro;
 window.abrirModal = abrirModal;
+window.abrirModalConfirmacao = abrirModalConfirmacao;
+window.mostrarAlertConfirmacao = mostrarAlertConfirmacao;
 window.fecharModal = fecharModal;
 window.salvarMembro = salvarMembro;
 window.criarMembro = criarMembro;
 window.toggleSecaoPastoral = toggleSecaoPastoral;
+window.toggleMotivoBloqueio = toggleMotivoBloqueio;
 

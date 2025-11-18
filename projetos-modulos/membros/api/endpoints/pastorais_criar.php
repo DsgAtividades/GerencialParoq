@@ -8,6 +8,17 @@
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../utils/Response.php';
 require_once __DIR__ . '/../utils/Cache.php';
+require_once __DIR__ . '/../utils/Validation.php';
+require_once __DIR__ . '/../utils/Permissions.php';
+require_once __DIR__ . '/escalas_helpers.php';
+
+// Iniciar sessão se não estiver iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Verificar permissão de administrador para criar pastorais
+Permissions::requireAdmin('criar pastorais');
 
 ob_start(); // Iniciar buffer de output
 try {
@@ -35,16 +46,31 @@ try {
         Response::error('Tipo inválido. Tipos permitidos: ' . implode(', ', $tiposPermitidos), 400);
     }
     
+    // Validar email do grupo se fornecido
+    if (isset($input['email_grupo']) && !empty($input['email_grupo'])) {
+        $validation = new Validation();
+        if (!$validation->isValidEmail($input['email_grupo'])) {
+            Response::error('Email do grupo inválido. Por favor, informe um endereço de email válido.', 400);
+        }
+    }
+    
+    // Validar link do WhatsApp se fornecido
+    if (isset($input['whatsapp_grupo_link']) && !empty($input['whatsapp_grupo_link'])) {
+        // Validar formato de URL
+        if (!filter_var($input['whatsapp_grupo_link'], FILTER_VALIDATE_URL)) {
+            Response::error('Link do WhatsApp inválido. Por favor, informe uma URL válida (ex: https://chat.whatsapp.com/...).', 400);
+        }
+        // Validar se é um link do WhatsApp
+        if (strpos($input['whatsapp_grupo_link'], 'whatsapp.com') === false && 
+            strpos($input['whatsapp_grupo_link'], 'wa.me') === false) {
+            Response::error('Link do WhatsApp inválido. O link deve ser do WhatsApp (whatsapp.com ou wa.me).', 400);
+        }
+    }
+    
     $db = new MembrosDatabase();
     
-    // Gerar UUID para o ID
-    $pastoral_id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-        mt_rand(0, 0xffff),
-        mt_rand(0, 0x0fff) | 0x4000,
-        mt_rand(0, 0x3fff) | 0x8000,
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-    );
+    // Gerar UUID para o ID (usando função RFC 4122)
+    $pastoral_id = uuid_v4();
     
     // Campos permitidos para criação
     $campos = ['id', 'nome', 'tipo'];

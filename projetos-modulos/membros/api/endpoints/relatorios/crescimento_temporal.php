@@ -21,12 +21,13 @@ try {
     
     $query = "
         SELECT 
-            DATE_FORMAT(created_at, '%Y-%m') as mes,
-            DATE_FORMAT(created_at, '%b/%Y') as mes_formatado,
+            DATE_FORMAT(data_entrada, '%Y-%m') as mes,
+            DATE_FORMAT(data_entrada, '%b/%Y') as mes_formatado,
             COUNT(*) as total
         FROM membros_membros
         WHERE status != 'bloqueado'
-            AND created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+            AND data_entrada IS NOT NULL
+            AND data_entrada >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
         GROUP BY mes
         ORDER BY mes ASC
     ";
@@ -35,12 +36,30 @@ try {
     $stmt->execute();
     $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // Criar array associativo para facilitar busca
+    $dadosPorMes = [];
+    foreach ($resultados as $row) {
+        $dadosPorMes[$row['mes']] = (int)$row['total'];
+    }
+    
+    // Gerar todos os meses dos últimos 12 meses (meses completos)
     $labels = [];
     $data = [];
+    $mesesFormatados = [
+        '01' => 'Jan', '02' => 'Fev', '03' => 'Mar', '04' => 'Abr',
+        '05' => 'Mai', '06' => 'Jun', '07' => 'Jul', '08' => 'Ago',
+        '09' => 'Set', '10' => 'Out', '11' => 'Nov', '12' => 'Dez'
+    ];
     
-    foreach ($resultados as $row) {
-        $labels[] = $row['mes_formatado'];
-        $data[] = (int)$row['total'];
+    // Gerar últimos 12 meses
+    for ($i = 11; $i >= 0; $i--) {
+        $dataMes = date('Y-m', strtotime("-$i months"));
+        $ano = substr($dataMes, 0, 4);
+        $mes = substr($dataMes, 5, 2);
+        $mesFormatado = $mesesFormatados[$mes] . '/' . $ano;
+        
+        $labels[] = $mesFormatado;
+        $data[] = isset($dadosPorMes[$dataMes]) ? $dadosPorMes[$dataMes] : 0;
     }
     
     ob_end_clean();

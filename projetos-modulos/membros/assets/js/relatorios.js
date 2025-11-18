@@ -209,6 +209,11 @@ async function carregarMembrosPorFaixaEtaria() {
 async function carregarCrescimentoTemporal() {
     try {
         const response = await fetch(`${getApiBaseUrl()}relatorios/crescimento-temporal`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
         
         if (result.success && result.data) {
@@ -218,6 +223,19 @@ async function carregarCrescimentoTemporal() {
             if (ctx) {
                 if (charts.crescimento) {
                     charts.crescimento.destroy();
+                }
+                
+                // Garantir que há dados válidos
+                if (!data.labels || data.labels.length === 0) {
+                    data.labels = [];
+                    data.datasets = [{
+                        label: 'Novos Membros',
+                        data: [],
+                        borderColor: '#36A2EB',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }];
                 }
                 
                 charts.crescimento = new Chart(ctx, {
@@ -232,22 +250,33 @@ async function carregarCrescimentoTemporal() {
                         plugins: {
                             legend: {
                                 display: false
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
                             }
                         },
                         scales: {
                             y: {
                                 beginAtZero: true,
                                 ticks: {
-                                    stepSize: 1
+                                    stepSize: 1,
+                                    precision: 0
                                 }
                             }
                         }
                     }
                 });
             }
+        } else {
+            console.error('Erro na resposta do crescimento temporal:', result);
         }
     } catch (error) {
         console.error('Erro ao carregar crescimento temporal:', error);
+        const ctx = document.getElementById('chart-crescimento');
+        if (ctx && ctx.parentElement) {
+            ctx.parentElement.innerHTML = '<div class="text-center text-muted p-3">Erro ao carregar gráfico</div>';
+        }
     }
 }
 
@@ -372,8 +401,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                     if (relatoriosSection.classList.contains('active')) {
                         // Verificar se os gráficos já foram carregados
-                        const firstChart = document.getElementById('chart-membros-pastoral');
-                        if (firstChart && !charts.membrosPastoral) {
+                        const firstChart = document.getElementById('chart-crescimento');
+                        if (firstChart && !charts.crescimento) {
                             console.log('Carregando relatórios pela primeira vez...');
                             carregarRelatorios();
                         }
@@ -394,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function() {
             setTimeout(() => {
                 if (relatoriosSection && relatoriosSection.classList.contains('active')) {
-                    if (!charts.membrosPastoral) {
+                    if (!charts.crescimento) {
                         console.log('Carregando relatórios ao clicar no link...');
                         carregarRelatorios();
                     }

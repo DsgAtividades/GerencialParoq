@@ -29,8 +29,19 @@ try {
             COUNT(*) as total
         FROM membros_membros
         WHERE status != 'bloqueado'
-        GROUP BY sexo
-        ORDER BY total DESC
+            AND status IS NOT NULL
+        GROUP BY 
+            CASE 
+                WHEN sexo = 'M' THEN 'Masculino'
+                WHEN sexo = 'F' THEN 'Feminino'
+                ELSE 'Não informado'
+            END
+        ORDER BY 
+            CASE 
+                WHEN sexo = 'M' THEN 1
+                WHEN sexo = 'F' THEN 2
+                ELSE 3
+            END
     ";
     
     $stmt = $db->prepare($query);

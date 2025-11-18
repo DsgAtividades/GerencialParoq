@@ -38,16 +38,23 @@ async function carregarPastoraisTabela() {
                             <button class="btn btn-sm btn-primary" onclick="window.location.href='pastoral_detalhes.php?id=${pastoral.id}'" title="Ver Detalhes">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-secondary" onclick="editarPastoral('${pastoral.id}')" title="Editar">
+                            <button class="btn btn-sm btn-secondary btn-editar-pastoral" onclick="editarPastoral('${pastoral.id}')" title="Editar">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-sm btn-danger" onclick="excluirPastoral('${pastoral.id}')" title="Excluir">
+                            <button class="btn btn-sm btn-danger btn-excluir-pastoral" onclick="excluirPastoral('${pastoral.id}')" title="Excluir">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </td>
                 </tr>
             `).join('');
+            
+            // Reaplicar controles de permissão após atualizar tabela
+            if (window.PermissionsManager && window.PermissionsManager.applyPermissionControls) {
+                setTimeout(() => {
+                    window.PermissionsManager.applyPermissionControls();
+                }, 100);
+            }
         }
     } catch (error) {
         console.error('Erro ao carregar pastorais:', error);
@@ -58,6 +65,11 @@ async function carregarPastoraisTabela() {
  * Editar pastoral
  */
 function editarPastoral(id) {
+    // Verificar permissão antes de editar
+    if (window.PermissionsManager && !window.PermissionsManager.requirePermission('atualizar pastorais', null)) {
+        return;
+    }
+    
     // TODO: Implementar edição de pastoral
     console.log('Editar pastoral:', id);
 }
@@ -66,6 +78,11 @@ function editarPastoral(id) {
  * Excluir pastoral
  */
 function excluirPastoral(id) {
+    // Verificar permissão antes de excluir
+    if (window.PermissionsManager && !window.PermissionsManager.requirePermission('excluir pastorais', null)) {
+        return;
+    }
+    
     // TODO: Implementar exclusão de pastoral
     console.log('Excluir pastoral:', id);
 }

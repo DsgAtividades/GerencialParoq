@@ -24,9 +24,16 @@ try {
             status,
             COUNT(*) as total
         FROM membros_membros
-        WHERE status != 'bloqueado'
+        WHERE status IS NOT NULL
+            AND status != 'bloqueado'
         GROUP BY status
-        ORDER BY total DESC
+        ORDER BY 
+            CASE status
+                WHEN 'ativo' THEN 1
+                WHEN 'afastado' THEN 2
+                WHEN 'em_discernimento' THEN 3
+                ELSE 4
+            END
     ";
     
     $stmt = $db->prepare($query);

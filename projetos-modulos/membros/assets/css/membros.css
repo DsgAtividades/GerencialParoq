@@ -316,6 +316,16 @@
     width: 100% !important;
 }
 
+/* Gráfico compacto para alinhar com coordenadores */
+.chart-card-compact {
+    padding: 1rem !important;
+}
+
+.chart-card-compact canvas {
+    max-height: 180px !important;
+    height: 180px !important;
+}
+
 .alerts-card {
     background: white;
     padding: 1.5rem;

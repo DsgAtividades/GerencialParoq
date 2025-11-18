@@ -1,6 +1,38 @@
 <?php
+// Desabilitar exibição de erros na tela
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
+// Limpar qualquer output anterior e iniciar buffer
+while (ob_get_level() > 0) {
+    ob_end_clean();
+}
+ob_start();
+
+// Verificar se há output antes de incluir arquivos
+$output_before = ob_get_contents();
+if (!empty(trim($output_before))) {
+    error_log("Output ANTES de session_start: " . substr($output_before, 0, 200));
+    ob_clean();
+}
+
 session_start();
+
+// Verificar se há output após session_start
+$output_after_session = ob_get_contents();
+if (!empty(trim($output_after_session))) {
+    error_log("Output APÓS session_start: " . substr($output_after_session, 0, 200));
+    ob_clean();
+}
+
 require_once 'config/database.php';
+
+// Verificar se há output após require_once
+$output_after_require = ob_get_contents();
+if (!empty(trim($output_after_require))) {
+    error_log("Output APÓS require_once database.php: " . substr($output_after_require, 0, 200));
+    ob_clean();
+}
 
 // Verificar se o usuário está logado no módulo específico
 if (!isset($_SESSION['module_logged_in']) || $_SESSION['module_logged_in'] !== true) {
@@ -32,6 +64,27 @@ if (!$pastoral_id) {
 
 $module_name = 'Detalhes da Pastoral';
 $module_description = 'Informações completas da pastoral';
+
+// Garantir que não há output antes do HTML
+if (ob_get_level() > 0) {
+    $output = ob_get_contents();
+    if (!empty(trim($output))) {
+        error_log("Output detectado antes do HTML: " . substr($output, 0, 100));
+    }
+    ob_clean();
+}
+
+// Garantir que não há espaços ou quebras de linha antes do DOCTYPE
+// Limpar qualquer output residual
+if (ob_get_level() > 0) {
+    ob_clean();
+}
+
+// Garantir que não há BOM (Byte Order Mark) ou espaços antes do HTML
+// Enviar headers primeiro
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=UTF-8');
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -49,7 +102,7 @@ $module_description = 'Informações completas da pastoral';
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer onerror="console.error('Erro ao carregar Chart.js')"></script>
 </head>
 <body>
     <div class="module-container">
@@ -121,9 +174,19 @@ $module_description = 'Informações completas da pastoral';
                     <div class="info-grid" id="info-pastoral">
                         <!-- Informações serão preenchidas via JS -->
                     </div>
-                    <h3>Coordenadores</h3>
-                    <div class="coordinators-list" id="coordenadores">
-                        <!-- Coordenadores serão preenchidos via JS -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                        <div>
+                            <h3>Coordenadores</h3>
+                            <div class="coordinators-list" id="coordenadores">
+                                <!-- Coordenadores serão preenchidos via JS -->
+                            </div>
+                        </div>
+                        <div>
+                            <h3>Distribuição por Idade</h3>
+                            <div class="chart-card chart-card-compact" style="position: relative; height: auto; min-height: 200px;">
+                                <canvas id="chart-faixa-etaria-pastoral"></canvas>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -378,24 +441,100 @@ $module_description = 'Informações completas da pastoral';
 
     <!-- Scripts -->
     <!-- Utilitários devem ser carregados primeiro -->
-    <script src="assets/js/sanitizer.js"></script>
-    <script src="assets/js/validator.js"></script>
-    <script src="assets/js/api.js"></script>
-    <script src="assets/js/modals.js"></script>
-    <script src="assets/js/pastoral_detalhes.js"></script>
-    <script src="assets/js/escalas.js"></script>
+    <script src="assets/js/sanitizer.js" type="text/javascript"></script>
+    <script src="assets/js/validator.js" type="text/javascript"></script>
+    <script src="assets/js/api.js" type="text/javascript"></script>
+    <script src="assets/js/permissions.js?v=<?php echo time(); ?>" type="text/javascript"></script>
+    <script src="assets/js/modals.js" type="text/javascript"></script>
+    <script src="assets/js/pastoral_detalhes.js" type="text/javascript"></script>
+    <script src="assets/js/escalas.js" type="text/javascript"></script>
     <script>
+        // Tratamento global de erros para identificar problemas de parse
+        window.addEventListener('error', function(e) {
+            if (e.message && e.message.includes('Unexpected end of input')) {
+                console.error('=== ERRO DE PARSE DETECTADO ===');
+                console.error('Mensagem:', e.message);
+                console.error('Arquivo:', e.filename);
+                console.error('Linha:', e.lineno);
+                console.error('Coluna:', e.colno);
+                console.error('Stack:', e.error ? e.error.stack : 'N/A');
+            }
+        });
+        
         // Inicializar página
-        const pastoralId = '<?php echo $pastoral_id; ?>';
+        <?php
+        // Garantir que o ID da pastoral está definido e é válido
+        if (isset($pastoral_id) && !empty($pastoral_id)) {
+            $pastoral_id_js = json_encode($pastoral_id, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+            if ($pastoral_id_js === false) {
+                error_log("Erro ao codificar pastoral_id: " . json_last_error_msg());
+                $pastoral_id_js = 'null';
+            }
+        } else {
+            $pastoral_id_js = 'null';
+        }
+        ?>
+        const pastoralId = <?php echo $pastoral_id_js; ?>;
         // Disponibilizar no escopo global para outros scripts
         window.pastoralId = pastoralId;
-        window.addEventListener('DOMContentLoaded', () => {
-            carregarDadosPastoral(pastoralId);
-            // carregar semana de escalas de imediato
-            escalasCarregarSemana(pastoralId);
+        window.addEventListener('DOMContentLoaded', function() {
+            if (pastoralId) {
+                if (typeof carregarDadosPastoral === 'function') {
+                    carregarDadosPastoral(pastoralId);
+                }
+                // carregar semana de escalas de imediato
+                if (typeof escalasCarregarSemana === 'function') {
+                    escalasCarregarSemana(pastoralId);
+                }
+            } else {
+                console.error('ID da pastoral não encontrado');
+            }
+            
+            // Aguardar inicialização do PermissionsManager e reatualizar tabela
+            window.addEventListener('permissionsInitialized', function() {
+                console.log('[Pastoral Detalhes] Permissões inicializadas, reatualizando tabelas');
+                if (typeof atualizarTabelaMembros === 'function') {
+                    atualizarTabelaMembros();
+                }
+                if (typeof atualizarTabelaEventos === 'function') {
+                    atualizarTabelaEventos();
+                }
+            });
+            
+            // Fallback: reatualizar após 2 segundos se permissões ainda não foram inicializadas
+            setTimeout(function() {
+                if (window.PermissionsManager && window.PermissionsManager.initialized) {
+                    if (typeof atualizarTabelaMembros === 'function') {
+                        atualizarTabelaMembros();
+                    }
+                    if (typeof atualizarTabelaEventos === 'function') {
+                        atualizarTabelaEventos();
+                    }
+                }
+            }, 2000);
         });
     </script>
 </body>
 </html>
-
-
+<?php
+// Finalizar output buffering e garantir que não há output após o HTML
+if (ob_get_level() > 0) {
+    $finalOutput = ob_get_contents();
+    ob_end_clean();
+    
+    // Verificar se há conteúdo após </html>
+    $afterHtml = substr($finalOutput, strrpos($finalOutput, '</html>') + 7);
+    if (!empty(trim($afterHtml))) {
+        error_log("Conteúdo após </html>: " . substr($afterHtml, 0, 200));
+        // Remover qualquer conteúdo após </html>
+        $finalOutput = substr($finalOutput, 0, strrpos($finalOutput, '</html>') + 7);
+    }
+    
+    // Enviar apenas o conteúdo HTML, sem nada após
+    echo $finalOutput;
+    // Garantir que não há output após
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+}
+exit;
