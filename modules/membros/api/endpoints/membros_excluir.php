@@ -13,8 +13,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar permissão de administrador para excluir membros
-Permissions::requireAdmin('excluir membros');
+// Verificar permissão específica para excluir membros
+if (!Permissions::canDeleteMembros()) {
+    Permissions::denyAccess('excluir membros');
+}
 
 try {
     $db = new MembrosDatabase();

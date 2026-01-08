@@ -8,7 +8,7 @@
 
 // Ambiente de desenvolvimento
 // Opções: 'local' ou 'production'
-define('MEMBROS_ENVIRONMENT', 'local');
+define('MEMBROS_ENVIRONMENT', 'Remote');
 
 // Configurações para ambiente LOCAL
 define('MEMBROS_DB_HOST_LOCAL', 'localhost');

@@ -7,7 +7,14 @@
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../utils/Response.php';
+require_once __DIR__ . '/../utils/Permissions.php';
 require_once __DIR__ . '/escalas_helpers.php';
+
+// Verificar permissão específica para gerenciar escalas de pastorais
+// Tanto Madmin quanto 'membros' podem gerenciar escalas de pastorais
+if (!Permissions::canManagePastoralEscalas()) {
+    Permissions::denyAccess('criar eventos de escalas');
+}
 
 try {
     global $pastoral_id;

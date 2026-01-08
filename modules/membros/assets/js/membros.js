@@ -236,9 +236,6 @@ function carregarDadosSecao(sectionId) {
         case 'relatorios':
             // Relatórios são carregados sob demanda
             break;
-        case 'configuracoes':
-            // Configurações são carregadas sob demanda
-            break;
     }
 }
 

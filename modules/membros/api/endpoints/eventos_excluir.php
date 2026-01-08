@@ -6,6 +6,13 @@
  */
 
 require_once '../config/database.php';
+require_once 'utils/Permissions.php';
+
+// Verificar permissão específica para excluir eventos gerais (aba Eventos)
+// Apenas Madmin pode excluir eventos gerais
+if (!Permissions::canDeleteEventos()) {
+    Permissions::denyAccess('excluir eventos');
+}
 
 try {
     // A variável $evento_id é definida pelo routes.php via regex

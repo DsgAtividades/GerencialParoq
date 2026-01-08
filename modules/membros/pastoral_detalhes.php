@@ -205,7 +205,7 @@ if (!headers_sent()) {
                 <button class="tab" onclick="mostrarAba('escalas')">
                     <i class="fas fa-clipboard-list"></i> Escalas
                 </button>
-                <button class="tab" onclick="mostrarAba('editar')">
+                <button class="tab btn-editar-pastoral-tab" onclick="mostrarAba('editar')">
                     <i class="fas fa-edit"></i> Editar Pastoral
                 </button>
             </div>

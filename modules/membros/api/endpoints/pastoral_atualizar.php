@@ -13,8 +13,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar permissão de administrador para atualizar pastorais
-Permissions::requireAdmin('atualizar pastorais');
+// Verificar permissão específica para editar pastorais
+if (!Permissions::canEditPastorais()) {
+    Permissions::denyAccess('editar pastorais');
+}
 
 try {
     // A variável $pastoral_id é definida pelo routes.php

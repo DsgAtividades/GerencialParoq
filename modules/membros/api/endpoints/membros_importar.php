@@ -19,8 +19,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar permissão de administrador para importar membros
-Permissions::requireAdmin('importar membros');
+// Verificar permissão específica para importar membros
+if (!Permissions::canImportMembros()) {
+    Permissions::denyAccess('importar membros');
+}
 
 // Verificar se é POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

@@ -14,12 +14,10 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../utils/Permissions.php';
 require_once __DIR__ . '/../utils/Response.php';
 
-// Verificar permissão de administrador
-try {
-    Permissions::requireAdmin('remover membros de pastorais');
-} catch (Exception $e) {
-    error_log("Erro de permissão em remover_membro: " . $e->getMessage());
-    Response::error('Erro de permissão: ' . $e->getMessage(), 403);
+// Verificar permissão específica para gerenciar membros de pastorais
+// Tanto Madmin quanto 'membros' podem remover membros de pastorais
+if (!Permissions::canManagePastoralMembros()) {
+    Permissions::denyAccess('remover membros de pastorais');
 }
 
 try {

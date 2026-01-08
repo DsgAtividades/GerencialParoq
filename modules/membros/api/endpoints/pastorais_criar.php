@@ -17,8 +17,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar permissão de administrador para criar pastorais
-Permissions::requireAdmin('criar pastorais');
+// Verificar permissão específica para criar pastorais
+if (!Permissions::canCreatePastorais()) {
+    Permissions::denyAccess('criar pastorais');
+}
 
 ob_start(); // Iniciar buffer de output
 try {

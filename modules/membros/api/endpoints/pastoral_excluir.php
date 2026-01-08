@@ -13,8 +13,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar permissão de administrador para excluir pastorais
-Permissions::requireAdmin('excluir pastorais');
+// Verificar permissão específica para excluir pastorais
+if (!Permissions::canDeletePastorais()) {
+    Permissions::denyAccess('excluir pastorais');
+}
 
 try {
     // A variável $pastoral_id é definida pelo routes.php

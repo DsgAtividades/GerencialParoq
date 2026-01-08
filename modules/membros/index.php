@@ -84,11 +84,6 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                         <i class="fas fa-chart-bar"></i> Relatórios
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="#configuracoes" class="nav-link" data-section="configuracoes">
-                        <i class="fas fa-cog"></i> Configurações
-                    </a>
-                </li>
             </ul>
         </nav>
 
@@ -416,36 +411,6 @@ $module_description = 'Sistema completo de gestão de membros paroquiais';
                 </div>
             </section>
 
-            <!-- Configurações -->
-            <section id="configuracoes" class="content-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-cog"></i> Configurações</h2>
-                </div>
-
-                <div class="settings-grid">
-                    <div class="settings-card">
-                        <h3><i class="fas fa-user-tag"></i> Funções</h3>
-                        <p>Gerenciar funções e cargos</p>
-                        <button class="btn btn-primary" onclick="abrirModalFuncoes()">
-                            Gerenciar
-                        </button>
-                    </div>
-                    <div class="settings-card">
-                        <h3><i class="fas fa-graduation-cap"></i> Formações</h3>
-                        <p>Gerenciar cursos e certificações</p>
-                        <button class="btn btn-primary" onclick="abrirModalFormacoes()">
-                            Gerenciar
-                        </button>
-                    </div>
-                    <div class="settings-card">
-                        <h3><i class="fas fa-shield-alt"></i> LGPD</h3>
-                        <p>Configurações de privacidade</p>
-                        <button class="btn btn-primary" onclick="abrirModalLGPD()">
-                            Configurar
-                        </button>
-                    </div>
-                </div>
-            </section>
         </main>
     </div>
 

@@ -6,6 +6,13 @@
  */
 
 require_once '../config/database.php';
+require_once 'utils/Permissions.php';
+
+// Verificar permissão específica para gerenciar escalas de pastorais
+// Tanto Madmin quanto 'membros' podem gerenciar escalas de pastorais
+if (!Permissions::canManagePastoralEscalas()) {
+    Permissions::denyAccess('excluir eventos de escalas');
+}
 
 try {
     global $evento_id;

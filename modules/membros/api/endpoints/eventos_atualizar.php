@@ -6,6 +6,13 @@
  */
 
 require_once '../config/database.php';
+require_once 'utils/Permissions.php';
+
+// Verificar permissão específica para editar eventos gerais (aba Eventos)
+// Apenas Madmin pode editar eventos gerais
+if (!Permissions::canEditEventos()) {
+    Permissions::denyAccess('editar eventos');
+}
 
 try {
     // A variável $evento_id é definida pelo routes.php via regex

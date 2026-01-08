@@ -6,6 +6,13 @@
  */
 
 require_once '../config/database.php';
+require_once 'utils/Permissions.php';
+
+// Verificar permissão específica para criar eventos gerais (aba Eventos)
+// Apenas Madmin pode criar eventos gerais
+if (!Permissions::canCreateEventos()) {
+    Permissions::denyAccess('criar eventos');
+}
 
 try {
     $db = new MembrosDatabase();

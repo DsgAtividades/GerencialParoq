@@ -6,6 +6,13 @@
  */
 
 require_once '../config/database.php';
+require_once 'utils/Permissions.php';
+
+// Verificar permissão específica para gerenciar eventos de pastorais
+// Tanto Madmin quanto 'membros' podem gerenciar eventos de pastorais
+if (!Permissions::canManagePastoralEventos()) {
+    Permissions::denyAccess('excluir eventos de pastorais');
+}
 
 try {
     global $pastoral_id, $evento_id;

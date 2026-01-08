@@ -15,8 +15,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar permissão de administrador para criar membros
-Permissions::requireAdmin('criar membros');
+// Verificar permissão específica para criar membros
+if (!Permissions::canCreateMembros()) {
+    Permissions::denyAccess('criar membros');
+}
 
 try {
     $db = new MembrosDatabase();

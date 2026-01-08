@@ -41,9 +41,9 @@ try {
             m.apelido,
             m.email,
             COALESCE(m.celular_whatsapp, m.telefone_fixo) as telefone,
+            m.cpf,
             m.status,
             m.paroquiano,
-            m.comunidade_ou_capelania,
             m.data_entrada,
             m.data_nascimento,
             m.sexo,
@@ -157,11 +157,11 @@ function exportarXLSXPhpSpreadsheet($membros) {
         'Apelido',
         'Email',
         'Telefone',
+        'CPF',
         'Data de Nascimento',
         'Sexo',
         'Status',
         'Paroquiano',
-        'Comunidade/Capelania',
         'Data de Entrada',
         'Pastorais'
     ];
@@ -189,11 +189,11 @@ function exportarXLSXPhpSpreadsheet($membros) {
         $sheet->setCellValue('B' . $row, $membro['apelido'] ?? '');
         $sheet->setCellValue('C' . $row, $membro['email'] ?? '');
         $sheet->setCellValue('D' . $row, $membro['telefone'] ?? '');
-        $sheet->setCellValue('E' . $row, $membro['data_nascimento'] ?? '');
-        $sheet->setCellValue('F' . $row, $membro['sexo'] ?? '');
-        $sheet->setCellValue('G' . $row, traduzirStatus($membro['status'] ?? ''));
-        $sheet->setCellValue('H' . $row, $membro['paroquiano'] ? 'Sim' : 'Não');
-        $sheet->setCellValue('I' . $row, $membro['comunidade_ou_capelania'] ?? '');
+        $sheet->setCellValue('E' . $row, $membro['cpf'] ?? '');
+        $sheet->setCellValue('F' . $row, $membro['data_nascimento'] ?? '');
+        $sheet->setCellValue('G' . $row, $membro['sexo'] ?? '');
+        $sheet->setCellValue('H' . $row, traduzirStatus($membro['status'] ?? ''));
+        $sheet->setCellValue('I' . $row, $membro['paroquiano'] ? 'Sim' : 'Não');
         $sheet->setCellValue('J' . $row, $membro['data_entrada'] ?? '');
         $sheet->setCellValue('K' . $row, $membro['pastorais'] ?? '');
         $row++;
@@ -204,11 +204,11 @@ function exportarXLSXPhpSpreadsheet($membros) {
     $sheet->getColumnDimension('B')->setWidth(20);
     $sheet->getColumnDimension('C')->setWidth(30);
     $sheet->getColumnDimension('D')->setWidth(20);
-    $sheet->getColumnDimension('E')->setWidth(18);
-    $sheet->getColumnDimension('F')->setWidth(10);
-    $sheet->getColumnDimension('G')->setWidth(15);
-    $sheet->getColumnDimension('H')->setWidth(12);
-    $sheet->getColumnDimension('I')->setWidth(25);
+    $sheet->getColumnDimension('E')->setWidth(15);
+    $sheet->getColumnDimension('F')->setWidth(18);
+    $sheet->getColumnDimension('G')->setWidth(10);
+    $sheet->getColumnDimension('H')->setWidth(15);
+    $sheet->getColumnDimension('I')->setWidth(12);
     $sheet->getColumnDimension('J')->setWidth(18);
     $sheet->getColumnDimension('K')->setWidth(30);
     
@@ -258,11 +258,11 @@ function exportarCSVExcel($membros, $busca = '', $status = '', $pastoral = '') {
         'Apelido',
         'Email',
         'Telefone',
+        'CPF',
         'Data de Nascimento',
         'Sexo',
         'Status',
         'Paroquiano',
-        'Comunidade/Capelania',
         'Data de Entrada',
         'Pastorais'
     ];
@@ -276,11 +276,11 @@ function exportarCSVExcel($membros, $busca = '', $status = '', $pastoral = '') {
             $membro['apelido'] ?? '',
             $membro['email'] ?? '',
             $membro['telefone'] ?? '',
+            $membro['cpf'] ?? '',
             $membro['data_nascimento'] ?? '',
             $membro['sexo'] ?? '',
             traduzirStatus($membro['status'] ?? ''),
             $membro['paroquiano'] ? 'Sim' : 'Não',
-            $membro['comunidade_ou_capelania'] ?? '',
             $membro['data_entrada'] ?? '',
             $membro['pastorais'] ?? ''
         ];
@@ -318,11 +318,11 @@ function exportarCSV($membros, $busca = '', $status = '', $pastoral = '') {
         'Apelido',
         'Email',
         'Telefone',
+        'CPF',
         'Data de Nascimento',
         'Sexo',
         'Status',
         'Paroquiano',
-        'Comunidade/Capelania',
         'Data de Entrada',
         'Pastorais'
     ];
@@ -335,11 +335,11 @@ function exportarCSV($membros, $busca = '', $status = '', $pastoral = '') {
             $membro['apelido'] ?? '',
             $membro['email'] ?? '',
             $membro['telefone'] ?? '',
+            $membro['cpf'] ?? '',
             $membro['data_nascimento'] ?? '',
             $membro['sexo'] ?? '',
             traduzirStatus($membro['status'] ?? ''),
             $membro['paroquiano'] ? 'Sim' : 'Não',
-            $membro['comunidade_ou_capelania'] ?? '',
             $membro['data_entrada'] ?? '',
             $membro['pastorais'] ?? ''
         ];

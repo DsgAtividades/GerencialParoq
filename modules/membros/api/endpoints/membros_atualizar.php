@@ -14,8 +14,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Verificar permissão de administrador para atualizar membros
-Permissions::requireAdmin('atualizar membros');
+// Verificar permissão específica para editar membros
+if (!Permissions::canEditMembros()) {
+    Permissions::denyAccess('editar membros');
+}
 
 try {
     $db = new MembrosDatabase();
