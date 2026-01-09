@@ -38,9 +38,9 @@ try {
 
     // Buscar participante pelo código do cartão ou CPF
     $query = "SELECT p.*, COALESCE(s.saldo, 0.00) as saldo, c.codigo as cartao_codigo
-              FROM pessoas p 
-              LEFT JOIN cartoes c ON p.id_pessoa = c.id_pessoa
-              LEFT JOIN saldos_cartao s ON p.id_pessoa = s.id_pessoa 
+              FROM cafe_pessoas p 
+              LEFT JOIN cafe_cartoes c ON p.id_pessoa = c.id_pessoa
+              LEFT JOIN cafe_saldos_cartao s ON p.id_pessoa = s.id_pessoa 
               WHERE 1=1
               AND p.cpf = '".$cpf."'
               OR c.codigo = '".$codigo."'";

@@ -1,8 +1,16 @@
 <?php
+/**
+ * Arquivo de conexão do módulo Cafe
+ * Usa o arquivo principal de conexão da raiz do projeto
+ */
+
+// Incluir o arquivo principal de conexão da raiz
+require_once __DIR__ . '/../../../config/database_connection.php';
+
+// Criar variável $pdo para compatibilidade com código existente
+// Usa a conexão centralizada do projeto principal
 try {
-    $pdo = new PDO("mysql:host=dbhomolog.mysql.dbaas.com.br;dbname=dbhomolog", "dbhomolog", "Dsg#1806");
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-} catch(PDOException $e) {
+    $pdo = DatabaseConnection::getInstance()->getConnection();
+} catch(Exception $e) {
     die("Erro na conexão: " . $e->getMessage());
 }

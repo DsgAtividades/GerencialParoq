@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (!empty($nome) && !empty($pagina)) {
                 try {
-                    $stmt = $pdo->prepare("INSERT INTO permissoes (nome, pagina) VALUES (?, ?)");
+                    $stmt = $pdo->prepare("INSERT INTO cafe_permissoes (nome, pagina) VALUES (?, ?)");
                     $stmt->execute([$nome, $pagina]);
                     exibirAlerta("Permissão criada com sucesso!");
                 } catch (PDOException $e) {
@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? '';
             if (!empty($id)) {
                 try {
-                    $stmt = $pdo->prepare("DELETE FROM permissoes WHERE id = ?");
+                    $stmt = $pdo->prepare("DELETE FROM cafe_permissoes WHERE id = ?");
                     $stmt->execute([$id]);
                     exibirAlerta("Permissão excluída com sucesso!");
                 } catch (PDOException $e) {
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (!empty($id) && !empty($nome) && !empty($pagina)) {
                 try {
-                    $stmt = $pdo->prepare("UPDATE permissoes SET nome = ?, pagina = ? WHERE id = ?");
+                    $stmt = $pdo->prepare("UPDATE cafe_permissoes SET nome = ?, pagina = ? WHERE id = ?");
                     $stmt->execute([$nome, $pagina, $id]);
                     exibirAlerta("Permissão atualizada com sucesso!");
                 } catch (PDOException $e) {
@@ -53,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Buscar todas as permissões com contagem de grupos
 $stmt = $pdo->query("
     SELECT p.*,
-           (SELECT COUNT(*) FROM grupos_permissoes gp WHERE gp.permissao_id = p.id) as total_grupos
-    FROM permissoes p
+           (SELECT COUNT(*) FROM cafe_grupos_permissoes gp WHERE gp.permissao_id = p.id) as total_grupos
+    FROM cafe_permissoes p
     ORDER BY p.nome
 ");
 $permissoes = $stmt->fetchAll();

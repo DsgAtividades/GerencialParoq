@@ -20,9 +20,9 @@ $stmt = $pdo->prepare("
         p.nome as cliente_nome,
         p.cpf as cliente_cpf,
         c.codigo as cartao_codigo
-    FROM vendas v
-    JOIN pessoas p ON v.id_pessoa = p.id_pessoa
-    LEFT JOIN cartoes c ON p.id_pessoa = c.id_pessoa
+    FROM cafe_vendas v
+    JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
+    LEFT JOIN cafe_cartoes c ON p.id_pessoa = c.id_pessoa
     WHERE v.id_venda = ?
 ");
 $stmt->execute([$id]);
@@ -38,8 +38,8 @@ $stmt = $pdo->prepare("
     SELECT 
         vi.*,
         p.nome_produto as produto_nome
-    FROM itens_venda vi
-    JOIN produtos p ON vi.id_produto = p.id
+    FROM cafe_itens_venda vi
+    JOIN cafe_produtos p ON vi.id_produto = p.id
     WHERE vi.id_venda = ?
     ORDER BY p.nome_produto
 ");

@@ -36,9 +36,9 @@ $sql = "
     SELECT pd.nome_produto, pd.preco, pd.estoque, 
            SUM(iv.quantidade) as quantidade_vendida,
            SUM(iv.quantidade * iv.valor_unitario) as valor_vendido
-    FROM itens_venda iv
-    INNER JOIN vendas ve ON ve.id_venda = iv.id_venda
-    INNER JOIN produtos pd ON pd.id = iv.id_produto
+    FROM cafe_itens_venda iv
+    INNER JOIN cafe_vendas ve ON ve.id_venda = iv.id_venda
+    INNER JOIN cafe_produtos pd ON pd.id = iv.id_produto
     $where_sql
     GROUP BY pd.id, pd.nome_produto, pd.preco, pd.estoque
     ORDER BY valor_vendido DESC, pd.nome_produto
@@ -60,9 +60,9 @@ $sqlVendidos = "
         pd.preco, 
         SUM(iv.quantidade) as quantidade_vendida, 
         SUM(iv.quantidade * iv.valor_unitario) as total_vendido
-    FROM itens_venda iv
-    INNER JOIN vendas ve ON ve.id_venda = iv.id_venda
-    INNER JOIN produtos pd ON pd.id = iv.id_produto
+    FROM cafe_itens_venda iv
+    INNER JOIN cafe_vendas ve ON ve.id_venda = iv.id_venda
+    INNER JOIN cafe_produtos pd ON pd.id = iv.id_produto
     WHERE (ve.estornada IS NULL OR ve.estornada = 0)
     GROUP BY pd.id, pd.nome_produto, pd.preco
     ORDER BY quantidade_vendida DESC, pd.nome_produto

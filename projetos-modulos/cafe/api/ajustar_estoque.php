@@ -35,7 +35,7 @@ try {
     $db = $database->getConnection();
     
     // Buscar produto
-    $stmt = $db->prepare("SELECT id, nome, estoque FROM produtos WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, nome, estoque FROM cafe_produtos WHERE id = ?");
     $stmt->execute([$produto_id]);
     $produto = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -64,12 +64,12 @@ try {
     
     try {
         // Atualizar estoque
-        $stmt = $db->prepare("UPDATE produtos SET estoque = ? WHERE id = ?");
+        $stmt = $db->prepare("UPDATE cafe_produtos SET estoque = ? WHERE id = ?");
         $stmt->execute([$novo_estoque, $produto_id]);
         
         // Registrar histórico
         $stmt = $db->prepare("
-            INSERT INTO historico_estoque 
+            INSERT INTO cafe_historico_estoque 
             (produto_id, tipo, quantidade, estoque_anterior, estoque_atual, motivo, data_movimento) 
             VALUES (?, ?, ?, ?, ?, ?, NOW())
         ");

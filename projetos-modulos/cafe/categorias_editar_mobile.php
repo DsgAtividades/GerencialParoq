@@ -12,8 +12,8 @@ $id = $_GET['id'];
 
 // Busca dados da categoria
 $sql = "SELECT c.*, COUNT(p.id) as total_produtos 
-        FROM categorias c 
-        LEFT JOIN produtos p ON c.id = p.categoria_id 
+FROM cafe_categorias c
+        LEFT JOIN cafe_produtos p ON c.id = p.categoria_id
         WHERE c.id = ? 
         GROUP BY c.id";
 $stmt = $conn->prepare($sql);

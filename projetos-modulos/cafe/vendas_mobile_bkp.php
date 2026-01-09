@@ -11,8 +11,8 @@ header('Content-Type: text/html; charset=utf-8');
 if($permissao_categoria != 'Administrador'){
     $stmt = $pdo->prepare("SELECT p.id, p.nome_produto, p.preco, p.estoque, p.bloqueado,
                            c.id as id_categoria, c.nome as nome_categoria, c.icone
-                    FROM produtos p
-                    LEFT JOIN categorias c ON p.categoria_id = c.id
+                    FROM cafe_produtos p
+                    LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
                     WHERE p.estoque > 0 AND p.bloqueado = 0 
                     AND c.nome in (?)
                     ORDER BY c.nome, p.nome_produto");
@@ -20,8 +20,8 @@ if($permissao_categoria != 'Administrador'){
 }else{
     $stmt = $pdo->prepare("SELECT p.id, p.nome_produto, p.preco, p.estoque, p.bloqueado,
                            c.id as id_categoria, c.nome as nome_categoria, c.icone
-                    FROM produtos p
-                    LEFT JOIN categorias c ON p.categoria_id = c.id
+                    FROM cafe_produtos p
+                    LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
                     WHERE p.estoque > 0 AND p.bloqueado = 0 
                     ORDER BY c.nome, p.nome_produto");
                     $stmt->execute();

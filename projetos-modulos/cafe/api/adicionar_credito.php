@@ -35,7 +35,7 @@ try {
     $db->beginTransaction();
 
     // Atualizar saldo
-    $query = "UPDATE saldos_cartao SET saldo = saldo + :valor WHERE id_pessoa = :id_pessoa";
+    $query = "UPDATE cafe_saldos_cartao SET saldo = saldo + :valor WHERE id_pessoa = :id_pessoa";
     $stmt = $db->prepare($query);
     $stmt->bindParam(':valor', $valor);
     $stmt->bindParam(':id_pessoa', $data['id_pessoa']);
@@ -45,7 +45,7 @@ try {
     }
 
     // Registrar histórico
-    $query = "INSERT INTO historico_saldo (id_pessoa, tipo, valor, data_hora) 
+    $query = "INSERT INTO cafe_historico_saldo (id_pessoa, tipo, valor, data_hora) 
               VALUES (:id_pessoa, 'credito', :valor, NOW())";
     $stmt = $db->prepare($query);
     $stmt->bindParam(':id_pessoa', $data['id_pessoa']);

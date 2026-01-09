@@ -11,8 +11,8 @@ $conn = getConnection();
 $id = $_GET['id'];
 
 // Busca dados da pessoa
-$sql = "SELECT p.*, c.codigo as cartao_codigo FROM pessoas p 
-        LEFT JOIN cartoes c ON p.cartao_id = c.id 
+$sql = "SELECT p.*, c.codigo as cartao_codigo FROM cafe_pessoas p
+        LEFT JOIN cafe_cartoes c ON p.cartao_id = c.id
         WHERE p.id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->execute([$id]);
@@ -24,7 +24,7 @@ if (!$pessoa) {
 }
 
 // Busca saldo atual
-$sql = "SELECT saldo FROM saldos_cartao WHERE pessoa_id = ?";
+$sql = "SELECT saldo FROM cafe_saldos_cartao WHERE pessoa_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->execute([$id]);
 $saldo = $stmt->fetch(PDO::FETCH_ASSOC);

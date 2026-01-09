@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Verificar se o cartão existe e está disponível
-        $stmt = $pdo->prepare("SELECT id FROM cartoes WHERE codigo = ? AND usado = 0");
+        $stmt = $pdo->prepare("SELECT id FROM cafe_cartoes WHERE codigo = ? AND usado = 0");
         $stmt->execute([$codigo_cartao]);
         $cartao = $stmt->fetch();
         
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Verificar se o CPF já está cadastrado
-        $stmt = $pdo->prepare("SELECT id_pessoa FROM pessoas WHERE cpf = ?");
+        $stmt = $pdo->prepare("SELECT id_pessoa FROM cafe_pessoas WHERE cpf = ?");
         $stmt->execute([$cpf]);
         $pessoa = $stmt->fetch();
         
@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Atualizar dados da pessoa
             $stmt = $pdo->prepare("
-                UPDATE pessoas 
+                UPDATE cafe_pessoas 
                 SET nome = ?, 
                     telefone = ?
                 WHERE id_pessoa = ?
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Inserir nova pessoa
             $stmt = $pdo->prepare("
-                INSERT INTO pessoas (nome, cpf, telefone) 
+                INSERT INTO cafe_pessoas (nome, cpf, telefone) 
                 VALUES (?, ?, ?)
             ");
             $stmt->execute([$nome, $cpf, $telefone]);
@@ -72,19 +72,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Marcar cartão como usado
-        $stmt = $pdo->prepare("UPDATE cartoes SET usado = 1, id_pessoa = ? WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE cafe_cartoes SET usado = 1, id_pessoa = ? WHERE id = ?");
         $stmt->execute([$pessoa_id, $cartao['id']]);
         
         // Criar registro de saldo inicial
         $stmt = $pdo->prepare("
-            INSERT INTO saldos_cartao (id_pessoa, saldo) 
+            INSERT INTO cafe_saldos_cartao (id_pessoa, saldo) 
             VALUES (?, ?)
             ON DUPLICATE KEY UPDATE saldo = saldo
         ");
         $stmt->execute([$pessoa_id,$fixo_cartao]);
 
         $stmt = $pdo->prepare("
-        INSERT INTO historico_saldo 
+        INSERT INTO cafe_historico_saldo 
         (id_pessoa, valor, tipo_operacao, saldo_anterior, saldo_novo, motivo, data_operacao)
         VALUES (?, ?, 'custo cartao', 0.00, ?, 'Custo Inicial Cartão', NOW())
         ");

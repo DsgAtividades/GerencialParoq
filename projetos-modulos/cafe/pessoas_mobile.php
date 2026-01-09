@@ -7,8 +7,8 @@ $conn = getConnection();
 
 // Busca todas as pessoas com seus cartões
 $sql = "SELECT p.*, c.codigo as cartao_codigo 
-        FROM pessoas p 
-        LEFT JOIN cartoes c ON p.cartao_id = c.id 
+FROM cafe_pessoas p
+        LEFT JOIN cafe_cartoes c ON p.cartao_id = c.id
         ORDER BY p.nome";
 $stmt = $conn->prepare($sql);
 $stmt->execute();

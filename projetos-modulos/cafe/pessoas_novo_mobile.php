@@ -5,7 +5,7 @@ require_once 'includes/header_mobile.php';
 $conn = getConnection();
 
 // Busca cartões disponíveis
-$sql = "SELECT id, codigo FROM cartoes WHERE usado = 0 ORDER BY codigo";
+$sql = "SELECT id, codigo FROM cafe_cartoes WHERE usado = 0 ORDER BY codigo";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $cartoes = $stmt->fetchAll(PDO::FETCH_ASSOC);

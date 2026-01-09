@@ -12,8 +12,8 @@ $id = $_GET['id'];
 
 // Busca dados do produto
 $sql = "SELECT p.*, c.nome as categoria_nome 
-        FROM produtos p 
-        LEFT JOIN categorias c ON p.categoria_id = c.id 
+FROM cafe_produtos p
+        LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
         WHERE p.id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->execute([$id]);
@@ -25,7 +25,7 @@ if (!$produto) {
 }
 
 // Busca categorias
-$sql = "SELECT id, nome FROM categorias ORDER BY nome";
+$sql = "SELECT id, nome FROM cafe_categorias ORDER BY nome";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);

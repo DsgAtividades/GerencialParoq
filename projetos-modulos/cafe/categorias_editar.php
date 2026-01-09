@@ -12,7 +12,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $id = (int)$_GET['id'];
 
 // Buscar dados da categoria
-$stmt = $db->prepare("SELECT * FROM categorias WHERE id = ?");
+$stmt = $db->prepare("SELECT * FROM cafe_categorias WHERE id = ?");
 $stmt->execute([$id]);
 $categoria = $stmt->fetch();
 
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $erro = "O nome da categoria é obrigatório.";
     } else {
         // Verificar se já existe outra categoria com este nome
-        $stmt = $db->prepare("SELECT COUNT(*) FROM categorias WHERE nome = ? AND id != ?");
+        $stmt = $db->prepare("SELECT COUNT(*) FROM cafe_categorias WHERE nome = ? AND id != ?");
         $stmt->execute([$nome, $id]);
         if ($stmt->fetchColumn() > 0) {
             $erro = "Já existe uma categoria com este nome.";
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (!$erro) {
         try {
-            $stmt = $db->prepare("UPDATE categorias SET nome = ?, icone = ?, ordem = ? WHERE id = ?");
+            $stmt = $db->prepare("UPDATE cafe_categorias SET nome = ?, icone = ?, ordem = ? WHERE id = ?");
             $stmt->execute([$nome, $icone, $ordem, $id]);
             
             header("Location: categorias.php");

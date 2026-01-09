@@ -32,7 +32,7 @@ try {
     $pdo->beginTransaction();
     
     // Verificar saldo do cliente
-    $stmt = $pdo->prepare("SELECT saldo FROM saldos_cartao WHERE id_pessoa = ?");
+    $stmt = $pdo->prepare("SELECT saldo FROM cafe_saldos_cartao WHERE id_pessoa = ?");
     $stmt->execute([$data['pessoa_id']]);
     $saldo = $stmt->fetchColumn();
     
@@ -48,7 +48,7 @@ try {
         }
         
         // Buscar preço atual do produto
-        $stmt = $pdo->prepare("SELECT preco, estoque FROM produtos WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT preco, estoque FROM cafe_produtos WHERE id = ?");
         $stmt->execute([$item['id_produto']]);
         $produto = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -75,7 +75,7 @@ try {
     
     // Registrar venda
     $stmt = $pdo->prepare("
-        INSERT INTO vendas (id_pessoa, valor_total, data_venda)
+        INSERT INTO cafe_vendas (id_pessoa, valor_total, data_venda)
         VALUES (?, ?, NOW())
     ");
     $stmt->execute([$data['pessoa_id'], $total_venda]);
@@ -83,19 +83,19 @@ try {
     
     // Registrar itens da venda e atualizar estoque
     $stmt_item = $pdo->prepare("
-        INSERT INTO itens_venda (id_venda, id_produto, quantidade, valor_unitario)
+        INSERT INTO cafe_itens_venda (id_venda, id_produto, quantidade, valor_unitario)
         VALUES (?, ?, ?, ?)
     ");
     
     $stmt_estoque = $pdo->prepare("
-        UPDATE produtos 
+        UPDATE cafe_produtos 
         SET estoque = estoque - ? 
         WHERE id = ?
     ");
     
     foreach ($data['itens'] as $item) {
         // Buscar preço atual do produto
-        $stmt = $pdo->prepare("SELECT preco FROM produtos WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT preco FROM cafe_produtos WHERE id = ?");
         $stmt->execute([$item['id_produto']]);
         $preco = $stmt->fetchColumn();
         
@@ -120,13 +120,13 @@ try {
     #echo ' Saldo Atual ' . $saldoAtual . ' Saldo Novo ' . $saldoAtual2;
      // Atualizar saldo do cliente
     $stmt = $pdo->prepare("
-        UPDATE saldos_cartao SET saldo = ? WHERE id_pessoa = ? 
+        UPDATE cafe_saldos_cartao SET saldo = ? WHERE id_pessoa = ? 
     ");
     $stmt->execute([$saldoAtual2, $data['pessoa_id']]);
     
      // Registrar movimentação no histórico
     $stmt = $pdo->prepare("
-        INSERT INTO historico_saldo 
+        INSERT INTO cafe_historico_saldo 
         (id_pessoa, valor, tipo_operacao, saldo_anterior, saldo_novo, motivo, data_operacao)
         VALUES (?, ?, 'debito', ?, ?, ?, NOW())
     ");
@@ -139,20 +139,20 @@ try {
     ]);
     
     // Buscar novo saldo
-    $stmt = $pdo->prepare("SELECT saldo FROM saldos_cartao WHERE id_pessoa = ?");
+    $stmt = $pdo->prepare("SELECT saldo FROM cafe_saldos_cartao WHERE id_pessoa = ?");
     $stmt->execute([$data['pessoa_id']]);
     $novo_saldo = $stmt->fetchColumn();
     $reg_venda = 'Venda #' . $id_venda;
 
     // Buscar codigo_cartao
-    $stmt = $pdo->prepare("SELECT codigo FROM cartoes WHERE id_pessoa = ? and usado = 1");
+    $stmt = $pdo->prepare("SELECT codigo FROM cafe_cartoes WHERE id_pessoa = ? and usado = 1");
     $stmt->execute([$data['pessoa_id']]);
     $codigo_cartao = $stmt->fetchColumn();
     
 
     //Registra os logs do sistema
     $stmt = $pdo->prepare("
-        INSERT INTO historico_transacoes_sistema 
+        INSERT INTO cafe_historico_transacoes_sistema 
         (nome_usuario, grupo_usuario, tipo, tipo_transacao, valor, id_pessoa, cartao)
         VALUES (?, ?, ?, 'débito', ?, ?, ?)
         ");

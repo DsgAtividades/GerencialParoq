@@ -15,8 +15,8 @@ $participante = isset($_POST['cpf_tel']) ? $_POST['cpf_tel'] : '';
 // Construir query
 $query = "
     SELECT h.*, p.nome, p.cpf
-    FROM historico_saldo h
-    JOIN pessoas p ON h.id_pessoa = p.id_pessoa
+    FROM cafe_historico_saldo h
+    JOIN cafe_pessoas p ON h.id_pessoa = p.id_pessoa
     WHERE 1=1
 ";
 

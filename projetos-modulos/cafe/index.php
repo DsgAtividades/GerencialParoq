@@ -14,25 +14,25 @@ $stats = [
 try {
     // Total de pessoas
     if (temPermissao('gerenciar_pessoas')) {
-        $stmt = $pdo->query("SELECT COUNT(*) as total FROM pessoas");
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM cafe_pessoas");
         $stats['total_pessoas'] = $stmt->fetch()['total'];
     }
 
     // Total de produtos
     if (temPermissao('gerenciar_produtos')) {
-        $stmt = $pdo->query("SELECT COUNT(*) as total FROM produtos");
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM cafe_produtos");
         $stats['total_produtos'] = $stmt->fetch()['total'];
     }
 
     // Total de vendas
     if (temPermissao('gerenciar_vendas')) {
-        $stmt = $pdo->query("SELECT COUNT(*) as total FROM vendas");
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM cafe_vendas");
         $stats['total_vendas'] = $stmt->fetch()['total'];
     }
 
     // Saldo total em cartões
     if (temPermissao('gerenciar_transacoes')) {
-        $stmt = $pdo->query("SELECT SUM(saldo) as total FROM saldos_cartao");
+        $stmt = $pdo->query("SELECT SUM(saldo) as total FROM cafe_saldos_cartao");
         $stats['saldo_total'] = $stmt->fetch()['total'] ?? 0;
     }
 } catch(PDOException $e) {

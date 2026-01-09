@@ -6,19 +6,19 @@ try {
     $db = $database->getConnection();
     
     // Backup dos dados existentes
-    $stmt = $db->query("SELECT * FROM cartoes");
+    $stmt = $db->query("SELECT * FROM cafe_cartoes");
     $cartoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Drop foreign key da tabela pessoas
-    $db->exec("ALTER TABLE pessoas DROP FOREIGN KEY fk_pessoas_cartao");
+    $db->exec("ALTER TABLE cafe_pessoas DROP FOREIGN KEY fk_pessoas_cartao");
     
     // Drop index único do qrcode
-    $db->exec("ALTER TABLE pessoas DROP INDEX qrcode");
+    $db->exec("ALTER TABLE cafe_pessoas DROP INDEX qrcode");
     
     // Recriar tabela cartoes com collation correta
-    $db->exec("DROP TABLE IF EXISTS cartoes");
+    $db->exec("DROP TABLE IF EXISTS cafe_cartoes");
     $db->exec("
-        CREATE TABLE cartoes (
+        CREATE TABLE cafe_cartoes (
             id INT AUTO_INCREMENT PRIMARY KEY,
             codigo VARCHAR(255) NOT NULL,
             data_geracao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -28,13 +28,13 @@ try {
     ");
     
     // Recriar índices
-    $db->exec("CREATE INDEX idx_cartoes_codigo ON cartoes(codigo)");
-    $db->exec("CREATE INDEX idx_cartoes_usado ON cartoes(usado)");
+    $db->exec("CREATE INDEX idx_cartoes_codigo ON cafe_cartoes(codigo)");
+    $db->exec("CREATE INDEX idx_cartoes_usado ON cafe_cartoes(usado)");
     
     // Restaurar dados
     if (!empty($cartoes)) {
         $stmt = $db->prepare("
-            INSERT INTO cartoes (id, codigo, data_geracao, usado) 
+            INSERT INTO cafe_cartoes (id, codigo, data_geracao, usado) 
             VALUES (?, ?, ?, ?)
         ");
         
@@ -49,12 +49,12 @@ try {
     }
     
     // Recriar foreign key e índice único
-    $db->exec("ALTER TABLE pessoas ADD CONSTRAINT uk_pessoas_qrcode UNIQUE (qrcode)");
+    $db->exec("ALTER TABLE cafe_pessoas ADD CONSTRAINT uk_pessoas_qrcode UNIQUE (qrcode)");
     $db->exec("
-        ALTER TABLE pessoas 
-        ADD CONSTRAINT fk_pessoas_cartao 
-        FOREIGN KEY (qrcode) 
-        REFERENCES cartoes(codigo) 
+ALTER TABLE cafe_pessoas
+        ADD CONSTRAINT fk_pessoas_cartao
+        FOREIGN KEY (qrcode)
+        REFERENCES cafe_cartoes(codigo)
         ON DELETE RESTRICT
     ");
     
@@ -69,9 +69,9 @@ try {
             exit(1);
         }
         
-        $db->exec("DROP TABLE IF EXISTS cartoes");
+        $db->exec("DROP TABLE IF EXISTS cafe_cartoes");
         $db->exec("
-            CREATE TABLE cartoes (
+            CREATE TABLE cafe_cartoes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 codigo VARCHAR(255) NOT NULL,
                 data_geracao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -80,7 +80,7 @@ try {
         ");
         
         $stmt = $db->prepare("
-            INSERT INTO cartoes (id, codigo, data_geracao, usado) 
+            INSERT INTO cafe_cartoes (id, codigo, data_geracao, usado) 
             VALUES (?, ?, ?, ?)
         ");
         

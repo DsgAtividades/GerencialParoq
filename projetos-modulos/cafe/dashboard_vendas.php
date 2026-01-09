@@ -59,7 +59,7 @@ require_once 'includes/header.php';
                             <select class="form-select" id="categoria" name="categoria">
                                 <option value="">Todas</option>
                                 <?php
-                                $stmt = $db->query("SELECT id, nome FROM categorias ORDER BY nome");
+                                $stmt = $db->query("SELECT id, nome FROM cafe_categorias ORDER BY nome");
                                 while ($cat = $stmt->fetch()) {
                                     echo "<option value='{$cat['id']}'>{$cat['nome']}</option>";
                                 }

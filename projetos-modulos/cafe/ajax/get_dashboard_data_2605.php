@@ -54,10 +54,10 @@ switch ($periodo) {
 
 // Construir query base
 $query_base = "
-    FROM itens_venda vi
-    JOIN produtos p ON vi.id_produto = p.id
-    JOIN vendas v ON vi.id_venda = v.id_venda
-    LEFT JOIN categorias c ON p.categoria_id = c.id
+    FROM cafe_itens_venda vi
+    JOIN cafe_produtos p ON vi.id_produto = p.id
+    JOIN cafe_vendas v ON vi.id_venda = v.id_venda
+    LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
     WHERE v.estornada is null and v.data_venda BETWEEN :data_inicio AND :data_fim
 ";
 
@@ -121,8 +121,8 @@ $query = "
         SUM(vi.quantidade * vi.valor_unitario) as valor_vendido,
         ROUND((SUM(vi.quantidade * vi.valor_unitario) / (
             SELECT SUM(vi2.quantidade * vi2.valor_unitario)
-            FROM itens_venda vi2
-            JOIN vendas v2 ON vi2.id_venda = v2.id_venda
+            FROM cafe_itens_venda vi2
+            JOIN cafe_vendas v2 ON vi2.id_venda = v2.id_venda
             WHERE v2.estornada is null and v2.data_venda BETWEEN :data_inicio AND :data_fim
         )) * 100, 1) as percentual
     " . $query_base . "
@@ -142,8 +142,8 @@ foreach ($produtos as &$produto) {
     
     $query = "
         SELECT SUM(vi.quantidade * vi.valor_unitario) as valor_anterior
-        FROM itens_venda vi
-        JOIN vendas v ON vi.id_venda = v.id_venda
+        FROM cafe_itens_venda vi
+        JOIN cafe_vendas v ON vi.id_venda = v.id_venda
         WHERE v.estornada is null and vi.id_produto = :produto_id
         AND v.data_venda BETWEEN :data_inicio AND :data_fim
     ";

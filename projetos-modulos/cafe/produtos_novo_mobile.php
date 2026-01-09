@@ -5,7 +5,7 @@ require_once 'includes/header_mobile.php';
 $conn = getConnection();
 
 // Busca categorias
-$sql = "SELECT id, nome FROM categorias ORDER BY nome";
+$sql = "SELECT id, nome FROM cafe_categorias ORDER BY nome";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);

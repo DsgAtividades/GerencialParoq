@@ -8,7 +8,7 @@ verificarPermissao('gerenciar_permissoes');
 $grupo_id = $_GET['id'] ?? 0;
 
 // Verificar se o grupo existe
-$stmt = $pdo->prepare("SELECT nome FROM grupos WHERE id = ?");
+$stmt = $pdo->prepare("SELECT nome FROM cafe_grupos WHERE id = ?");
 $stmt->execute([$grupo_id]);
 $grupo = $stmt->fetch();
 
@@ -24,12 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->beginTransaction();
 
         // Remover todas as permissões atuais do grupo
-        $stmt = $pdo->prepare("DELETE FROM grupos_permissoes WHERE grupo_id = ?");
+        $stmt = $pdo->prepare("DELETE FROM cafe_grupos_permissoes WHERE grupo_id = ?");
         $stmt->execute([$grupo_id]);
 
         // Inserir novas permissões
         if (isset($_POST['permissoes']) && is_array($_POST['permissoes'])) {
-            $stmt = $pdo->prepare("INSERT INTO grupos_permissoes (grupo_id, permissao_id) VALUES (?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO cafe_grupos_permissoes (grupo_id, permissao_id) VALUES (?, ?)");
             foreach ($_POST['permissoes'] as $permissao_id) {
                 $stmt->execute([$grupo_id, $permissao_id]);
             }
@@ -44,11 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Buscar todas as permissões
-$stmt = $pdo->query("SELECT id, nome, pagina FROM permissoes ORDER BY nome");
+$stmt = $pdo->query("SELECT id, nome, pagina FROM cafe_permissoes ORDER BY nome");
 $permissoes = $stmt->fetchAll();
 
 // Buscar permissões do grupo
-$stmt = $pdo->prepare("SELECT permissao_id FROM grupos_permissoes WHERE grupo_id = ?");
+$stmt = $pdo->prepare("SELECT permissao_id FROM cafe_grupos_permissoes WHERE grupo_id = ?");
 $stmt->execute([$grupo_id]);
 $permissoes_grupo = $stmt->fetchAll(PDO::FETCH_COLUMN);
 

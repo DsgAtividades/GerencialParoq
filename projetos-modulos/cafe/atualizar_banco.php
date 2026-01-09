@@ -8,7 +8,7 @@ try {
     echo "<h2>Atualizando banco de dados...</h2>";
     
     // 1. Primeiro limpar os valores de id_categoria na tabela produtos
-    $sql = "UPDATE produtos SET id_categoria = NULL";
+    $sql = "UPDATE cafe_produtos SET id_categoria = NULL";
     $db->exec($sql);
     echo "<p style='color: blue;'>→ Valores de id_categoria limpos na tabela produtos.</p>";
     
@@ -19,7 +19,7 @@ try {
                 information_schema.KEY_COLUMN_USAGE
             WHERE 
                 TABLE_SCHEMA = 'festa' AND
-                TABLE_NAME = 'produtos' AND
+                TABLE_NAME = 'cafe_produtos' AND
                 REFERENCED_TABLE_NAME = 'categorias'";
             
     $stmt = $db->query($sql);
@@ -30,7 +30,7 @@ try {
         echo "<p style='color: blue;'>→ Foreign key encontrada: " . htmlspecialchars($fk_name) . "</p>";
         
         // Remover a foreign key encontrada
-        $sql = "ALTER TABLE `produtos` DROP FOREIGN KEY `" . $fk_name . "`";
+        $sql = "ALTER TABLE `cafe_produtos` DROP FOREIGN KEY `" . $fk_name . "`";
         $db->exec($sql);
         echo "<p style='color: green;'>✓ Foreign key removida com sucesso!</p>";
     } else {
@@ -38,12 +38,12 @@ try {
     }
 
     // 3. Dropar tabela categorias se existir
-    $sql = "DROP TABLE IF EXISTS `categorias`";
+    $sql = "DROP TABLE IF EXISTS `cafe_categorias`";
     $db->exec($sql);
     echo "<p style='color: blue;'>→ Tabela categorias removida (se existia).</p>";
 
     // 4. Criar nova tabela categorias
-    $sql = "CREATE TABLE `categorias` (
+    $sql = "CREATE TABLE `cafe_categorias` (
         `id_categoria` int(11) NOT NULL AUTO_INCREMENT,
         `nome_categoria` varchar(100) NOT NULL,
         `descricao` text,
@@ -56,9 +56,9 @@ try {
     echo "<p style='color: green;'>✓ Nova tabela categorias criada!</p>";
 
     // 5. Verificar/criar coluna id_categoria em produtos
-    $stmt = $db->query("SHOW COLUMNS FROM `produtos` LIKE 'id_categoria'");
+    $stmt = $db->query("SHOW COLUMNS FROM `cafe_produtos` LIKE 'id_categoria'");
     if ($stmt->rowCount() == 0) {
-        $sql = "ALTER TABLE `produtos` 
+        $sql = "ALTER TABLE `cafe_produtos`
                 ADD COLUMN `id_categoria` int(11) DEFAULT NULL AFTER `nome_produto`";
         $db->exec($sql);
         echo "<p style='color: green;'>✓ Coluna id_categoria adicionada em produtos!</p>";
@@ -67,9 +67,9 @@ try {
     }
 
     // 6. Criar nova foreign key
-    $sql = "ALTER TABLE `produtos` 
-            ADD CONSTRAINT `fk_produto_categoria` 
-            FOREIGN KEY (`id_categoria`) REFERENCES `categorias` (`id_categoria`) 
+    $sql = "ALTER TABLE `cafe_produtos`
+            ADD CONSTRAINT `fk_produto_categoria`
+            FOREIGN KEY (`id_categoria`) REFERENCES `cafe_categorias` (`id_categoria`)
             ON DELETE RESTRICT";
     $db->exec($sql);
     echo "<p style='color: green;'>✓ Nova foreign key criada!</p>";
@@ -83,17 +83,17 @@ try {
         ['Outros', 'Outros produtos']
     ];
 
-    $stmt = $db->prepare("INSERT INTO categorias (nome_categoria, descricao) VALUES (?, ?)");
+    $stmt = $db->prepare("INSERT INTO cafe_categorias (nome_categoria, descricao) VALUES (?, ?)");
     foreach ($categorias as $categoria) {
         $stmt->execute($categoria);
         echo "<p style='color: green;'>✓ Categoria '{$categoria[0]}' inserida!</p>";
     }
 
     // 8. Atualizar produtos sem categoria
-    $sql = "UPDATE produtos p 
+    $sql = "UPDATE cafe_produtos p
             SET p.id_categoria = (
-                SELECT id_categoria 
-                FROM categorias 
+                SELECT id_categoria
+                FROM cafe_categorias
                 WHERE nome_categoria = 'Outros'
                 LIMIT 1
             )

@@ -20,16 +20,16 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $data_inicio) || !preg_match('/^\d{4}-\
 try {
     // 1) KPIs principais
     // Custo de cartão na tabela historico_saldo (há variantes com e sem acento)
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(ABS(valor)),0) as total, COUNT(*) as qtde FROM historico_saldo WHERE tipo_operacao IN ('custo cartao','custo cartão') AND DATE(data_operacao) BETWEEN :i AND :f");
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(ABS(valor)),0) as total, COUNT(*) as qtde FROM cafe_historico_saldo WHERE tipo_operacao IN ('custo cartao','custo cartão') AND DATE(data_operacao) BETWEEN :i AND :f");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $rowCartao = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['total' => 0, 'qtde' => 0];
 
     // Estornos: somar de historico_transacoes_sistema (tipo = 'Estorno') e historico_saldo (tipo_operacao = 'debito' e motivo = 'Estorno')
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(ABS(valor)),0) as total FROM historico_transacoes_sistema WHERE tipo = 'Estorno' AND DATE(create_at) BETWEEN :i AND :f");
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(ABS(valor)),0) as total FROM cafe_historico_transacoes_sistema WHERE tipo = 'Estorno' AND DATE(create_at) BETWEEN :i AND :f");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $rowEstornoHTS = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['total' => 0];
 
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(ABS(valor)),0) as total FROM historico_saldo WHERE tipo_operacao = 'debito' AND motivo = 'Estorno' AND DATE(data_operacao) BETWEEN :i AND :f");
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(ABS(valor)),0) as total FROM cafe_historico_saldo WHERE tipo_operacao = 'debito' AND motivo = 'Estorno' AND DATE(data_operacao) BETWEEN :i AND :f");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $rowEstornoHS = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['total' => 0];
 
@@ -43,13 +43,13 @@ try {
     $custo_medio        = $qtd_cartoes > 0 ? $custo_cartao_total / $qtd_cartoes : 0.0;
 
     // Receita total (créditos em historico_saldo) - considera apenas valores positivos
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(CASE WHEN valor > 0 THEN valor ELSE 0 END),0) as total FROM historico_saldo WHERE tipo_operacao = 'credito' AND DATE(data_operacao) BETWEEN :i AND :f");
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(CASE WHEN valor > 0 THEN valor ELSE 0 END),0) as total FROM cafe_historico_saldo WHERE tipo_operacao = 'credito' AND DATE(data_operacao) BETWEEN :i AND :f");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $rowReceita = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['total' => 0];
     $receita_total = (float)$rowReceita['total'];
 
     // Vendas (itens_venda * valor_unitario) e itens vendidos
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(vi.quantidade * vi.valor_unitario),0) as total, COALESCE(SUM(vi.quantidade),0) as itens, COUNT(DISTINCT v.id_venda) as qtd_vendas_total FROM itens_venda vi JOIN vendas v ON vi.id_venda = v.id_venda WHERE v.estornada is null AND DATE(v.data_venda) BETWEEN :i AND :f");
+    $stmt = $pdo->prepare("SELECT COALESCE(SUM(vi.quantidade * vi.valor_unitario),0) as total, COALESCE(SUM(vi.quantidade),0) as itens, COUNT(DISTINCT v.id_venda) as qtd_vendas_total FROM cafe_itens_venda vi JOIN cafe_vendas v ON vi.id_venda = v.id_venda WHERE v.estornada is null AND DATE(v.data_venda) BETWEEN :i AND :f");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $rowVendas = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['total' => 0, 'itens' => 0, 'qtd_vendas_total' => 0];
     $vendas_total = (float)$rowVendas['total'];
@@ -64,20 +64,20 @@ try {
     $taxa_conversao = $receita_total > 0 ? (($vendas_total / $receita_total) * 100) : 0.0;
 
     // 2) Evolução diária (custo cartão + estorno)
-    $stmt = $pdo->prepare("SELECT DATE(data_operacao) as dia, COALESCE(SUM(ABS(valor)),0) as total FROM historico_saldo WHERE tipo_operacao IN ('custo cartao','custo cartão') AND DATE(data_operacao) BETWEEN :i AND :f GROUP BY DATE(data_operacao) ORDER BY dia");
+    $stmt = $pdo->prepare("SELECT DATE(data_operacao) as dia, COALESCE(SUM(ABS(valor)),0) as total FROM cafe_historico_saldo WHERE tipo_operacao IN ('custo cartao','custo cartão') AND DATE(data_operacao) BETWEEN :i AND :f GROUP BY DATE(data_operacao) ORDER BY dia");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $evolCartao = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt = $pdo->prepare("SELECT DATE(create_at) as dia, COALESCE(SUM(ABS(valor)),0) as total FROM historico_transacoes_sistema WHERE tipo = 'Estorno' AND DATE(create_at) BETWEEN :i AND :f GROUP BY DATE(create_at) ORDER BY dia");
+    $stmt = $pdo->prepare("SELECT DATE(create_at) as dia, COALESCE(SUM(ABS(valor)),0) as total FROM cafe_historico_transacoes_sistema WHERE tipo = 'Estorno' AND DATE(create_at) BETWEEN :i AND :f GROUP BY DATE(create_at) ORDER BY dia");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $evolEstorno = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Evolução de receitas (créditos) e vendas
-    $stmt = $pdo->prepare("SELECT DATE(data_operacao) as dia, COALESCE(SUM(valor),0) as total FROM historico_saldo WHERE tipo_operacao = 'credito' AND DATE(data_operacao) BETWEEN :i AND :f GROUP BY DATE(data_operacao) ORDER BY dia");
+    $stmt = $pdo->prepare("SELECT DATE(data_operacao) as dia, COALESCE(SUM(valor),0) as total FROM cafe_historico_saldo WHERE tipo_operacao = 'credito' AND DATE(data_operacao) BETWEEN :i AND :f GROUP BY DATE(data_operacao) ORDER BY dia");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $evolReceita = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt = $pdo->prepare("SELECT DATE(v.data_venda) as dia, COALESCE(SUM(vi.quantidade * vi.valor_unitario),0) as total, COUNT(DISTINCT v.id_venda) as qtd_vendas FROM itens_venda vi JOIN vendas v ON vi.id_venda = v.id_venda WHERE v.estornada is null AND DATE(v.data_venda) BETWEEN :i AND :f GROUP BY DATE(v.data_venda) ORDER BY dia");
+    $stmt = $pdo->prepare("SELECT DATE(v.data_venda) as dia, COALESCE(SUM(vi.quantidade * vi.valor_unitario),0) as total, COUNT(DISTINCT v.id_venda) as qtd_vendas FROM cafe_itens_venda vi JOIN cafe_vendas v ON vi.id_venda = v.id_venda WHERE v.estornada is null AND DATE(v.data_venda) BETWEEN :i AND :f GROUP BY DATE(v.data_venda) ORDER BY dia");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $evolVendas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -102,7 +102,7 @@ try {
     }
 
     // 3b) Créditos por dia por meio de pagamento (PIX/Dinheiro/Cartão) - incluindo todas as variações possíveis
-    $stmt = $pdo->prepare("SELECT DATE(create_at) as dia, tipo, COALESCE(SUM(ABS(valor)),0) as total FROM historico_transacoes_sistema WHERE tipo IN ('PIX','Dinheiro','Cartão','Cartao','Credito','Débito','Debito') AND DATE(create_at) BETWEEN :i AND :f GROUP BY DATE(create_at), tipo ORDER BY dia");
+    $stmt = $pdo->prepare("SELECT DATE(create_at) as dia, tipo, COALESCE(SUM(ABS(valor)),0) as total FROM cafe_historico_transacoes_sistema WHERE tipo IN ('PIX','Dinheiro','Cartão','Cartao','Credito','Débito','Debito') AND DATE(create_at) BETWEEN :i AND :f GROUP BY DATE(create_at), tipo ORDER BY dia");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $rowsPayDaily = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $payDaily = [];
@@ -123,7 +123,7 @@ try {
     }
 
     // 3) Pagamentos (PIX/Dinheiro/Cartão de historico_transacoes_sistema)
-    $stmt = $pdo->prepare("SELECT tipo, COALESCE(SUM(ABS(valor)),0) as total FROM historico_transacoes_sistema WHERE tipo IN ('PIX','Dinheiro','Cartão','Cartao','Credito','Débito','Debito') AND DATE(create_at) BETWEEN :i AND :f GROUP BY tipo");
+    $stmt = $pdo->prepare("SELECT tipo, COALESCE(SUM(ABS(valor)),0) as total FROM cafe_historico_transacoes_sistema WHERE tipo IN ('PIX','Dinheiro','Cartão','Cartao','Credito','Débito','Debito') AND DATE(create_at) BETWEEN :i AND :f GROUP BY tipo");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $rowsPay = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     $pagamentos = [
@@ -137,16 +137,16 @@ try {
     $saldo_deixado = $receita_total - $vendas_total - $custo_cartao_total;
     
     // Cartões ativos (com saldo > 0)
-    $stmt = $pdo->query("SELECT COUNT(*) as ativos FROM saldos_cartao WHERE saldo > 0");
+    $stmt = $pdo->query("SELECT COUNT(*) as ativos FROM cafe_saldos_cartao WHERE saldo > 0");
     $rowAtivos = $stmt->fetch(PDO::FETCH_ASSOC) ?: ['ativos' => 0];
     $cartoes_ativos = (int)$rowAtivos['ativos'];
 
     // 4) Top produtos e categorias por valor vendido
-    $stmt = $pdo->prepare("SELECT p.nome_produto, SUM(vi.quantidade * vi.valor_unitario) as valor_vendido FROM itens_venda vi JOIN produtos p ON vi.id_produto = p.id JOIN vendas v ON vi.id_venda = v.id_venda WHERE v.estornada is null AND DATE(v.data_venda) BETWEEN :i AND :f GROUP BY p.nome_produto ORDER BY valor_vendido DESC LIMIT 10");
+    $stmt = $pdo->prepare("SELECT p.nome_produto, SUM(vi.quantidade * vi.valor_unitario) as valor_vendido FROM cafe_itens_venda vi JOIN cafe_produtos p ON vi.id_produto = p.id JOIN cafe_vendas v ON vi.id_venda = v.id_venda WHERE v.estornada is null AND DATE(v.data_venda) BETWEEN :i AND :f GROUP BY p.nome_produto ORDER BY valor_vendido DESC LIMIT 10");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $top_produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt = $pdo->prepare("SELECT c.nome as categoria, SUM(vi.quantidade * vi.valor_unitario) as valor_vendido FROM itens_venda vi JOIN produtos p ON vi.id_produto = p.id LEFT JOIN categorias c ON p.categoria_id = c.id JOIN vendas v ON vi.id_venda = v.id_venda WHERE v.estornada is null AND DATE(v.data_venda) BETWEEN :i AND :f GROUP BY c.nome ORDER BY valor_vendido DESC LIMIT 10");
+    $stmt = $pdo->prepare("SELECT c.nome as categoria, SUM(vi.quantidade * vi.valor_unitario) as valor_vendido FROM cafe_itens_venda vi JOIN cafe_produtos p ON vi.id_produto = p.id LEFT JOIN cafe_categorias c ON p.categoria_id = c.id JOIN cafe_vendas v ON vi.id_venda = v.id_venda WHERE v.estornada is null AND DATE(v.data_venda) BETWEEN :i AND :f GROUP BY c.nome ORDER BY valor_vendido DESC LIMIT 10");
     $stmt->execute([':i' => $data_inicio, ':f' => $data_fim]);
     $top_categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

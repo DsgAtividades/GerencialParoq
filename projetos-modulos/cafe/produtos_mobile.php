@@ -6,7 +6,7 @@ $conn = getConnection();
 
 // Busca todos os produtos
 $sql = "SELECT p.id, p.nome, p.preco, p.estoque as quantidade_estoque, p.ativo as bloqueado 
-        FROM produtos p 
+        FROM cafe_produtos p 
         ORDER BY p.nome";
 $stmt = $conn->prepare($sql);
 $stmt->execute();

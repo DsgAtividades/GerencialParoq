@@ -3,12 +3,12 @@ require_once '../includes/conexao.php';
 
 try {
     // Verificar se já existe o grupo Administrador
-    $stmt = $pdo->query("SELECT id FROM grupos WHERE nome = 'Administrador' LIMIT 1");
+    $stmt = $pdo->query("SELECT id FROM cafe_grupos WHERE nome = 'Administrador' LIMIT 1");
     $grupo = $stmt->fetch();
     
     if (!$grupo) {
         // Criar grupo Administrador se não existir
-        $pdo->exec("INSERT INTO grupos (nome) VALUES ('Administrador')");
+        $pdo->exec("INSERT INTO cafe_grupos (nome) VALUES ('Administrador')");
         $grupo_id = $pdo->lastInsertId();
     } else {
         $grupo_id = $grupo['id'];
@@ -16,7 +16,7 @@ try {
 
     // Criar usuário administrador
     $stmt = $pdo->prepare("
-        INSERT INTO usuarios (nome, email, senha, grupo_id, ativo)
+        INSERT INTO cafe_usuarios (nome, email, senha, grupo_id, ativo)
         VALUES (?, ?, ?, ?, 1)
     ");
 

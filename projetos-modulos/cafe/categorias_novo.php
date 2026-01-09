@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $erro = "O nome da categoria é obrigatório.";
     } else {
         // Verificar se já existe uma categoria com este nome
-        $stmt = $db->prepare("SELECT COUNT(*) FROM categorias WHERE nome = ?");
+        $stmt = $db->prepare("SELECT COUNT(*) FROM cafe_categorias WHERE nome = ?");
         $stmt->execute([$nome]);
         if ($stmt->fetchColumn() > 0) {
             $erro = "Já existe uma categoria com este nome.";
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if (!$erro) {
         try {
-            $stmt = $db->prepare("INSERT INTO categorias (nome, icone, ordem) VALUES (?, ?, ?)");
+            $stmt = $db->prepare("INSERT INTO cafe_categorias (nome, icone, ordem) VALUES (?, ?, ?)");
             $stmt->execute([$nome, $icone, $ordem]);
             
             header("Location: categorias.php?success=created");

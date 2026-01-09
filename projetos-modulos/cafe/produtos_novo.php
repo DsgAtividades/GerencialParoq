@@ -9,7 +9,7 @@ $error = '';
 verificarPermissao('produtos_incluir');
 
 // Buscar categorias para o select
-$stmt = $pdo->query("SELECT id, nome, icone, ordem FROM categorias ORDER BY ordem, nome");
+$stmt = $pdo->query("SELECT id, nome, icone, ordem FROM cafe_categorias ORDER BY ordem, nome");
 $categorias = $stmt->fetchAll();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         // Inserir produto
-        $stmt = $pdo->prepare("INSERT INTO produtos (nome_produto, categoria_id, preco, estoque) VALUES (?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO cafe_produtos (nome_produto, categoria_id, preco, estoque) VALUES (?, ?, ?, ?)");
         $stmt->execute([$nome, $categoria_id, $preco, $estoque]);
         
         header("Location: produtos.php?success=created");

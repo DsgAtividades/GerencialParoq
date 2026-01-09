@@ -18,16 +18,16 @@ $id_pessoa = (int)$_GET['id'];
 
 
 // Buscar cartões disponíveis
-$stmt = $pdo->query("SELECT codigo FROM cartoes WHERE usado = FALSE ORDER BY data_geracao DESC");
+$stmt = $pdo->query("SELECT codigo FROM cafe_cartoes WHERE usado = FALSE ORDER BY data_geracao DESC");
 $cartoes_disponiveis = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Buscar dados da pessoa
 try {
     $stmt = $pdo->prepare("
         SELECT p.*, COALESCE(sc.saldo, 0.00) as saldo, c.codigo as qrcode 
-        FROM pessoas p 
-        LEFT JOIN saldos_cartao sc ON p.id_pessoa = sc.id_pessoa 
-        left JOIN cartoes c on c.id_pessoa = p.id_pessoa
+        FROM cafe_pessoas p 
+        LEFT JOIN cafe_saldos_cartao sc ON p.id_pessoa = sc.id_pessoa 
+        left JOIN cafe_cartoes c on c.id_pessoa = p.id_pessoa
         WHERE p.id_pessoa = ?
     ");
     $stmt->execute([$id_pessoa]);
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Verificar se o CPF já existe (excluindo o registro atual)
-        $stmt = $pdo->prepare("SELECT id_pessoa FROM pessoas WHERE cpf = ? AND id_pessoa != ?");
+        $stmt = $pdo->prepare("SELECT id_pessoa FROM cafe_pessoas WHERE cpf = ? AND id_pessoa != ?");
         $stmt->execute([$cpf, $id_pessoa]);
         if ($stmt->fetch()) {
             throw new Exception("Este CPF já está cadastrado para outra pessoa.");
@@ -70,16 +70,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Se está trocando o cartão
         if (!empty($novo_cartao) && $novo_cartao !== $pessoa['qrcode']) {
             // Marcar cartão antigo como não usado
-            $stmt = $pdo->prepare("UPDATE cartoes SET usado = FALSE, id_pessoa = NULL WHERE codigo = ?");
+            $stmt = $pdo->prepare("UPDATE cafe_cartoes SET usado = FALSE, id_pessoa = NULL WHERE codigo = ?");
             $stmt->execute([$pessoa['qrcode']]);
             
             // Marcar novo cartão como usado
-            $stmt = $pdo->prepare("UPDATE cartoes SET usado = TRUE, id_pessoa = ? WHERE codigo = ?");
+            $stmt = $pdo->prepare("UPDATE cafe_cartoes SET usado = TRUE, id_pessoa = ? WHERE codigo = ?");
             $stmt->execute([$id_pessoa, $novo_cartao]);
             
             // Atualizar pessoa com novo cartão
             $stmt = $pdo->prepare("
-                UPDATE pessoas 
+                UPDATE cafe_pessoas 
                 SET nome = ?, cpf = ?, telefone = ?
                 WHERE id_pessoa = ?
             ");
@@ -88,19 +88,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $novo_saldo = number_format($pessoa['saldo'] + (float)-2.00, 2);
             $novo_saldo = str_replace(',', '',$novo_saldo);
             $stmt = $pdo->prepare("
-                UPDATE saldos_cartao SET saldo = ? where id_pessoa = ?  
+                UPDATE cafe_saldos_cartao SET saldo = ? where id_pessoa = ?  
             ");
             $stmt->execute([$novo_saldo, $id_pessoa]);
 
             $stmt = $pdo->prepare("
-                INSERT INTO historico_saldo 
+                INSERT INTO cafe_historico_saldo 
                 (id_pessoa, valor, tipo_operacao, saldo_anterior, saldo_novo, motivo, data_operacao)
                 VALUES (?, -2.00, 'custo cartao', ?, ?, 'Custo Inicial Cartao', NOW())
                 ");
                 $stmt->execute([$id_pessoa, $pessoa['saldo'], $novo_saldo]);
 
             $stmt = $pdo->prepare("
-                INSERT INTO historico_transacoes_sistema 
+                INSERT INTO cafe_historico_transacoes_sistema 
                 (nome_usuario, grupo_usuario, tipo, tipo_transacao, valor, id_pessoa, cartao)
                 VALUES (?, ?, 'Custo Cartão', 'débito', ?, ?, ?)
                 ");
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Atualizar apenas dados básicos
             $stmt = $pdo->prepare("
-                UPDATE pessoas 
+                UPDATE cafe_pessoas 
                 SET nome = ?, cpf = ?, telefone = ?
                 WHERE id_pessoa = ?
             ");

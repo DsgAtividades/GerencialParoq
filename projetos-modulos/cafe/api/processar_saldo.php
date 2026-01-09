@@ -24,8 +24,8 @@ try {
     
     // Verificar se a pessoa existe e pegar saldo atual
     $stmt = $db->prepare("SELECT p.nome, sc.saldo, sc.id_saldo 
-                         FROM pessoas p 
-                         LEFT JOIN saldos_cartao sc ON p.id_pessoa = sc.id_pessoa 
+                         FROM cafe_pessoas p 
+                         LEFT JOIN cafe_saldos_cartao sc ON p.id_pessoa = sc.id_pessoa 
                          WHERE p.id_pessoa = ? 
                          FOR UPDATE");
     $stmt->execute([$dados['id_pessoa']]);
@@ -50,16 +50,16 @@ try {
     
     // Atualizar saldo
     if ($cliente['id_saldo']) {
-        $stmt = $db->prepare("UPDATE saldos_cartao SET saldo = ? WHERE id_saldo = ?");
+        $stmt = $db->prepare("UPDATE cafe_saldos_cartao SET saldo = ? WHERE id_saldo = ?");
         $stmt->execute([$novo_saldo, $cliente['id_saldo']]);
     } else {
-        $stmt = $db->prepare("INSERT INTO saldos_cartao (id_pessoa, saldo) VALUES (?, ?)");
+        $stmt = $db->prepare("INSERT INTO cafe_saldos_cartao (id_pessoa, saldo) VALUES (?, ?)");
         $stmt->execute([$dados['id_pessoa'], $novo_saldo]);
     }
     
     // Registrar no histórico
     $stmt = $db->prepare("
-        INSERT INTO historico_saldo 
+        INSERT INTO cafe_historico_saldo 
         (id_pessoa, tipo_operacao, valor, saldo_anterior, saldo_novo, motivo, data_operacao) 
         VALUES (?, ?, ?, ?, ?, ?, NOW())
     ");

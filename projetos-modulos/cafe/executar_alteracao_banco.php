@@ -12,8 +12,8 @@ try {
     
     // 1. Verificar registros inconsistentes
     $stmt = $db->query("SELECT p.id_pessoa, p.nome, p.cpf, p.qrcode, c.codigo 
-                        FROM pessoas p 
-                        LEFT JOIN cartoes c ON p.qrcode = c.codigo 
+FROM cafe_pessoas p
+                        LEFT JOIN cafe_cartoes c ON p.qrcode = c.codigo
                         WHERE c.codigo IS NULL");
     $inconsistencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -37,7 +37,7 @@ try {
     $result = $stmt->fetch();
     
     if ($result['count'] > 0) {
-        $sql = "ALTER TABLE pessoas DROP FOREIGN KEY fk_pessoas_cartao";
+        $sql = "ALTER TABLE cafe_pessoas DROP FOREIGN KEY fk_pessoas_cartao";
         $db->exec($sql);
         echo "<p>Foreign key removida com sucesso</p>";
     } else {
@@ -54,7 +54,7 @@ try {
     $result = $stmt->fetch();
     
     if ($result['count'] == 0) {
-        $sql = "ALTER TABLE cartoes ADD COLUMN id_pessoa INT NULL";
+        $sql = "ALTER TABLE cafe_cartoes ADD COLUMN id_pessoa INT NULL";
         $db->exec($sql);
         echo "<p>Coluna id_pessoa adicionada na tabela cartoes</p>";
     } else {
@@ -62,8 +62,8 @@ try {
     }
     
     // 4. Atualizar id_pessoa nos cartões existentes
-    $sql = "UPDATE cartoes c 
-            INNER JOIN pessoas p ON c.codigo = p.qrcode 
+    $sql = "UPDATE cafe_cartoes c
+            INNER JOIN cafe_pessoas p ON c.codigo = p.qrcode
             SET c.id_pessoa = p.id_pessoa 
             WHERE c.id_pessoa IS NULL";
     $stmt = $db->prepare($sql);
@@ -81,20 +81,20 @@ try {
     $result = $stmt->fetch();
     
     if ($result['count'] > 0) {
-        $sql = "ALTER TABLE cartoes DROP FOREIGN KEY fk_cartoes_pessoa";
+        $sql = "ALTER TABLE cafe_cartoes DROP FOREIGN KEY fk_cartoes_pessoa";
         $db->exec($sql);
         echo "<p>Foreign key antiga removida da tabela cartoes</p>";
     }
     
     // 6. Adicionar foreign key em cartoes
-    $sql = "ALTER TABLE cartoes 
-            ADD CONSTRAINT fk_cartoes_pessoa FOREIGN KEY (id_pessoa) REFERENCES pessoas(id_pessoa) ON DELETE RESTRICT";
+    $sql = "ALTER TABLE cafe_cartoes
+            ADD CONSTRAINT fk_cartoes_pessoa FOREIGN KEY (id_pessoa) REFERENCES cafe_pessoas(id_pessoa) ON DELETE RESTRICT";
     $db->exec($sql);
     echo "<p>Foreign key adicionada na tabela cartoes</p>";
     
     // 7. Adicionar foreign key em pessoas
-    $sql = "ALTER TABLE pessoas
-            ADD CONSTRAINT fk_pessoas_cartao FOREIGN KEY (qrcode) REFERENCES cartoes(codigo) ON DELETE RESTRICT";
+    $sql = "ALTER TABLE cafe_pessoas
+            ADD CONSTRAINT fk_pessoas_cartao FOREIGN KEY (qrcode) REFERENCES cafe_cartoes(codigo) ON DELETE RESTRICT";
     $db->exec($sql);
     echo "<p>Foreign key recriada na tabela pessoas</p>";
     

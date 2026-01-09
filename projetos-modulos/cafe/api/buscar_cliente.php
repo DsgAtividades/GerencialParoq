@@ -16,8 +16,8 @@ try {
     // Buscar cliente e seu saldo
     $stmt = $db->prepare("
         SELECT p.*, sc.saldo 
-        FROM pessoas p 
-        LEFT JOIN saldos_cartao sc ON p.id_pessoa = sc.id_pessoa 
+        FROM cafe_pessoas p 
+        LEFT JOIN cafe_saldos_cartao sc ON p.id_pessoa = sc.id_pessoa 
         WHERE p.qrcode = ?
     ");
     

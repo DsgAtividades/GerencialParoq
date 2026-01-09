@@ -21,10 +21,10 @@ $stmt = $pdo->prepare("
         p.nome as cliente_nome,
         p.cpf as cliente_cpf,
         GROUP_CONCAT(pr.nome_produto SEPARATOR ', ') as produtos
-    FROM vendas v
-    JOIN pessoas p ON v.id_pessoa = p.id_pessoa
-    JOIN itens_venda vi ON v.id_venda = vi.id_venda
-    JOIN produtos pr ON vi.id_produto = pr.id
+    FROM cafe_vendas v
+    JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
+    JOIN cafe_itens_venda vi ON v.id_venda = vi.id_venda
+    JOIN cafe_produtos pr ON vi.id_produto = pr.id
     WHERE v.estornada is null and DATE(v.data_venda) BETWEEN ? AND ? AND pr.bloqueado = 0
     GROUP BY v.id_venda, v.data_venda, v.valor_total, p.nome, p.cpf
     ORDER BY v.data_venda DESC LIMIT 20
@@ -42,10 +42,10 @@ $stmt = $pdo->prepare("
         p.nome as cliente_nome,
         p.cpf as cliente_cpf,
         GROUP_CONCAT(pr.nome_produto SEPARATOR ', ') as produtos
-    FROM vendas v
-    JOIN pessoas p ON v.id_pessoa = p.id_pessoa
-    JOIN itens_venda vi ON v.id_venda = vi.id_venda
-    JOIN produtos pr ON vi.id_produto = pr.id
+    FROM cafe_vendas v
+    JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
+    JOIN cafe_itens_venda vi ON v.id_venda = vi.id_venda
+    JOIN cafe_produtos pr ON vi.id_produto = pr.id
     WHERE DATE(v.data_venda) BETWEEN ? AND ? AND pr.bloqueado = 0
     GROUP BY v.id_venda, v.data_venda, v.valor_total, p.nome, p.cpf
     ORDER BY v.data_venda DESC LIMIT 20
@@ -64,9 +64,9 @@ $stmt = $pdo->prepare("
         p.nome_produto,
         SUM(vi.quantidade) as total_vendido,
         SUM(vi.quantidade * vi.valor_unitario) as valor_total
-    FROM itens_venda vi
-    JOIN produtos p ON vi.id_produto = p.id
-    JOIN vendas v ON vi.id_venda = v.id_venda
+    FROM cafe_itens_venda vi
+    JOIN cafe_produtos p ON vi.id_produto = p.id
+    JOIN cafe_vendas v ON vi.id_venda = v.id_venda
     WHERE DATE(v.data_venda) BETWEEN ? AND ? AND p.bloqueado = 0 and v.estornada is null
     GROUP BY p.id, p.nome_produto
     ORDER BY total_vendido DESC
@@ -80,7 +80,7 @@ $stmt = $pdo->prepare("
     SELECT 
         COUNT(*) as total,
         SUM(valor_total) as valor_total
-    FROM vendas
+    FROM cafe_vendas
     WHERE estornada is null and DATE(data_venda) BETWEEN ? AND ?
 ");
 $stmt->execute([$data_inicio, $data_fim]);

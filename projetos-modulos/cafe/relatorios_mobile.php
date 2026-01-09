@@ -12,7 +12,7 @@ $sql = "SELECT
             COUNT(DISTINCT v.id) as total_vendas,
             SUM(v.valor_total) as valor_total,
             COUNT(DISTINCT v.pessoa_id) as total_clientes
-        FROM vendas v 
+        FROM cafe_vendas v 
         WHERE DATE(v.data_venda) = ?";
 
 $stmt = $conn->prepare($sql);
@@ -26,9 +26,9 @@ $sql = "SELECT
             COUNT(DISTINCT v.id) as total_vendas,
             SUM(i.quantidade) as quantidade_total,
             SUM(i.valor_total) as valor_total
-        FROM produtos p
-        LEFT JOIN itens_venda i ON p.id = i.produto_id
-        LEFT JOIN vendas v ON i.venda_id = v.id 
+        FROM cafe_produtos p
+        LEFT JOIN cafe_itens_venda i ON p.id = i.produto_id
+        LEFT JOIN cafe_vendas v ON i.venda_id = v.id 
         WHERE DATE(v.data_venda) = ?
         GROUP BY p.id, p.nome
         ORDER BY valor_total DESC";
@@ -43,8 +43,8 @@ $sql = "SELECT
             p.nome,
             COUNT(DISTINCT v.id_venda) as total_vendas,
             SUM(v.valor_total) as valor_total
-        FROM pessoas p
-        LEFT JOIN vendas v ON p.id_pessoa = v.id_pessoa 
+        FROM cafe_pessoas p
+        LEFT JOIN cafe_vendas v ON p.id_pessoa = v.id_pessoa 
             AND DATE(v.data_venda) = ?
         GROUP BY p.id_pessoa
         ORDER BY COALESCE(SUM(v.valor_total), 0) DESC";

@@ -44,21 +44,21 @@ try {
     $pdo->beginTransaction();
     
     // Verificar se a pessoa existe
-    $stmt = $pdo->prepare("SELECT id_pessoa FROM pessoas WHERE id_pessoa = ?");
+    $stmt = $pdo->prepare("SELECT id_pessoa FROM cafe_pessoas WHERE id_pessoa = ?");
     $stmt->execute([$pessoa_id]);
     if (!$stmt->fetch()) {
         throw new Exception('Pessoa não encontrada.');
     }
     
     // Buscar ou criar registro de saldo
-    $stmt = $pdo->prepare("SELECT id_saldo, saldo FROM saldos_cartao WHERE id_pessoa = ?");
+    $stmt = $pdo->prepare("SELECT id_saldo, saldo FROM cafe_saldos_cartao WHERE id_pessoa = ?");
     $stmt->execute([$pessoa_id]);
     $saldo = $stmt->fetch();
     
     if ($saldo) {
         // Atualizar saldo existente
         $stmt = $pdo->prepare("
-            UPDATE saldos_cartao 
+            UPDATE cafe_saldos_cartao 
             SET saldo = saldo + ? 
             WHERE id_saldo = ?
         ");
@@ -66,7 +66,7 @@ try {
     } else {
         // Criar novo registro de saldo
         $stmt = $pdo->prepare("
-            INSERT INTO saldos_cartao (id_pessoa, saldo) 
+            INSERT INTO cafe_saldos_cartao (id_pessoa, saldo) 
             VALUES (?, ?)
         ");
         $stmt->execute([$pessoa_id, $valor]);
@@ -77,7 +77,7 @@ try {
     
     // Registrar no histórico
     $stmt = $pdo->prepare("
-        INSERT INTO historico_saldo 
+        INSERT INTO cafe_historico_saldo 
         (id_pessoa, tipo_operacao, valor, saldo_anterior, saldo_novo, motivo, data_operacao) 
         VALUES (?, 'credito', ?, ?, ?, ?, NOW())
     ");

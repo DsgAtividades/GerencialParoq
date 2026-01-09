@@ -8,9 +8,9 @@ verificarPermissao('gerenciar_pessoas');
 
 // Buscar todas as pessoas com seus saldos e status do cartão
 $query = "SELECT p.*, COALESCE(sc.saldo, 0.00) as saldo, c.usado as cartao_usado, c.codigo as cartao_codigo
-          FROM pessoas p 
-          LEFT JOIN saldos_cartao sc ON p.id_pessoa = sc.id_pessoa 
-          LEFT JOIN cartoes c ON p.id_pessoa = c.id_pessoa";
+          FROM cafe_pessoas p 
+          LEFT JOIN cafe_saldos_cartao sc ON p.id_pessoa = sc.id_pessoa 
+          LEFT JOIN cafe_cartoes c ON p.id_pessoa = c.id_pessoa";
 
 // Adicionar filtro de pesquisa se fornecido
 if (isset($_GET['busca']) && !empty($_GET['busca'])) {

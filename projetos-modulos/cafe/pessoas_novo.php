@@ -10,7 +10,7 @@ $message = '';
 $error = '';
 
 // Buscar cartões disponíveis
-$stmt = $pdo->query("SELECT id, codigo FROM cartoes WHERE usado = FALSE ORDER BY data_geracao DESC");
+$stmt = $pdo->query("SELECT id, codigo FROM cafe_cartoes WHERE usado = FALSE ORDER BY data_geracao DESC");
 $cartoes_disponiveis = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (empty($cartoes_disponiveis)) {
@@ -43,16 +43,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         try {
             // Inserir pessoa
-            $stmt = $pdo->prepare("INSERT INTO pessoas (nome, cpf, telefone) VALUES (?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO cafe_pessoas (nome, cpf, telefone) VALUES (?, ?, ?)");
             $stmt->execute([$nome, $cpf, $telefone]);
             $pessoa_id = $pdo->lastInsertId();
             
             // Criar saldo inicial
-            $stmt = $pdo->prepare("INSERT INTO saldos_cartao (id_pessoa, saldo) VALUES (?, 0.00)");
+            $stmt = $pdo->prepare("INSERT INTO cafe_saldos_cartao (id_pessoa, saldo) VALUES (?, 0.00)");
             $stmt->execute([$pessoa_id]);
 
             // Marcar cartão como usado
-            $stmt = $pdo->prepare("UPDATE cartoes SET usado = TRUE, id_pessoa = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE cafe_cartoes SET usado = TRUE, id_pessoa = ? WHERE id = ?");
             $stmt->execute([$pessoa_id, $cartao_id]);
 
             // Confirmar transação

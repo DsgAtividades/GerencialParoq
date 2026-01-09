@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nome = $_POST['nome'] ?? '';
             if (!empty($nome)) {
                 try {
-                    $stmt = $pdo->prepare("INSERT INTO grupos (nome) VALUES (?)");
+                    $stmt = $pdo->prepare("INSERT INTO cafe_grupos (nome) VALUES (?)");
                     $stmt->execute([$nome]);
                     exibirAlerta("Grupo criado com sucesso!");
                 } catch (PDOException $e) {
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? '';
             if (!empty($id)) {
                 try {
-                    $stmt = $pdo->prepare("DELETE FROM grupos WHERE id = ?");
+                    $stmt = $pdo->prepare("DELETE FROM cafe_grupos WHERE id = ?");
                     $stmt->execute([$id]);
                     exibirAlerta("Grupo excluído com sucesso!");
                 } catch (PDOException $e) {
@@ -42,9 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Buscar grupos com contadores
 $stmt = $pdo->query("
     SELECT g.*,
-           (SELECT COUNT(*) FROM usuarios u WHERE u.grupo_id = g.id) as total_usuarios,
-           (SELECT COUNT(*) FROM grupos_permissoes gp WHERE gp.grupo_id = g.id) as total_permissoes
-    FROM grupos g
+           (SELECT COUNT(*) FROM cafe_usuarios u WHERE u.grupo_id = g.id) as total_usuarios,
+           (SELECT COUNT(*) FROM cafe_grupos_permissoes gp WHERE gp.grupo_id = g.id) as total_permissoes
+    FROM cafe_grupos g
     $where
     ORDER BY g.nome
 ");

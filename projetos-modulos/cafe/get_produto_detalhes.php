@@ -31,8 +31,8 @@ $query = "
     SELECT 
         DATE(v.data_venda) as data,
         SUM(vi.quantidade * vi.valor_unitario) as valor
-    FROM itens_venda vi
-    JOIN vendas v ON vi.id_venda = v.id_venda
+    FROM cafe_itens_venda vi
+    JOIN cafe_vendas v ON vi.id_venda = v.id_venda
     WHERE vi.id_produto = :produto_id
     AND v.data_venda BETWEEN :data_inicio AND :data_fim
     GROUP BY DATE(v.data_venda)
@@ -63,9 +63,9 @@ $query = "
         vi.quantidade,
         (vi.quantidade * vi.valor_unitario) as valor,
         CONCAT(p.nome, ' (', COALESCE(p.cpf, 'Não identificado'), ')') as cliente
-    FROM itens_venda vi
-    JOIN vendas v ON vi.id_venda = v.id_venda
-    LEFT JOIN pessoas p ON v.id_pessoa = p.id_pessoa
+    FROM cafe_itens_venda vi
+    JOIN cafe_vendas v ON vi.id_venda = v.id_venda
+    LEFT JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
     WHERE vi.id_produto = :produto_id
     ORDER BY v.data_venda DESC
     LIMIT 10

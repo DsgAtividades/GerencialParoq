@@ -22,7 +22,7 @@ try {
         }
 
         // Verificar saldo do cliente
-        $stmt = $db->prepare("SELECT s.saldo FROM saldos_cartao s WHERE s.pessoa_id = ?");
+        $stmt = $db->prepare("SELECT s.saldo FROM cafe_saldos_cartao s WHERE s.pessoa_id = ?");
         $stmt->execute([$dados['pessoa_id']]);
         $saldo = $stmt->fetchColumn();
 
@@ -35,14 +35,14 @@ try {
         }
 
         // Inserir venda
-        $stmt = $db->prepare("INSERT INTO vendas (pessoa_id, data_venda, valor_total, status) VALUES (?, NOW(), ?, 'concluida')");
+        $stmt = $db->prepare("INSERT INTO cafe_vendas (pessoa_id, data_venda, valor_total, status) VALUES (?, NOW(), ?, 'concluida')");
         $stmt->execute([$dados['pessoa_id'], $total_venda]);
         $venda_id = $db->lastInsertId();
         
         // Inserir itens e atualizar estoque
         foreach ($dados['itens'] as $item) {
             // Verificar estoque
-            $stmt = $db->prepare("SELECT estoque FROM produtos WHERE id = ?");
+            $stmt = $db->prepare("SELECT estoque FROM cafe_produtos WHERE id = ?");
             $stmt->execute([$item['produto_id']]);
             $estoque_atual = $stmt->fetchColumn();
             
@@ -56,7 +56,7 @@ try {
             
             // Inserir item da venda
             $subtotal = $item['valor_unitario'] * $item['quantidade'];
-            $stmt = $db->prepare("INSERT INTO vendas_itens (venda_id, produto_id, quantidade, valor_unitario, subtotal) 
+            $stmt = $db->prepare("INSERT INTO cafe_itens_venda (venda_id, produto_id, quantidade, valor_unitario, subtotal) 
                                 VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([
                 $venda_id,
@@ -68,11 +68,11 @@ try {
             
             // Atualizar estoque
             $novo_estoque = $estoque_atual - $item['quantidade'];
-            $stmt = $db->prepare("UPDATE produtos SET estoque = ? WHERE id = ?");
+            $stmt = $db->prepare("UPDATE cafe_produtos SET estoque = ? WHERE id = ?");
             $stmt->execute([$novo_estoque, $item['produto_id']]);
             
             // Registrar movimento de estoque
-            $stmt = $db->prepare("INSERT INTO historico_estoque 
+            $stmt = $db->prepare("INSERT INTO cafe_historico_estoque 
                                 (produto_id, tipo, quantidade, estoque_anterior, estoque_atual, motivo) 
                                 VALUES (?, 'saida', ?, ?, ?, ?)");
             $stmt->execute([
@@ -86,11 +86,11 @@ try {
 
         // Debitar saldo do cliente
         $novo_saldo = $saldo - $total_venda;
-        $stmt = $db->prepare("UPDATE saldos_cartao SET saldo = ? WHERE pessoa_id = ?");
+        $stmt = $db->prepare("UPDATE cafe_saldos_cartao SET saldo = ? WHERE pessoa_id = ?");
         $stmt->execute([$novo_saldo, $dados['pessoa_id']]);
 
         // Registrar movimento no histórico de saldo
-        $stmt = $db->prepare("INSERT INTO historico_saldo (pessoa_id, tipo, valor, motivo) 
+        $stmt = $db->prepare("INSERT INTO cafe_historico_saldo (pessoa_id, tipo, valor, motivo) 
                             VALUES (?, 'debito', ?, ?)");
         $stmt->execute([
             $dados['pessoa_id'],

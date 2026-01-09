@@ -32,8 +32,8 @@ try {
     // 1. Buscar dados da venda
     $stmt = $pdo->prepare("
         SELECT v.*, p.nome as nome_pessoa
-        FROM vendas v
-        JOIN pessoas p ON v.id_pessoa = p.id_pessoa
+        FROM cafe_vendas v
+        JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
         WHERE v.id_venda = ?
     ");
     $stmt->execute([$data['id_venda']]);
@@ -46,8 +46,8 @@ try {
     // 2. Buscar itens da venda
     $stmt = $pdo->prepare("
         SELECT iv.*, p.nome_produto
-        FROM itens_venda iv
-        JOIN produtos p ON iv.id_produto = p.id
+        FROM cafe_itens_venda iv
+        JOIN cafe_produtos p ON iv.id_produto = p.id
         WHERE iv.id_venda = ?
     ");
     $stmt->execute([$data['id_venda']]);
@@ -59,17 +59,17 @@ try {
     
     // 3. Devolver produtos ao estoque
     $stmt_estoque = $pdo->prepare("
-        UPDATE produtos 
+        UPDATE cafe_produtos 
         SET estoque = estoque + ?
         WHERE id = ?
     ");
     
     $stmt_historico = $pdo->prepare("
-        INSERT INTO historico_estoque 
+        INSERT INTO cafe_historico_estoque 
         (id_produto, tipo_operacao, quantidade, quantidade_anterior, motivo, data_operacao)
         SELECT 
             ?, 'entrada', ?, estoque, ?, NOW()
-        FROM produtos 
+        FROM cafe_produtos 
         WHERE id = ?
     ");
     
@@ -88,7 +88,7 @@ try {
     
     // 4. Devolver saldo ao cliente
     $stmt = $pdo->prepare("
-        UPDATE saldos_cartao 
+        UPDATE cafe_saldos_cartao 
         SET saldo = saldo + ? 
         WHERE id_pessoa = ?
     ");
@@ -96,11 +96,11 @@ try {
     
     // 5. Registrar no histórico de saldo
     $stmt = $pdo->prepare("
-        INSERT INTO historico_saldo 
+        INSERT INTO cafe_historico_saldo 
         (id_pessoa, tipo_operacao, valor, saldo_anterior, saldo_novo, motivo, data_operacao)
         SELECT 
             ?, 'credito', ?, saldo - ?, ?, ?, NOW()
-        FROM saldos_cartao
+        FROM cafe_saldos_cartao
         WHERE id_pessoa = ?
     ");
     $stmt->execute([
@@ -113,7 +113,7 @@ try {
     ]);
     
     // 6. Excluir a venda (isso vai excluir os itens em cascata)
-    $stmt = $pdo->prepare("UPDATE vendas SET estornada = 1 WHERE id_venda = ?");
+    $stmt = $pdo->prepare("UPDATE cafe_vendas SET estornada = 1 WHERE id_venda = ?");
     $stmt->execute([$data['id_venda']]);
     
     // Commit da transação

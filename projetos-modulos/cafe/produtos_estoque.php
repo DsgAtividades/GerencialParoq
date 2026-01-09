@@ -15,7 +15,7 @@ if (!$id) {
 }
 
 // Buscar produto
-$stmt = $pdo->prepare("SELECT * FROM produtos WHERE id = ?");
+$stmt = $pdo->prepare("SELECT * FROM cafe_produtos WHERE id = ?");
 $stmt->execute([$id]);
 $produto = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -26,7 +26,7 @@ if (!$produto) {
 
 // Buscar histórico de movimentações
 $stmt = $pdo->prepare("
-    SELECT * FROM historico_estoque 
+    SELECT * FROM cafe_historico_estoque 
     WHERE id_produto = ? 
     ORDER BY data_operacao DESC 
     LIMIT 50
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Registrar no histórico
         $stmt = $pdo->prepare("
-            INSERT INTO historico_estoque 
+            INSERT INTO cafe_historico_estoque 
             (id_produto, tipo_operacao, quantidade, quantidade_anterior, motivo, data_operacao) 
             VALUES (?, ?, ?, ?, ?, now())
         ");
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Atualizar estoque do produto
         $stmt = $pdo->prepare("
-            UPDATE produtos 
+            UPDATE cafe_produtos 
             SET estoque = estoque + ? 
             WHERE id = ?
         ");

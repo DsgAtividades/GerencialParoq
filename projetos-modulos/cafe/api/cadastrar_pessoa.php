@@ -32,7 +32,7 @@ try {
     $db = $database->getConnection();
 
     // Verificar se o CPF já está cadastrado
-    $query = "SELECT id_pessoa FROM pessoas WHERE cpf = :cpf";
+    $query = "SELECT id_pessoa FROM cafe_pessoas WHERE cpf = :cpf";
     $stmt = $db->prepare($query);
     $stmt->bindParam(':cpf', $cpf);
     $stmt->execute();
@@ -44,7 +44,7 @@ try {
     }
 
     // Verificar se o QR Code já está em uso
-    $query = "SELECT id_pessoa FROM pessoas WHERE qr_code = :qr_code";
+    $query = "SELECT id_pessoa FROM cafe_pessoas WHERE qr_code = :qr_code";
     $stmt = $db->prepare($query);
     $stmt->bindParam(':qr_code', $data['qr_code']);
     $stmt->execute();
@@ -56,7 +56,7 @@ try {
     }
 
     // Inserir pessoa
-    $query = "INSERT INTO pessoas (nome, cpf, telefone, qr_code) VALUES (:nome, :cpf, :telefone, :qr_code)";
+    $query = "INSERT INTO cafe_pessoas (nome, cpf, telefone, qr_code) VALUES (:nome, :cpf, :telefone, :qr_code)";
     $stmt = $db->prepare($query);
     $stmt->bindParam(':nome', $data['nome']);
     $stmt->bindParam(':cpf', $cpf);
@@ -66,7 +66,7 @@ try {
     if ($stmt->execute()) {
         // Criar registro de saldo inicial
         $id_pessoa = $db->lastInsertId();
-        $query = "INSERT INTO saldos_cartao (id_pessoa, saldo) VALUES (:id_pessoa, 0)";
+        $query = "INSERT INTO cafe_saldos_cartao (id_pessoa, saldo) VALUES (:id_pessoa, 0)";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':id_pessoa', $id_pessoa);
         $stmt->execute();

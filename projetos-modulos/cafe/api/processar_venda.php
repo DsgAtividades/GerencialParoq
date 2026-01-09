@@ -40,7 +40,7 @@ try {
     $db->beginTransaction();
     
     // 1. Verificar saldo do cliente
-    $stmt = $db->prepare("SELECT saldo FROM saldos_cartao WHERE id_pessoa = ? FOR UPDATE");
+    $stmt = $db->prepare("SELECT saldo FROM cafe_saldos_cartao WHERE id_pessoa = ? FOR UPDATE");
     $stmt->execute([$dados['pessoa_id']]);
     $saldo = $stmt->fetch(PDO::FETCH_COLUMN);
     
@@ -61,7 +61,7 @@ try {
     // 2. Verificar e atualizar estoque de cada item
     foreach ($dados['itens'] as $item) {
         // Verificar estoque
-        $stmt = $db->prepare("SELECT estoque FROM produtos WHERE id = ? FOR UPDATE");
+        $stmt = $db->prepare("SELECT estoque FROM cafe_produtos WHERE id = ? FOR UPDATE");
         $stmt->execute([$item['produto_id']]);
         $estoque = $stmt->fetch(PDO::FETCH_COLUMN);
         
@@ -70,13 +70,13 @@ try {
         }
         
         // Atualizar estoque
-        $stmt = $db->prepare("UPDATE produtos SET estoque = estoque - ? WHERE id= ?");
+        $stmt = $db->prepare("UPDATE cafe_produtos SET estoque = estoque - ? WHERE id= ?");
         $stmt->execute([$item['quantidade'], $item['produto_id']]);
     }
     
     // 3. Registrar venda
     $stmt = $db->prepare("
-        INSERT INTO vendas (id_pessoa, valor_total, data_venda) 
+        INSERT INTO cafe_vendas (id_pessoa, valor_total, data_venda) 
         VALUES (?, ?, NOW())
     ");
     $stmt->execute([
@@ -87,7 +87,7 @@ try {
     
     // 4. Registrar itens da venda
     $stmt = $db->prepare("
-        INSERT INTO itens_venda (id_venda, id_produto, quantidade, valor_unitario)
+        INSERT INTO cafe_itens_venda (id_venda, id_produto, quantidade, valor_unitario)
         VALUES (?, ?, ?, ?)
     ");
     
@@ -101,12 +101,12 @@ try {
     }
     
     // 5. Debitar saldo do cliente
-    $stmt = $db->prepare("UPDATE saldos_cartao SET saldo = saldo - ? WHERE id_pessoa = ?");
+    $stmt = $db->prepare("UPDATE cafe_saldos_cartao SET saldo = saldo - ? WHERE id_pessoa = ?");
     $stmt->execute([$total_venda, $dados['pessoa_id']]);
     
     // 6. Registrar no histórico
     $stmt = $db->prepare("
-        INSERT INTO historico_saldo 
+        INSERT INTO cafe_historico_saldo 
         (id_pessoa, tipo_operacao, valor, saldo_anterior, saldo_novo, motivo, data_operacao)
         VALUES (?, 'debito', ?, ?, ?, ?, NOW())
     ");

@@ -10,13 +10,13 @@ $data_inicio = isset($_GET['data_inicio']) ? $_GET['data_inicio'] : date('Y-m-d'
 $data_fim = isset($_GET['data_fim']) ? $_GET['data_fim'] : date('Y-m-d');
 
 // Buscar motivos distintos
-$stmt = $pdo->query("SELECT DISTINCT motivo FROM historico_saldo WHERE tipo_operacao = 'credito'");
+$stmt = $pdo->query("SELECT DISTINCT motivo FROM cafe_historico_saldo WHERE tipo_operacao = 'credito'");
 $motivos = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
 // Consulta agrupada por dia e motivo
 $stmt = $pdo->prepare("
     SELECT DATE(data_operacao) as dia, motivo, SUM(valor) as total
-    FROM historico_saldo
+    FROM cafe_historico_saldo
     WHERE tipo_operacao = 'credito' and motivo NOT REGEXP 'Estorno'
       AND DATE(data_operacao) BETWEEN ? AND ?
     GROUP BY dia, motivo

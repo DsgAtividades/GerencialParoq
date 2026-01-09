@@ -31,7 +31,7 @@ try {
     $db->beginTransaction();
     
     // 1. Verificar tem produto 
-    $stmt = $db->prepare("SELECT id FROM produtos WHERE id = ?");
+    $stmt = $db->prepare("SELECT id FROM cafe_produtos WHERE id = ?");
     $stmt->execute([$dados['id_produto']]);
     $produto = $stmt->fetch();
 
@@ -40,13 +40,13 @@ try {
     }
     
     // 2. Verifica se existe venda para esse produto 
-    $stmt = $db->prepare("SELECT * FROM itens_venda WHERE id_produto = ?");
+    $stmt = $db->prepare("SELECT * FROM cafe_itens_venda WHERE id_produto = ?");
     $stmt->execute([$produto['id']]);
     $vendas = $stmt->fetch();
     
     if ($vendas === false) {
         // 3. executa a exclusão
-        $stmt = $db->prepare("DELETE from produtos where id = ?");
+        $stmt = $db->prepare("DELETE from cafe_produtos where id = ?");
         $stmt->execute([$produto['id']]);
         // Commit da transação
         $db->commit();

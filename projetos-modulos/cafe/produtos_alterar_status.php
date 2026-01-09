@@ -17,7 +17,7 @@ $status = (int)$data['status'];
 
 try {
     // Atualiza o status do produto
-    $sql = "UPDATE produtos SET bloqueado = :status WHERE id = :id";
+    $sql = "UPDATE cafe_produtos SET bloqueado = :status WHERE id = :id";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ':status' => $status,

@@ -7,8 +7,8 @@ $conn = getConnection();
 // Buscar todas as categorias com contagem de produtos
 $sql = "SELECT c.id, c.nome,
         COUNT(p.id) as total_produtos
-        FROM categorias c
-        LEFT JOIN produtos p ON p.categoria_id = c.id
+        FROM cafe_categorias c
+        LEFT JOIN cafe_produtos p ON p.categoria_id = c.id
         GROUP BY c.id
         ORDER BY c.nome";
 

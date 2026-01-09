@@ -18,8 +18,8 @@ $db = $database->getConnection();
 try {
     $stmt = $db->prepare("
         SELECT p.*, COALESCE(sc.saldo, 0) as saldo, sc.id_saldo
-        FROM pessoas p 
-        LEFT JOIN saldos_cartao sc ON p.id_pessoa = sc.id_pessoa 
+FROM cafe_pessoas p
+        LEFT JOIN cafe_saldos_cartao sc ON p.id_pessoa = sc.id_pessoa
         WHERE p.id_pessoa = ?
     ");
     $stmt->execute([$id_pessoa]);
@@ -34,7 +34,7 @@ try {
     // Buscar histórico de operações
     $stmt = $db->prepare("
         SELECT *
-        FROM historico_saldo
+        FROM cafe_historico_saldo
         WHERE id_pessoa = ?
         ORDER BY data_operacao DESC
         LIMIT 10
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Se não tem registro de saldo, criar um
         if (!$pessoa['id_saldo']) {
-            $stmt = $db->prepare("INSERT INTO saldos_cartao (id_pessoa, saldo) VALUES (?, 0)");
+            $stmt = $db->prepare("INSERT INTO cafe_saldos_cartao (id_pessoa, saldo) VALUES (?, 0)");
             $stmt->execute([$id_pessoa]);
             $pessoa['id_saldo'] = $db->lastInsertId();
             $pessoa['saldo'] = 0;
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Registrar no histórico
         $stmt = $db->prepare("
-            INSERT INTO historico_saldo 
+            INSERT INTO cafe_historico_saldo 
             (id_pessoa, tipo_operacao, valor, saldo_anterior, saldo_novo, motivo, data_operacao)
             VALUES (?, 'credito', ?, ?, ?, ?, NOW())
         ");
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$id_pessoa, $valor, $pessoa['saldo'], $saldo_novo, $motivo]);
 
         // Atualizar saldo
-        $stmt = $db->prepare("UPDATE saldos_cartao SET saldo = saldo + ? WHERE id_saldo = ?");
+        $stmt = $db->prepare("UPDATE cafe_saldos_cartao SET saldo = saldo + ? WHERE id_saldo = ?");
         $stmt->execute([$valor, $pessoa['id_saldo']]);
 
         $db->commit();

@@ -23,7 +23,7 @@ try {
     $db = $database->getConnection();
 
     // Verificar se o QR Code já está em uso
-    $query = "SELECT id_pessoa FROM pessoas WHERE qr_code = :qr_code";
+    $query = "SELECT id_pessoa FROM cafe_pessoas WHERE qr_code = :qr_code";
     $stmt = $db->prepare($query);
     $stmt->bindParam(':qr_code', $qr_code);
     $stmt->execute();

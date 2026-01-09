@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['cartao'])) {
     $busca = trim($_POST['cartao']);
     $stmt = $pdo->prepare("
         SELECT p.id_pessoa
-        FROM pessoas p
-        LEFT JOIN cartoes c ON c.id_pessoa = p.id_pessoa
+        FROM cafe_pessoas p
+        LEFT JOIN cafe_cartoes c ON c.id_pessoa = p.id_pessoa
         WHERE c.codigo = ? OR p.cpf = ?
     ");
     $stmt->execute([$busca, $busca]);

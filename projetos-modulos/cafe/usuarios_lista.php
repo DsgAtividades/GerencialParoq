@@ -13,9 +13,9 @@ if($grupo != "Administrador"){
 
 $stmt = $pdo->query("
     SELECT u.*, g.nome as grupo_nome,
-    (SELECT COUNT(*) FROM grupos_permissoes gp WHERE gp.grupo_id = u.grupo_id) as total_permissoes
-    FROM usuarios u
-    LEFT JOIN grupos g ON u.grupo_id = g.id
+    (SELECT COUNT(*) FROM cafe_grupos_permissoes gp WHERE gp.grupo_id = u.grupo_id) as total_permissoes
+    FROM cafe_usuarios u
+    LEFT JOIN cafe_grupos g ON u.grupo_id = g.id
     $where
     ORDER BY u.nome
 ");

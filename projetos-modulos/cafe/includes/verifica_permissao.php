@@ -23,9 +23,9 @@ function verificarPermissao($permissaoNecessaria) {
         try {
             $stmt = $pdo->prepare("
                 SELECT COUNT(*) as tem_permissao 
-                FROM usuarios u
-                JOIN grupos_permissoes gp ON u.grupo_id = gp.grupo_id
-                JOIN permissoes p ON gp.permissao_id = p.id
+                FROM cafe_usuarios u
+                JOIN cafe_grupos_permissoes gp ON u.grupo_id = gp.grupo_id
+                JOIN cafe_permissoes p ON gp.permissao_id = p.id
                 WHERE u.id = ? AND p.nome = ? AND u.ativo = 1
             ");
             
@@ -62,9 +62,9 @@ function verificarPermissaoApi($permissaoNecessaria) {
     try {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) as tem_permissao 
-            FROM usuarios u
-            JOIN grupos_permissoes gp ON u.grupo_id = gp.grupo_id
-            JOIN permissoes p ON gp.permissao_id = p.id
+            FROM cafe_usuarios u
+            JOIN cafe_grupos_permissoes gp ON u.grupo_id = gp.grupo_id
+            JOIN cafe_permissoes p ON gp.permissao_id = p.id
             WHERE u.id = ? AND p.nome = ? AND u.ativo = 1
         ");
         
@@ -87,9 +87,9 @@ function temPermissao($permissao) {
     try {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) as tem_permissao 
-            FROM usuarios u
-            JOIN grupos_permissoes gp ON u.grupo_id = gp.grupo_id
-            JOIN permissoes p ON gp.permissao_id = p.id
+            FROM cafe_usuarios u
+            JOIN cafe_grupos_permissoes gp ON u.grupo_id = gp.grupo_id
+            JOIN cafe_permissoes p ON gp.permissao_id = p.id
             WHERE u.id = ? AND p.nome = ? AND u.ativo = 1
         ");
         
@@ -113,10 +113,10 @@ function verificaGrupoPermissao() {
     try {
         $stmt = $pdo->prepare("
             SELECT distinct g.nome as nome
-            FROM usuarios u
-            JOIN grupos_permissoes gp ON u.grupo_id = gp.grupo_id
-            JOIN permissoes p ON gp.permissao_id = p.id
-            JOIN grupos g on g.id = gp.grupo_id
+            FROM cafe_usuarios u
+            JOIN cafe_grupos_permissoes gp ON u.grupo_id = gp.grupo_id
+            JOIN cafe_permissoes p ON gp.permissao_id = p.id
+            JOIN cafe_grupos g on g.id = gp.grupo_id
             WHERE u.id = ? AND u.ativo = 1
         ");
         $stmt->execute([$_SESSION['usuario_id']]);

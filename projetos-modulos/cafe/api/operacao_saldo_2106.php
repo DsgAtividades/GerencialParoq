@@ -35,7 +35,7 @@ try {
     $pdo->beginTransaction();
 
     // Buscar saldo atual
-    $stmt = $pdo->prepare("SELECT sc.* FROM saldos_cartao sc WHERE id_pessoa = ?");
+    $stmt = $pdo->prepare("SELECT sc.* FROM cafe_saldos_cartao sc WHERE id_pessoa = ?");
     $stmt->execute([$dados['id_pessoa']]);
     $saldo_atual = $stmt->fetch();
 
@@ -52,7 +52,7 @@ try {
             throw new Exception('Saldo insuficiente');
         }
 
-        $stmt = $pdo->prepare("INSERT INTO saldos_cartao (id_pessoa, saldo) VALUES (?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO cafe_saldos_cartao (id_pessoa, saldo) VALUES (?, ?)");
         $stmt->execute([$dados['id_pessoa'], $valor]);
         $id_saldo = $pdo->lastInsertId();
         $saldo_anterior = 0;
@@ -65,7 +65,7 @@ try {
             throw new Exception('Saldo insuficiente');
         }
 
-        $stmt = $pdo->prepare("UPDATE saldos_cartao SET saldo = ? WHERE id_saldo = ?");
+        $stmt = $pdo->prepare("UPDATE cafe_saldos_cartao SET saldo = ? WHERE id_saldo = ?");
         $stmt->execute([$novo_saldo, $saldo_atual['id_saldo']]);
         $id_saldo = $saldo_atual['id_saldo'];
         $saldo_anterior = $saldo_atual['saldo'];
@@ -73,7 +73,7 @@ try {
 
     // Registrar operação no histórico
     $stmt = $pdo->prepare("
-        INSERT INTO historico_saldo 
+        INSERT INTO cafe_historico_saldo 
         (id_pessoa, tipo_operacao, valor, saldo_anterior, saldo_novo, motivo, data_operacao) 
         VALUES (?, ?, ?, ?, ?, ?, NOW())
     ");

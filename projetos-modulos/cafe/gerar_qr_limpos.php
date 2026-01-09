@@ -6,7 +6,7 @@ $database = new Database();
 $conn = $database->getConnection();
 
 try {
-    $sql = "CREATE TABLE IF NOT EXISTS cartoes (
+    $sql = "CREATE TABLE IF NOT EXISTS cafe_cartoes (
         id INT AUTO_INCREMENT PRIMARY KEY,
         codigo VARCHAR(11) UNIQUE NOT NULL,
         data_geracao DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -25,13 +25,13 @@ try {
             $numeros = gerarNumeroAleatorio();
             $codigo = 'pspa' .implode('', $numeros);
             $hashCode = 'pspa' .md5($codigo);
-            $stmt = $conn->prepare("SELECT COUNT(*) FROM cartoes WHERE codigo = ?");
+            $stmt = $conn->prepare("SELECT COUNT(*) FROM cafe_cartoes WHERE codigo = ?");
             $stmt->execute([$hashCode]);
             $existe = $stmt->fetchColumn() > 0;
         } while ($existe);
 
         try {
-            $stmt = $conn->prepare("INSERT INTO cartoes (codigo) VALUES (?)");
+            $stmt = $conn->prepare("INSERT INTO cafe_cartoes (codigo) VALUES (?)");
             $stmt->execute([$hashCode]);
             return $hashCode;
         } catch (PDOException $e) {

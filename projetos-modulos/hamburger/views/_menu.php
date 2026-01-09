@@ -60,7 +60,7 @@
           </a>
         </li>
         <li class="mt-4">
-          <a href="/gerencialParoquia/dashboard.html" class="nav-link d-flex align-items-center text-primary">
+          <a href="/gerencialParoq/dashboard.html" class="nav-link d-flex align-items-center text-primary">
             <span class="fs-5 me-2">⬅️</span> Voltar aos Módulos
           </a>
         </li>
@@ -119,7 +119,7 @@
       </a>
     </li>
     <li class="mt-4">
-      <a href="/gerencialParoquia/dashboard.html" class="nav-link d-flex align-items-center text-primary">
+      <a href="/gerencialParoq/dashboard.html" class="nav-link d-flex align-items-center text-primary">
         <span class="fs-5 me-2">⬅️</span> Voltar aos Módulos
       </a>
     </li>

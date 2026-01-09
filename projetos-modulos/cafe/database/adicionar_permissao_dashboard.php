@@ -6,7 +6,7 @@ try {
     $conn = $database->getConnection();
 
     // Inserir a permissão se não existir
-    $sql = "INSERT IGNORE INTO permissoes (nome, pagina) VALUES (:nome, :pagina)";
+    $sql = "INSERT IGNORE INTO cafe_permissoes (nome, pagina) VALUES (:nome, :pagina)";
     $stmt = $conn->prepare($sql);
     $stmt->execute([
         ':nome' => 'visualizar_dashboard',
@@ -14,9 +14,9 @@ try {
     ]);
 
     // Associar a permissão ao grupo Administrador
-    $sql = "INSERT IGNORE INTO grupos_permissoes (grupo_id, permissao_id)
+    $sql = "INSERT IGNORE INTO cafe_grupos_permissoes (grupo_id, permissao_id)
             SELECT g.id, p.id
-            FROM grupos g, permissoes p
+            FROM cafe_grupos g, cafe_permissoes p
             WHERE g.nome = 'Administrador'
             AND p.nome = 'visualizar_dashboard'";
     $stmt = $conn->prepare($sql);

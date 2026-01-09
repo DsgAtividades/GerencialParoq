@@ -34,15 +34,15 @@ $where[] = '(ve.estornada IS NULL OR ve.estornada = 0)';
 $where_sql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 // Busca categorias para o filtro
-$categorias = $pdo->query('SELECT id, nome FROM categorias ORDER BY nome')->fetchAll();
+$categorias = $pdo->query('SELECT id, nome FROM cafe_categorias ORDER BY nome')->fetchAll();
 
 // Consulta principal
 $sql = "
     SELECT ca.id as categoria_id, ca.nome, SUM(iv.quantidade * iv.valor_unitario) as total_vendas
-    FROM itens_venda iv
-    INNER JOIN vendas ve ON ve.id_venda = iv.id_venda
-    INNER JOIN produtos pd ON pd.id = iv.id_produto
-    INNER JOIN categorias ca ON ca.id = pd.categoria_id
+    FROM cafe_itens_venda iv
+    INNER JOIN cafe_vendas ve ON ve.id_venda = iv.id_venda
+    INNER JOIN cafe_produtos pd ON pd.id = iv.id_produto
+    INNER JOIN cafe_categorias ca ON ca.id = pd.categoria_id
     $where_sql
     GROUP BY ca.id, ca.nome
     ORDER BY total_vendas DESC

@@ -51,7 +51,7 @@ try {
     $database = new Database();
     $db = $database->getConnection();
 
-    $stmt = $db->prepare("SELECT id_pessoa FROM pessoas WHERE cpf = ? AND id_pessoa != ?");
+    $stmt = $db->prepare("SELECT id_pessoa FROM cafe_pessoas WHERE cpf = ? AND id_pessoa != ?");
     $stmt->execute([
         substr($cpf, 0, 3) . '.' . substr($cpf, 3, 3) . '.' . substr($cpf, 6, 3) . '-' . substr($cpf, 9, 2),
         $id_pessoa

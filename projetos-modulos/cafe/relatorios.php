@@ -26,7 +26,7 @@ try {
         SELECT COUNT(*) as total_vendas,
                SUM(valor_total) as valor_total_vendas,
                COUNT(DISTINCT id_pessoa) as total_clientes
-        FROM vendas
+        FROM cafe_vendas
         WHERE DATE(data_venda) BETWEEN ? AND ?
     ");
     $stmt->execute([$data_inicio, $data_fim]);
@@ -39,9 +39,9 @@ try {
             SUM(iv.quantidade) as total_vendido,
             SUM(iv.quantidade * iv.valor_unitario) as valor_total,
             COUNT(DISTINCT v.id_pessoa) as total_clientes
-        FROM itens_venda iv
-        JOIN vendas v ON iv.id_venda = v.id_venda
-        JOIN produtos p ON iv.id_produto = p.id
+        FROM cafe_itens_venda iv
+        JOIN cafe_vendas v ON iv.id_venda = v.id_venda
+        JOIN cafe_produtos p ON iv.id_produto = p.id
         WHERE DATE(v.data_venda) BETWEEN ? AND ?
         GROUP BY p.id, p.nome_produto
         ORDER BY total_vendido DESC
@@ -56,8 +56,8 @@ try {
             p.nome,
             COUNT(DISTINCT v.id_venda) as total_compras,
             SUM(v.valor_total) as valor_total
-        FROM vendas v
-        JOIN pessoas p ON v.id_pessoa = p.id_pessoa
+        FROM cafe_vendas v
+        JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
         WHERE DATE(v.data_venda) BETWEEN ? AND ?
         GROUP BY p.id_pessoa, p.nome
         ORDER BY valor_total DESC
@@ -75,8 +75,8 @@ try {
             (p.estoque * p.preco) as valor_total,
             c.nome as categoria_nome,
             c.icone as categoria_icone
-        FROM produtos p
-        LEFT JOIN categorias c ON p.categoria_id = c.id
+        FROM cafe_produtos p
+        LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
         WHERE p.estoque > 0
         ORDER BY p.estoque DESC
     ");

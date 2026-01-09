@@ -26,7 +26,7 @@ try {
     // Buscar cliente e seu saldo
     $stmt = $db->prepare("
         SELECT codigo, id_pessoa, usado 
-        FROM cartoes
+        FROM cafe_cartoes
         WHERE codigo = ?
     ");
     

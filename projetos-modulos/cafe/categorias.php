@@ -10,14 +10,14 @@ verificarPermissao('gerenciar_categorias');
 if (isset($_POST['excluir']) && isset($_POST['id'])) {
     try {
         // Verificar se existem produtos usando esta categoria
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM produtos WHERE categoria_id = ?");
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM cafe_produtos WHERE categoria_id = ?");
         $stmt->execute([$_POST['id']]);
         $count = $stmt->fetchColumn();
 
         if ($count > 0) {
             exibirAlerta("Não é possível excluir esta categoria pois existem produtos vinculados a ela.", "danger");
         } else {
-            $stmt = $pdo->prepare("DELETE FROM categorias WHERE id = ?");
+            $stmt = $pdo->prepare("DELETE FROM cafe_categorias WHERE id = ?");
             $stmt->execute([$_POST['id']]);
             exibirAlerta("Categoria excluída com sucesso!");
         }
@@ -29,7 +29,7 @@ if (isset($_POST['excluir']) && isset($_POST['id'])) {
 // Processar ativação/desativação
 if (isset($_POST['toggle_status']) && isset($_POST['id'])) {
     try {
-        $stmt = $pdo->prepare("UPDATE categorias SET ativo = NOT ativo WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE cafe_categorias SET ativo = NOT ativo WHERE id = ?");
         $stmt->execute([$_POST['id']]);
         exibirAlerta("Status da categoria atualizado com sucesso!");
     } catch(PDOException $e) {
@@ -39,8 +39,8 @@ if (isset($_POST['toggle_status']) && isset($_POST['id'])) {
 
 // Buscar todas as categorias
 $query = "SELECT c.id, c.nome, c.icone, c.ordem, 
-                 (SELECT COUNT(*) FROM produtos WHERE categoria_id = c.id) as total_produtos 
-          FROM categorias c 
+                 (SELECT COUNT(*) FROM cafe_produtos WHERE categoria_id = c.id) as total_produtos 
+          FROM cafe_categorias c 
           ORDER BY c.ordem, c.nome";
 $stmt = $pdo->query($query);
 $categorias = $stmt->fetchAll();

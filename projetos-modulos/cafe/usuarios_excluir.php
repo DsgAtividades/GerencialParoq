@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = ?");
+        $stmt = $pdo->prepare("DELETE FROM cafe_usuarios WHERE id = ?");
         $stmt->execute([$id]);
 
         if ($stmt->rowCount() > 0) {

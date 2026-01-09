@@ -13,7 +13,7 @@ if($grupo != "Administrador"){
 $id = $_GET['id'] ?? 0;
 
 // Verificar se o usuário existe
-$stmt = $pdo->prepare("SELECT * FROM usuarios WHERE id = ?");
+$stmt = $pdo->prepare("SELECT * FROM cafe_usuarios WHERE id = ?");
 $stmt->execute([$id]);
 $usuario = $stmt->fetch();
 
@@ -39,17 +39,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($erros)) {
         try {
             // Verificar se o email já existe para outro usuário
-            $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ? AND id != ?");
+            $stmt = $pdo->prepare("SELECT id FROM cafe_usuarios WHERE email = ? AND id != ?");
             $stmt->execute([$email, $id]);
             if ($stmt->fetch()) {
                 exibirAlerta("Este email já está cadastrado para outro usuário", "danger");
             } else {
                 // Atualizar usuário
                 if (!empty($senha)) {
-                    $sql = "UPDATE usuarios SET nome = ?, email = ?, senha = ?, grupo_id = ?, ativo = ? WHERE id = ?";
+                    $sql = "UPDATE cafe_usuarios SET nome = ?, email = ?, senha = ?, grupo_id = ?, ativo = ? WHERE id = ?";
                     $params = [$nome, $email, password_hash($senha, PASSWORD_DEFAULT), $grupo_id, $ativo, $id];
                 } else {
-                    $sql = "UPDATE usuarios SET nome = ?, email = ?, grupo_id = ?, ativo = ? WHERE id = ?";
+                    $sql = "UPDATE cafe_usuarios SET nome = ?, email = ?, grupo_id = ?, ativo = ? WHERE id = ?";
                     $params = [$nome, $email, $grupo_id, $ativo, $id];
                 }
 
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Buscar grupos para o select
-$stmt = $pdo->query("SELECT id, nome FROM grupos $where ORDER BY nome");
+$stmt = $pdo->query("SELECT id, nome FROM cafe_grupos $where ORDER BY nome");
 $grupos = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>

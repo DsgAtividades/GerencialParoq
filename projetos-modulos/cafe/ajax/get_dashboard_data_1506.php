@@ -64,10 +64,10 @@ if ($data_inicio == ''){
 }
 // Construir query base
 $query_base = "
-    FROM itens_venda vi
-    JOIN produtos p ON vi.id_produto = p.id
-    JOIN vendas v ON vi.id_venda = v.id_venda
-    LEFT JOIN categorias c ON p.categoria_id = c.id
+    FROM cafe_itens_venda vi
+    JOIN cafe_produtos p ON vi.id_produto = p.id
+    JOIN cafe_vendas v ON vi.id_venda = v.id_venda
+    LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
     WHERE v.estornada is null and date(v.data_venda) BETWEEN :data_inicio AND :data_fim
 ";
 
@@ -133,8 +133,8 @@ $query = "
         SUM(vi.quantidade * vi.valor_unitario) as valor_vendido,
         ROUND((SUM(vi.quantidade * vi.valor_unitario) / (
             SELECT SUM(vi2.quantidade * vi2.valor_unitario)
-            FROM itens_venda vi2
-            JOIN vendas v2 ON vi2.id_venda = v2.id_venda
+            FROM cafe_itens_venda vi2
+            JOIN cafe_vendas v2 ON vi2.id_venda = v2.id_venda
             WHERE v2.estornada is null and date(v2.data_venda) BETWEEN :data_inicio AND :data_fim
         )) * 100, 1) as percentual
     " . $query_base . "
@@ -154,8 +154,8 @@ foreach ($produtos as $produto) {
     
     $query = "
         SELECT SUM(vi.quantidade * vi.valor_unitario) as valor_anterior
-        FROM itens_venda vi
-        JOIN vendas v ON vi.id_venda = v.id_venda
+        FROM cafe_itens_venda vi
+        JOIN cafe_vendas v ON vi.id_venda = v.id_venda
         WHERE v.estornada is null and vi.id_produto = :produto_id
         AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim AND vi.id_produto = :produto_id
     ";
@@ -170,10 +170,10 @@ foreach ($produtos as $produto) {
 
 // --- INÍCIO: DADOS DE SALDO DOS CARTÕES ---
 // Saldo total dos cartões ativos (apenas saldo >= 0)
-//$stmt = $pdo->query("SELECT SUM(saldo) as saldo_total, COUNT(*) as qtd_cartoes, AVG(saldo) as saldo_medio FROM saldos_cartao a join historico_saldo b on b.id_pessoa = a.id_pessoa WHERE a.id_pessoa IS NOT NULL AND saldo >= 0 AND b.tipo_operacao = 'credito' AND date(b.data_operacao) between '".$data_inicio."' and '".$data_fim."'");
+//$stmt = $pdo->query("SELECT SUM(saldo) as saldo_total, COUNT(*) as qtd_cartoes, AVG(saldo) as saldo_medio FROM cafe_saldos_cartao a join cafe_historico_saldo b on b.id_pessoa = a.id_pessoa WHERE a.id_pessoa IS NOT NULL AND saldo >= 0 AND b.tipo_operacao = 'credito' AND date(b.data_operacao) between '".$data_inicio."' and '".$data_fim."'");
 $stmt = $pdo->query("select sum(valor) as saldo_total, AVG(valor) as saldo_medio, count(distinct a.id_pessoa) as qtd_cartoes
-        from historico_saldo a
-        join pessoas b on b.id_pessoa = a.id_pessoa
+        from cafe_historico_saldo a
+        join cafe_pessoas b on b.id_pessoa = a.id_pessoa
         where date(data_operacao) between '".$data_inicio."' and '".$data_fim."'
         and tipo_operacao in ('debito')
         and motivo NOT REGEXP 'Estorno' ");
@@ -186,16 +186,16 @@ $stmt = $pdo->query("
       SUM(CASE WHEN saldo >= 10 AND saldo < 50 THEN 1 ELSE 0 END) AS faixa_10_50,
       SUM(CASE WHEN saldo >= 50 AND saldo < 100 THEN 1 ELSE 0 END) AS faixa_50_100,
       SUM(CASE WHEN saldo >= 100 THEN 1 ELSE 0 END) AS faixa_100_acima
-    FROM saldos_cartao WHERE id_pessoa IS NOT NULL AND saldo >= 0
+    FROM cafe_saldos_cartao WHERE id_pessoa IS NOT NULL AND saldo >= 0
 ");
 $faixas = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Top 10 maiores saldos (pode incluir negativos, mas normalmente só positivos aparecem no topo)
 $stmt = $pdo->query("
     SELECT p.nome, c.codigo as cartao, s.saldo
-    FROM saldos_cartao s
-    JOIN pessoas p ON s.id_pessoa = p.id_pessoa
-    JOIN cartoes c ON c.id_pessoa = p.id_pessoa
+    FROM cafe_saldos_cartao s
+    JOIN cafe_pessoas p ON s.id_pessoa = p.id_pessoa
+    JOIN cafe_cartoes c ON c.id_pessoa = p.id_pessoa
     WHERE s.saldo >= 0
     ORDER BY s.saldo DESC
     LIMIT 10
@@ -204,21 +204,21 @@ $top_saldos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 
 // Total de créditos já inseridos nos cartões (apenas créditos positivos)
-$stmt = $pdo->query("SELECT SUM(valor) as total_creditos FROM historico_saldo WHERE tipo_operacao = 'credito' and motivo not like('%Estorno ') AND valor > 0 AND date(data_operacao) between '".$data_inicio."' and '".$data_fim."'");
+$stmt = $pdo->query("SELECT SUM(valor) as total_creditos FROM cafe_historico_saldo WHERE tipo_operacao = 'credito' and motivo not like('%Estorno ') AND valor > 0 AND date(data_operacao) between '".$data_inicio."' and '".$data_fim."'");
 $total_creditos = $stmt->fetchColumn();
 
 // Total de custo do cartoes
-$stmt = $pdo->query("SELECT SUM(valor*-1) as total_cartao, count(id_historico) as qtde FROM historico_saldo WHERE tipo_operacao = 'custo cartao' AND date(data_operacao) between '".$data_inicio."' and '".$data_fim."'");
+$stmt = $pdo->query("SELECT SUM(valor*-1) as total_cartao, count(id_historico) as qtde FROM cafe_historico_saldo WHERE tipo_operacao = 'custo cartao' AND date(data_operacao) between '".$data_inicio."' and '".$data_fim."'");
 $total_cartao = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Total estornado
-$stmt = $pdo->query("SELECT SUM(valor) as total_estorno, count(id_historico) as qtde FROM historico_saldo WHERE tipo_operacao = 'debito' AND motivo = 'Estorno' AND date(data_operacao) between '".$data_inicio."' and '".$data_fim."'");
+$stmt = $pdo->query("SELECT SUM(valor) as total_estorno, count(id_historico) as qtde FROM cafe_historico_saldo WHERE tipo_operacao = 'debito' AND motivo = 'Estorno' AND date(data_operacao) between '".$data_inicio."' and '".$data_fim."'");
 $total_estorno = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Cartoes ativos
 $stmt = $pdo->query("select count(distinct a.id_pessoa) as qtd_cartoes
-        from historico_saldo a
-        join pessoas b on b.id_pessoa = a.id_pessoa
+        from cafe_historico_saldo a
+        join cafe_pessoas b on b.id_pessoa = a.id_pessoa
         where date(data_operacao) between '".$data_inicio."' and '".$data_fim."'
         and motivo NOT REGEXP 'Estorno' ");
 $cartoes_uso = $stmt->fetch(PDO::FETCH_ASSOC);

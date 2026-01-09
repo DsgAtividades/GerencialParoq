@@ -15,9 +15,9 @@ if ($qrcode) {
         SELECT 
             p.nome,
             COALESCE(sc.saldo, 0) as saldo_atual
-        FROM pessoas p 
-        LEFT JOIN cartoes c ON p.id_pessoa = c.id_pessoa
-        LEFT JOIN saldos_cartao sc ON p.id_pessoa = sc.id_pessoa
+FROM cafe_pessoas p
+        LEFT JOIN cafe_cartoes c ON p.id_pessoa = c.id_pessoa
+        LEFT JOIN cafe_saldos_cartao sc ON p.id_pessoa = sc.id_pessoa
         WHERE c.codigo = :qrcode
     ";
     
@@ -29,9 +29,9 @@ if ($qrcode) {
     if ($participante) {
         $query = "
             SELECT h.*, p.nome, p.cpf
-            FROM historico_saldo h
-            JOIN pessoas p ON h.id_pessoa = p.id_pessoa
-            JOIN cartoes c ON p.id_pessoa = c.id_pessoa
+            FROM cafe_historico_saldo h
+            JOIN cafe_pessoas p ON h.id_pessoa = p.id_pessoa
+            JOIN cafe_cartoes c ON p.id_pessoa = c.id_pessoa
             WHERE c.codigo = :qrcode
             ORDER BY h.data_operacao DESC
         ";

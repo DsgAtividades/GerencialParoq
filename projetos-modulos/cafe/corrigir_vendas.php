@@ -30,10 +30,10 @@ $conn->exec('SET FOREIGN_KEY_CHECKS=0');
 
 try {
     // 1. Adicionar coluna valor_total em vendas se não existir
-    if (!colunaExiste($conn, 'vendas', 'valor_total')) {
+    if (!colunaExiste($conn, 'cafe_vendas', 'valor_total')) {
         $conn->beginTransaction();
         if (executarQuery($conn, 
-            "ALTER TABLE vendas ADD COLUMN valor_total DECIMAL(10,2) DEFAULT 0",
+            "ALTER TABLE cafe_vendas ADD COLUMN valor_total DECIMAL(10,2) DEFAULT 0",
             "Adicionando coluna valor_total em vendas"
         )) {
             $conn->commit();
@@ -45,10 +45,10 @@ try {
     }
 
     // 2. Adicionar coluna valor_total em itens_venda se não existir
-    if (!colunaExiste($conn, 'itens_venda', 'valor_total')) {
+    if (!colunaExiste($conn, 'cafe_itens_venda', 'valor_total')) {
         $conn->beginTransaction();
         if (executarQuery($conn, 
-            "ALTER TABLE itens_venda ADD COLUMN valor_total DECIMAL(10,2)",
+            "ALTER TABLE cafe_itens_venda ADD COLUMN valor_total DECIMAL(10,2)",
             "Adicionando coluna valor_total em itens_venda"
         )) {
             $conn->commit();
@@ -62,8 +62,8 @@ try {
     // 3. Remover triggers antigos
     $conn->beginTransaction();
     $success = true;
-    $success &= executarQuery($conn, "DROP TRIGGER IF EXISTS after_item_venda_insert", "Removendo trigger insert antigo");
-    $success &= executarQuery($conn, "DROP TRIGGER IF EXISTS after_item_venda_update", "Removendo trigger update antigo");
+    $success &= executarQuery($conn, "DROP TRIGGER IF EXISTS after_cafe_item_venda_insert", "Removendo trigger insert antigo");
+    $success &= executarQuery($conn, "DROP TRIGGER IF EXISTS after_cafe_item_venda_update", "Removendo trigger update antigo");
     if ($success) {
         $conn->commit();
     } else {
@@ -73,7 +73,7 @@ try {
     // 4. Configurar coluna calculada
     $conn->beginTransaction();
     if (executarQuery($conn, 
-        "ALTER TABLE itens_venda MODIFY COLUMN valor_total DECIMAL(10,2) 
+        "ALTER TABLE cafe_itens_venda MODIFY COLUMN valor_total DECIMAL(10,2) 
          GENERATED ALWAYS AS (quantidade * valor_unitario) STORED",
         "Configurando coluna calculada valor_total"
     )) {
@@ -84,25 +84,25 @@ try {
     
     // 5. Criar novos triggers
     $triggers = [
-        "CREATE TRIGGER after_item_venda_insert AFTER INSERT ON itens_venda
+        "CREATE TRIGGER after_cafe_item_venda_insert AFTER INSERT ON cafe_itens_venda
          FOR EACH ROW
          BEGIN
-             UPDATE vendas 
+             UPDATE cafe_vendas 
              SET valor_total = (
                  SELECT COALESCE(SUM(valor_total), 0)
-                 FROM itens_venda 
+FROM cafe_itens_venda
                  WHERE id_venda = NEW.id_venda
              )
              WHERE id_venda = NEW.id_venda;
          END" => "Criando trigger para INSERT",
 
-        "CREATE TRIGGER after_item_venda_update AFTER UPDATE ON itens_venda
+        "CREATE TRIGGER after_cafe_item_venda_update AFTER UPDATE ON cafe_itens_venda
          FOR EACH ROW
          BEGIN
-             UPDATE vendas 
+             UPDATE cafe_vendas 
              SET valor_total = (
                  SELECT COALESCE(SUM(valor_total), 0)
-                 FROM itens_venda 
+FROM cafe_itens_venda
                  WHERE id_venda = NEW.id_venda
              )
              WHERE id_venda = NEW.id_venda;
@@ -143,10 +143,10 @@ try {
     echo "<br>Recalculando valores totais das vendas...<br>";
     
     $conn->beginTransaction();
-    $sql = "UPDATE vendas v 
+    $sql = "UPDATE cafe_vendas v
             SET valor_total = (
                 SELECT COALESCE(SUM(valor_total), 0)
-                FROM itens_venda 
+                FROM cafe_itens_venda
                 WHERE id_venda = v.id_venda
             )";
     

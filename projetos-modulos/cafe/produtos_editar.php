@@ -8,7 +8,7 @@ require_once 'includes/funcoes.php';
 verificarPermissao('produtos_editar');
 
 // Buscar categorias para o select
-$stmt = $pdo->query("SELECT id, nome, icone FROM categorias ORDER BY ordem, nome");
+$stmt = $pdo->query("SELECT id, nome, icone FROM cafe_categorias ORDER BY ordem, nome");
 $categorias = $stmt->fetchAll();
 
 // Verificar se foi passado um ID
@@ -22,8 +22,8 @@ if ($id <= 0) {
 // Buscar dados do produto
 $stmt = $pdo->prepare("
     SELECT p.*, c.nome as nome_categoria, c.icone as categoria_icone 
-    FROM produtos p 
-    LEFT JOIN categorias c ON p.categoria_id = c.id 
+    FROM cafe_produtos p 
+    LEFT JOIN cafe_categorias c ON p.categoria_id = c.id 
     WHERE p.id = ?
 ");
 $stmt->execute([$id]);
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // Atualizar produto
-        $stmt = $pdo->prepare("UPDATE produtos SET nome_produto = ?, categoria_id = ?, preco = ?, estoque = ? WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE cafe_produtos SET nome_produto = ?, categoria_id = ?, preco = ?, estoque = ? WHERE id = ?");
         $stmt->execute([$nome, $categoria_id, $preco, $estoque, $id]);
         
         header('Location: produtos.php?success=updated');

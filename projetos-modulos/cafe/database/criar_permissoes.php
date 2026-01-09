@@ -3,8 +3,8 @@ require_once '../includes/conexao.php';
 
 try {
     // Limpar todas as permissões existentes
-    $pdo->exec("DELETE FROM grupos_permissoes");
-    $pdo->exec("DELETE FROM permissoes");
+    $pdo->exec("DELETE FROM cafe_grupos_permissoes");
+    $pdo->exec("DELETE FROM cafe_permissoes");
     
     // Inserir permissões
     $permissoes = [
@@ -35,21 +35,21 @@ try {
     ];
 
     // Inserir as permissões
-    $stmt = $pdo->prepare("INSERT INTO permissoes (nome, pagina) VALUES (?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO cafe_permissoes (nome, pagina) VALUES (?, ?)");
     foreach ($permissoes as $perm) {
         $stmt->execute($perm);
     }
 
     // Obter o ID do grupo Administrador
-    $stmt = $pdo->query("SELECT id FROM grupos WHERE nome = 'Administrador' LIMIT 1");
+    $stmt = $pdo->query("SELECT id FROM cafe_grupos WHERE nome = 'Administrador' LIMIT 1");
     $grupo = $stmt->fetch();
     $grupoAdminId = $grupo['id'] ?? null;
 
     if ($grupoAdminId) {
         // Dar todas as permissões para o grupo Administrador
         $stmt = $pdo->prepare("
-            INSERT INTO grupos_permissoes (grupo_id, permissao_id)
-            SELECT ?, id FROM permissoes
+            INSERT INTO cafe_grupos_permissoes (grupo_id, permissao_id)
+            SELECT ?, id FROM cafe_permissoes
         ");
         $stmt->execute([$grupoAdminId]);
     }

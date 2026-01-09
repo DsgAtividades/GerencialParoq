@@ -18,8 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("
                 SELECT u.*, g.nome as grupo_nome 
-                FROM usuarios u
-                LEFT JOIN grupos g ON u.grupo_id = g.id
+                FROM cafe_usuarios u
+                LEFT JOIN cafe_grupos g ON u.grupo_id = g.id
                 WHERE u.email = ? AND u.ativo = 1
             ");
             $stmt->execute([$email]);
@@ -36,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Buscar permissões do usuário
                 $stmt = $pdo->prepare("
                     SELECT p.nome
-                    FROM permissoes p
-                    JOIN grupos_permissoes gp ON p.id = gp.permissao_id
+                    FROM cafe_permissoes p
+                    JOIN cafe_grupos_permissoes gp ON p.id = gp.permissao_id
                     WHERE gp.grupo_id = ?
                 ");
                 $stmt->execute([$usuario['grupo_id']]);

@@ -8,7 +8,7 @@ verificarPermissao('vendas_incluir');
 
 // Buscar produtos disponíveis
 $stmt = $pdo->query("SELECT id, nome_produto, preco, estoque 
-                    FROM produtos 
+                    FROM cafe_produtos 
                     WHERE estoque > 0 AND bloqueado = 0 
                     ORDER BY nome_produto");
 $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);

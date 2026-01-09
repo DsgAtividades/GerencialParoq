@@ -8,7 +8,7 @@ $conn = getConnection();
 $produto_id = isset($_GET['id']) ? $_GET['id'] : null;
 
 // Busca produtos
-$sql = "SELECT id_produto, nome_produto, quantidade_estoque FROM produtos";
+$sql = "SELECT id_produto, nome_produto, quantidade_estoque FROM cafe_produtos";
 if ($produto_id) {
     $sql .= " WHERE id_produto = ?";
 }

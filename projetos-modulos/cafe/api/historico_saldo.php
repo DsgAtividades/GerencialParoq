@@ -22,7 +22,7 @@ try {
 
     // Buscar histórico de saldo
     $query = "SELECT tipo, valor, data_hora 
-              FROM historico_saldo 
+              FROM cafe_historico_saldo 
               WHERE id_pessoa = :id_pessoa 
               ORDER BY data_hora DESC 
               LIMIT 50";

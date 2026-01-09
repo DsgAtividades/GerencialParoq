@@ -14,8 +14,8 @@ $tipo = isset($_GET['tipo']) ? $_GET['tipo'] : null;
 // Construir query
 $query = "
     SELECT h.*, p.nome, p.cpf
-    FROM historico_saldo h
-    JOIN pessoas p ON h.id_pessoa = p.id_pessoa
+    FROM cafe_historico_saldo h
+    JOIN cafe_pessoas p ON h.id_pessoa = p.id_pessoa
     WHERE 1=1
 ";
 
@@ -37,7 +37,7 @@ $stmt = $pdo->query($query);
 $historico = $stmt->fetchAll();
 
 // Buscar lista de pessoas para o filtro
-$stmt = $pdo->query("SELECT id_pessoa, nome FROM pessoas ORDER BY nome");
+$stmt = $pdo->query("SELECT id_pessoa, nome FROM cafe_pessoas ORDER BY nome");
 $pessoas = $stmt->fetchAll();
 
 include 'includes/header.php';

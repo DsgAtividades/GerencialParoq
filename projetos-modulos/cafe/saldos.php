@@ -11,9 +11,9 @@ $query = "SELECT
             sc.saldo,
             sc.id_saldo as saldo_id,
             COALESCE(MAX(hs.data_operacao)) as ultima_atualizacao
-          FROM pessoas p
-          LEFT JOIN saldos_cartao sc ON p.id_pessoa = sc.id_pessoa
-          LEFT JOIN historico_saldo hs ON p.id_pessoa = hs.id_pessoa
+          FROM cafe_pessoas p
+          LEFT JOIN cafe_saldos_cartao sc ON p.id_pessoa = sc.id_pessoa
+          LEFT JOIN cafe_historico_saldo hs ON p.id_pessoa = hs.id_pessoa
           GROUP BY p.id_pessoa
           ORDER BY p.nome";
 $stmt = $pdo->query($query);

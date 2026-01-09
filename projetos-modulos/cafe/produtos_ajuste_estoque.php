@@ -34,7 +34,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             }
             
             // Buscar produto
-            $stmt = $db->prepare("SELECT id, nome, estoque FROM produtos WHERE id = ?");
+            $stmt = $db->prepare("SELECT id, nome, estoque FROM cafe_produtos WHERE id = ?");
             $stmt->execute([$id]);
             $produto = $stmt->fetch();
             
@@ -53,12 +53,12 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQU
             }
             
             // Atualizar estoque
-            $stmt = $db->prepare("UPDATE produtos SET estoque = ? WHERE id = ?");
+            $stmt = $db->prepare("UPDATE cafe_produtos SET estoque = ? WHERE id = ?");
             $stmt->execute([$novo_estoque, $id]);
             
             // Registrar histórico
             $stmt = $db->prepare("
-                INSERT INTO historico_estoque 
+                INSERT INTO cafe_historico_estoque 
                 (produto_id, tipo, quantidade, estoque_anterior, estoque_atual, motivo, data_operacao) 
                 VALUES (?, ?, ?, ?, ?, ?, NOW())
             ");
@@ -110,8 +110,8 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id > 0) {
     $stmt = $db->prepare("
         SELECT p.*, c.nome as categoria_nome, c.icone as categoria_icone 
-        FROM produtos p
-        LEFT JOIN categorias c ON p.categoria_id = c.id
+        FROM cafe_produtos p
+        LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
         WHERE p.id = ?
     ");
     $stmt->execute([$id]);
@@ -165,8 +165,8 @@ include 'includes/header.php';
                                     <?php
                                     $stmt = $db->query("
                                         SELECT p.id, p.nome, p.estoque, c.nome as categoria_nome, c.icone as categoria_icone
-                                        FROM produtos p
-                                        LEFT JOIN categorias c ON p.categoria_id = c.id
+                                        FROM cafe_produtos p
+                                        LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
                                         ORDER BY c.ordem, c.nome, p.nome
                                     ");
                                     $produtos = $stmt->fetchAll();
@@ -244,8 +244,8 @@ include 'includes/header.php';
                                 <?php
                                 $stmt = $db->query("
                                     SELECT h.*, p.nome as produto_nome
-                                    FROM historico_estoque h
-                                    JOIN produtos p ON h.produto_id = p.id
+                                    FROM cafe_historico_estoque h
+                                    JOIN cafe_produtos p ON h.produto_id = p.id
                                     ORDER BY h.data_registro DESC
                                     LIMIT 5
                                 ");

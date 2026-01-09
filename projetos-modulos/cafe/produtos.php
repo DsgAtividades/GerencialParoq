@@ -8,13 +8,13 @@ header('Content-Type: text/html; charset=utf-8');
 
 // // Adicionar coluna bloqueado se não existir
 // try {
-//     $db->query("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS bloqueado TINYINT(1) DEFAULT 0");
+//     $db->query("ALTER TABLE cafe_produtos ADD COLUMN IF NOT EXISTS bloqueado TINYINT(1) DEFAULT 0");
 // } catch (PDOException $e) {
 //     // Ignora erro se a coluna já existir
 // }
 
 // Buscar categorias para o filtro
-$stmt = $pdo->query("SELECT id, nome FROM categorias ORDER BY nome");
+$stmt = $pdo->query("SELECT id, nome FROM cafe_categorias ORDER BY nome");
 $categorias = $stmt->fetchAll();
 
 // Filtros
@@ -25,8 +25,8 @@ $apenas_sem_estoque = isset($_GET['apenas_sem_estoque']) ? true : false;
 
 // Construir query
 $query = "SELECT p.*, c.nome as categoria_nome 
-          FROM produtos p 
-          LEFT JOIN categorias c ON p.categoria_id = c.id 
+          FROM cafe_produtos p 
+          LEFT JOIN cafe_categorias c ON p.categoria_id = c.id 
           WHERE 1=1";
 $params = [];
 

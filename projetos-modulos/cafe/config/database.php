@@ -1,26 +1,24 @@
 <?php
+/**
+ * Arquivo de configuração de banco de dados do módulo Cafe
+ * Usa o arquivo principal de conexão da raiz do projeto
+ */
+
+// Incluir o arquivo principal de conexão da raiz
+require_once __DIR__ . '/../../../config/database_connection.php';
+
+/**
+ * Classe Database para compatibilidade com código existente
+ * Usa a conexão centralizada do projeto principal
+ */
 class Database {
-    private $host = 'dbhomolog.mysql.dbaas.com.br';
-    private $db_name = 'dbhomolog';
-    private $username = 'dbhomolog';
-    private $password = 'Dsg#1806';
     private $conn;
 
     public function getConnection() {
-        $this->conn = null;
-
-        try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4",
-                $this->username,
-                $this->password
-            );
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        } catch(PDOException $e) {
-            echo "Erro na conexão: " . $e->getMessage();
+        if ($this->conn === null) {
+            // Usa a conexão centralizada do projeto principal
+            $this->conn = DatabaseConnection::getInstance()->getConnection();
         }
-
         return $this->conn;
     }
 }

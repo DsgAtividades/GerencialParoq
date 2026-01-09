@@ -29,14 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($erros)) {
         try {
-            $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE email = ?");
+            $stmt = $pdo->prepare("SELECT id FROM cafe_usuarios WHERE email = ?");
             $stmt->execute([$email]);
             
             if ($stmt->fetch()) {
                 exibirAlerta("Este email já está cadastrado", "danger");
             } else {
                 $stmt = $pdo->prepare("
-                    INSERT INTO usuarios (nome, email, senha, grupo_id, ativo)
+                    INSERT INTO cafe_usuarios (nome, email, senha, grupo_id, ativo)
                     VALUES (?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Buscar grupos para o select
-$stmt = $pdo->query("SELECT id, nome FROM grupos $where ORDER BY nome");
+$stmt = $pdo->query("SELECT id, nome FROM cafe_grupos $where ORDER BY nome");
 $grupos = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>

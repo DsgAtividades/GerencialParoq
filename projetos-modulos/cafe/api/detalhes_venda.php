@@ -23,8 +23,8 @@ try {
             v.data_venda,
             v.valor_total,
             p.nome as nome_pessoa
-        FROM vendas v
-        JOIN pessoas p ON v.id_pessoa = p.id_pessoa
+        FROM cafe_vendas v
+        JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
         WHERE v.id_venda = ?
     ");
     $stmt->execute([$_GET['id']]);
@@ -40,8 +40,8 @@ try {
             iv.quantidade,
             iv.valor_unitario,
             p.nome_produto
-        FROM itens_venda iv
-        JOIN produtos p ON iv.id_produto = p.id_produto
+        FROM cafe_itens_venda iv
+        JOIN cafe_produtos p ON iv.id_produto = p.id_produto
         WHERE iv.id_venda = ?
     ");
     $stmt->execute([$_GET['id']]);
