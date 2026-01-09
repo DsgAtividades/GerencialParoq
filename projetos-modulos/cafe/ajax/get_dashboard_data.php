@@ -1,30 +1,40 @@
 <?php
+// Desabilitar exibição de erros para não quebrar o JSON
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// Definir header JSON primeiro para evitar qualquer output HTML
+header('Content-Type: application/json');
+
 require_once '../includes/conexao.php';
 require_once '../includes/verifica_permissao.php';
 require_once '../includes/funcoes.php';
 date_default_timezone_set('Etc/GMT+3');
-$permissao = verificarPermissaoApi('visualizar_dashboard');
 
-header('Content-Type: application/json');
 $dados = json_decode(file_get_contents('php://input'), true);
-//echo "data_inicio ".$dados['data_inicial'];
-//echo "data_final ".$dados['data_final'];
-if($permissao == 0){
+
+// Verificar permissão
+$permissao = verificarPermissaoApi('visualizar_dashboard');
+if(!isset($permissao['tem_permissao']) || $permissao['tem_permissao'] == 0){
     echo json_encode([
         'success' => false,
         'message' => 'Usuário sem permissão de acesso'
     ]);
+    exit;
 }
 
-// Obter parâmetros
+// Obter parâmetros com valores padrão
 //$periodo = $_POST['periodo'] ?? 'hoje';
-$data_inicio = $dados['data_inicial'];
-$data_fim = $dados['data_final'];
+$data_inicio = $dados['data_inicial'] ?? '';
+$data_fim = $dados['data_final'] ?? '';
 $data_inicio_anterior = $data_inicio;
 $data_fim_anterior = $data_fim;
-$categoria = $dados['categoria'];
-$busca = $dados['busca'];
+$categoria = $dados['categoria'] ?? '';
+$busca = $dados['busca'] ?? '';
 $hoje = date('Y-m-d');
+
+try {
 // // Definir datas com base no período
 // switch ($periodo) {
 //     case 'hoje':
@@ -99,6 +109,16 @@ $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $resumo_atual = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Garantir que resumo_atual tenha valores padrão se NULL
+if (!$resumo_atual) {
+    $resumo_atual = [
+        'total_vendas' => 0,
+        'quantidade_vendida' => 0,
+        'produtos_diferentes' => 0,
+        'ticket_medio' => 0
+    ];
+}
+
 // Obter resumo do período anterior para comparação
 // $params[':data_inicio'] = $data_inicio_anterior;
 // $params[':data_fim'] = $data_fim_anterior;
@@ -108,6 +128,15 @@ $params[':data_fim'] = $data_fim;
 $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $resumo_anterior = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Garantir que resumo_anterior tenha valores padrão se NULL
+if (!$resumo_anterior) {
+    $resumo_anterior = [
+        'total_vendas' => 0,
+        'quantidade_vendida' => 0,
+        'ticket_medio' => 0
+    ];
+}
 
 // Calcular variações
 $variacao_vendas = $resumo_anterior['total_vendas'] > 0 ? 
@@ -120,8 +149,21 @@ $variacao_ticket = $resumo_anterior['ticket_medio'] > 0 ?
     round((($resumo_atual['ticket_medio'] - $resumo_anterior['ticket_medio']) / $resumo_anterior['ticket_medio']) * 100, 1) : 0;
 
 // Obter dados dos produtos
-$params[':data_inicio'] = $data_inicio;
-$params[':data_fim'] = $data_fim;
+// Criar novos parâmetros para evitar conflito com a subquery
+$params_produtos = [
+    ':data_inicio' => $data_inicio,
+    ':data_fim' => $data_fim,
+    ':data_inicio_sub' => $data_inicio,
+    ':data_fim_sub' => $data_fim
+];
+
+if ($categoria) {
+    $params_produtos[':categoria_id'] = $categoria;
+}
+
+if ($busca) {
+    $params_produtos[':busca'] = "%{$busca}%";
+}
 
 $query = "
     SELECT 
@@ -135,7 +177,7 @@ $query = "
             SELECT SUM(vi2.quantidade * vi2.valor_unitario)
             FROM cafe_itens_venda vi2
             JOIN cafe_vendas v2 ON vi2.id_venda = v2.id_venda
-            WHERE v2.estornada is null and date(v2.data_venda) BETWEEN :data_inicio AND :data_fim
+            WHERE v2.estornada is null and date(v2.data_venda) BETWEEN :data_inicio_sub AND :data_fim_sub
         )) * 100, 1) as percentual
     " . $query_base . "
     GROUP BY p.id, p.nome_produto, c.nome, p.estoque
@@ -143,28 +185,36 @@ $query = "
 ";
 
 $stmt = $pdo->prepare($query);
-$stmt->execute($params);
+$stmt->execute($params_produtos);
 $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Garantir que produtos seja um array
+if (!is_array($produtos)) {
+    $produtos = [];
+}
+
 // Calcular tendência para cada produto
-foreach ($produtos as $produto) {
-    $params[':produto_id'] = $produto['id'];
-    $params[':data_inicio'] = $data_inicio_anterior;
-    $params[':data_fim'] = $data_fim_anterior;
+foreach ($produtos as $key => $produto) {
+    $params_tendencia = [
+        ':produto_id' => $produto['id'],
+        ':data_inicio' => $data_inicio_anterior,
+        ':data_fim' => $data_fim_anterior
+    ];
     
     $query = "
         SELECT SUM(vi.quantidade * vi.valor_unitario) as valor_anterior
         FROM cafe_itens_venda vi
         JOIN cafe_vendas v ON vi.id_venda = v.id_venda
         WHERE v.estornada is null and vi.id_produto = :produto_id
-        AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim AND vi.id_produto = :produto_id
+        AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim
     ";
     
     $stmt = $pdo->prepare($query);
-    $stmt->execute($params);
-    $valor_anterior = $stmt->fetch(PDO::FETCH_ASSOC)['valor_anterior'] ?? 0;
+    $stmt->execute($params_tendencia);
+    $resultado_tendencia = $stmt->fetch(PDO::FETCH_ASSOC);
+    $valor_anterior = $resultado_tendencia['valor_anterior'] ?? 0;
     
-    $produto['tendencia'] = $valor_anterior > 0 ? 
+    $produtos[$key]['tendencia'] = $valor_anterior > 0 ? 
         round((($produto['valor_vendido'] - $valor_anterior) / $valor_anterior) * 100, 1) : 0;
 }
 
@@ -178,6 +228,9 @@ $stmt = $pdo->query("select sum(valor) as saldo_total, AVG(valor) as saldo_medio
         and tipo_operacao in ('debito')
         and motivo NOT REGEXP 'Estorno' ");
 $dados_saldos = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$dados_saldos) {
+    $dados_saldos = ['saldo_total' => 0, 'saldo_medio' => 0, 'qtd_cartoes' => 0];
+}
 
 // Quantidade de cartões por faixa de saldo (apenas saldo >= 0)
 $stmt = $pdo->query("
@@ -189,6 +242,9 @@ $stmt = $pdo->query("
     FROM cafe_saldos_cartao WHERE id_pessoa IS NOT NULL AND saldo >= 0
 ");
 $faixas = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$faixas) {
+    $faixas = ['faixa_0_10' => 0, 'faixa_10_50' => 0, 'faixa_50_100' => 0, 'faixa_100_acima' => 0];
+}
 
 // Top 10 maiores saldos (pode incluir negativos, mas normalmente só positivos aparecem no topo)
 $stmt = $pdo->query("
@@ -201,6 +257,9 @@ $stmt = $pdo->query("
     LIMIT 10
 ");
 $top_saldos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+if (!is_array($top_saldos)) {
+    $top_saldos = [];
+}
 
 
 // Total de créditos já inseridos nos cartões (apenas créditos positivos)
@@ -210,10 +269,16 @@ $total_creditos = $stmt->fetchColumn();
 // Total de custo do cartoes
 $stmt = $pdo->query("SELECT SUM(valor*-1) as total_cartao, count(id_historico) as qtde FROM cafe_historico_saldo WHERE tipo_operacao = 'custo cartao' AND date(data_operacao) between '".$data_inicio."' and '".$data_fim."'");
 $total_cartao = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$total_cartao) {
+    $total_cartao = ['total_cartao' => 0, 'qtde' => 0];
+}
 
 // Total estornado
 $stmt = $pdo->query("SELECT SUM(valor) as total_estorno, count(id_historico) as qtde FROM cafe_historico_saldo WHERE tipo_operacao = 'debito' AND motivo = 'Estorno' AND date(data_operacao) between '".$data_inicio."' and '".$data_fim."'");
 $total_estorno = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$total_estorno) {
+    $total_estorno = ['total_estorno' => 0, 'qtde' => 0];
+}
 
 // Cartoes ativos
 $stmt = $pdo->query("select count(distinct a.id_pessoa) as qtd_cartoes
@@ -222,33 +287,45 @@ $stmt = $pdo->query("select count(distinct a.id_pessoa) as qtd_cartoes
         where date(data_operacao) between '".$data_inicio."' and '".$data_fim."'
         and motivo NOT REGEXP 'Estorno' ");
 $cartoes_uso = $stmt->fetch(PDO::FETCH_ASSOC);
+if (!$cartoes_uso) {
+    $cartoes_uso = ['qtd_cartoes' => 0];
+}
 
 // --- FIM: DADOS DE SALDO DOS CARTÕES ---
 
 // Retornar dados
 echo json_encode([
+    'success' => true,
     'resumo' => [
-        'total_vendas' => (float)$resumo_atual['total_vendas'],
-        'quantidade_vendida' => (int)$resumo_atual['quantidade_vendida'],
-        'produtos_diferentes' => (int)$resumo_atual['produtos_diferentes'],
-        'ticket_medio' => (float)$resumo_atual['ticket_medio'],
-        'variacao_vendas' => $variacao_vendas,
-        'variacao_quantidade' => $variacao_quantidade,
-        'variacao_ticket' => $variacao_ticket,
-        'custo_cartao' => (float)$total_cartao['total_cartao'],
-        'qtde_cartao' => $total_cartao['qtde'],
-        'total_estorno' => $total_estorno['total_estorno'],
-        'qtde_estorno' => $total_estorno['qtde']
+        'total_vendas' => (float)($resumo_atual['total_vendas'] ?? 0),
+        'quantidade_vendida' => (int)($resumo_atual['quantidade_vendida'] ?? 0),
+        'produtos_diferentes' => (int)($resumo_atual['produtos_diferentes'] ?? 0),
+        'ticket_medio' => (float)($resumo_atual['ticket_medio'] ?? 0),
+        'variacao_vendas' => $variacao_vendas ?? 0,
+        'variacao_quantidade' => $variacao_quantidade ?? 0,
+        'variacao_ticket' => $variacao_ticket ?? 0,
+        'custo_cartao' => (float)($total_cartao['total_cartao'] ?? 0),
+        'qtde_cartao' => (int)($total_cartao['qtde'] ?? 0),
+        'total_estorno' => (float)($total_estorno['total_estorno'] ?? 0),
+        'qtde_estorno' => (int)($total_estorno['qtde'] ?? 0)
     ],
-    'produtos' => $produtos,
+    'produtos' => $produtos ?? [],
     // --- INÍCIO: DADOS DE SALDO DOS CARTÕES ---
     'saldos_cartao' => [
         'saldo_total' => (float)($dados_saldos['saldo_total'] ?? 0),
         'qtd_cartoes' => (int)($cartoes_uso['qtd_cartoes'] ?? 0),
         'saldo_medio' => (float)($dados_saldos['saldo_medio'] ?? 0),
-        'faixas' => $faixas,
-        'top_saldos' => $top_saldos,
+        'faixas' => $faixas ?? [],
+        'top_saldos' => $top_saldos ?? [],
         'total_creditos' => (float)($total_creditos ?? 0)
     ]
     // --- FIM: DADOS DE SALDO DOS CARTÕES ---
 ]);
+} catch (Exception $e) {
+    // Retornar erro em formato JSON
+    echo json_encode([
+        'success' => false,
+        'message' => 'Erro ao processar dados: ' . $e->getMessage()
+    ]);
+    exit;
+}

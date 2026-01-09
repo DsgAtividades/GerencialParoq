@@ -53,11 +53,14 @@ function verificarPermissao($permissaoNecessaria) {
     
 }
 
-// Função para verificar permissão específica
+// Função para verificar permissão específica (para APIs - não faz redirect)
 function verificarPermissaoApi($permissaoNecessaria) {
     global $pdo;
     
-    verificarLogin();
+    // Verificar login sem fazer redirect (apenas retornar false se não estiver logado)
+    if (!isset($_SESSION['usuario_id'])) {
+        return ['tem_permissao' => 0];
+    }
 
     try {
         $stmt = $pdo->prepare("
@@ -72,7 +75,8 @@ function verificarPermissaoApi($permissaoNecessaria) {
         $resultado = $stmt->fetch();
         return $resultado;
     } catch(PDOException $e) {
-        die("Erro ao verificar permissão: " . $e->getMessage());
+        // Retornar erro em formato que não quebre o JSON
+        return ['tem_permissao' => 0, 'erro' => $e->getMessage()];
     }
 }
 

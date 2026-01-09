@@ -277,36 +277,64 @@ function atualizarDados() {
             },
             body: JSON.stringify(dados)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro na requisição: ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
+            // Verificar se há erro na resposta
+            if (data.success === false) {
+                alert('Erro: ' + (data.message || 'Erro desconhecido'));
+                console.error('Erro do servidor:', data);
+                return;
+            }
+            
+            // Verificar se a estrutura esperada existe
+            if (!data.resumo || !data.produtos) {
+                console.error('Estrutura de dados inválida:', data);
+                alert('Erro: Dados recebidos em formato inválido');
+                return;
+            }
+            
             // Atualizar cards
-            document.getElementById('totalVendas').textContent = formatMoney(data.resumo.total_vendas);
-            document.getElementById('quantidadeVendida').textContent = data.resumo.quantidade_vendida;
+            document.getElementById('totalVendas').textContent = formatMoney(data.resumo.total_vendas || 0);
+            document.getElementById('quantidadeVendida').textContent = data.resumo.quantidade_vendida || 0;
             
             //document.getElementById('ticketMedio').textContent = formatMoney(data.resumo.ticket_medio);
-            document.getElementById('custoCartao').textContent = formatMoney(data.resumo.custo_cartao);
-            document.getElementById('qtdeCartao').textContent = "Quantidade "+data.resumo.qtde_cartao;
-            document.getElementById('estornoTotalCartoes').textContent = formatMoney(data.resumo.total_estorno);
-            document.getElementById('qtdeEstorno').textContent = "Quantidade " + data.resumo.qtde_estorno;
+            document.getElementById('custoCartao').textContent = formatMoney(data.resumo.custo_cartao || 0);
+            document.getElementById('qtdeCartao').textContent = "Quantidade " + (data.resumo.qtde_cartao || 0);
+            document.getElementById('estornoTotalCartoes').textContent = formatMoney(data.resumo.total_estorno || 0);
+            document.getElementById('qtdeEstorno').textContent = "Quantidade " + (data.resumo.qtde_estorno || 0);
 
             // Atualizar comparações
-            document.getElementById('comparacaoVendas').textContent = `${data.resumo.variacao_vendas}% vs período anterior`;
-            document.getElementById('comparacaoQuantidade').textContent = `${data.resumo.variacao_quantidade}% vs período anterior`;
+            document.getElementById('comparacaoVendas').textContent = `${data.resumo.variacao_vendas || 0}% vs período anterior`;
+            document.getElementById('comparacaoQuantidade').textContent = `${data.resumo.variacao_quantidade || 0}% vs período anterior`;
             //document.getElementById('comparacaoTicket').textContent = `${data.resumo.variacao_ticket}% vs período anterior`;
 
             // Atualizar cards de saldo dos cartões
             if (data.saldos_cartao) {
-                document.getElementById('saldoTotalCartoes').textContent = formatMoney(data.saldos_cartao.total_creditos > 0 ? (data.saldos_cartao.total_creditos - data.saldos_cartao.saldo_total - data.resumo.custo_cartao) : 0);
+                const totalCreditos = data.saldos_cartao.total_creditos || 0;
+                const saldoTotal = data.saldos_cartao.saldo_total || 0;
+                const custoCartao = data.resumo.custo_cartao || 0;
+                document.getElementById('saldoTotalCartoes').textContent = formatMoney(totalCreditos > 0 ? (totalCreditos - saldoTotal - custoCartao) : 0);
                 //document.getElementById('saldoMedioCartoes').textContent = formatMoney(data.saldos_cartao.total_creditos > 0 ? data.saldos_cartao.saldo_medio : 0);
-                document.getElementById('qtdCartoesAtivos').textContent = data.saldos_cartao.total_creditos > 0 ? data.saldos_cartao.qtd_cartoes : 0;
-                document.getElementById('totalCreditosCartoes').textContent = formatMoney(data.saldos_cartao.total_creditos);
+                document.getElementById('qtdCartoesAtivos').textContent = totalCreditos > 0 ? (data.saldos_cartao.qtd_cartoes || 0) : 0;
+                document.getElementById('totalCreditosCartoes').textContent = formatMoney(totalCreditos);
             }
             
-            document.getElementById('totalReceita').textContent = formatMoney(data.resumo.total_vendas + data.resumo.custo_cartao);
+            document.getElementById('totalReceita').textContent = formatMoney((data.resumo.total_vendas || 0) + (data.resumo.custo_cartao || 0));
 
             // Limpar e preencher tabela
             const tbody = document.querySelector('#tabelaProdutos tbody');
             tbody.innerHTML = '';
+
+            // Verificar se produtos é um array
+            if (!Array.isArray(data.produtos)) {
+                console.error('Produtos não é um array:', data.produtos);
+                data.produtos = [];
+            }
 
             data.produtos.forEach(produto => {
                 const tr = document.createElement('tr');
@@ -340,6 +368,10 @@ function atualizarDados() {
                 `;
                 tbody.appendChild(tr);
             });
+        })
+        .catch(error => {
+            console.error('Erro ao buscar dados:', error);
+            alert('Erro ao carregar dados do dashboard. Verifique o console para mais detalhes.');
         });
     }
 }

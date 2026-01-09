@@ -237,10 +237,19 @@ verificarLogin();
         .list-group-item {
             border: none;
             padding: 0.5rem 1rem;
+            font-size: 0.875rem; /* Reduzido 1px do padrão (de ~15px para ~14px) */
         }
 
         .list-group-item:hover {
-            background-color: #e9ecef;
+            background-color: #F2E8C4;
+        }
+        
+        .list-group-item.active {
+            background-color: #F2E8C4 !important;
+        }
+        
+        .list-group-item.active:hover {
+            background-color: #F2E8C4;
         }
 
         .list-group-item i {
@@ -303,30 +312,46 @@ verificarLogin();
             <a href="dashboard_vendas.php" class="list-group-item list-group-item-action">
                 <i class="bi bi-graph-up"></i> Dashboard de Vendas
             </a>
+            
             <a href="vendas.php" class="list-group-item list-group-item-action">
                 <i class="bi bi-cart"></i> Relatório Vendas
             </a>
+            
+            <?php if (temPermissao('visualizar_relatorios')): ?>
+            <a href="saldos_historico.php" class="list-group-item list-group-item-action">
+                <i class="bi bi-clock-history"></i> Histórico Vendas
+            </a>
+            <?php endif; ?>
+            
             <a href="relatorio_categorias.php" class="list-group-item list-group-item-action">
                 <i class="bi bi-pie-chart"></i> Relatório por Categoria
             </a>
-            <a href="fechamento_caixa.php" class="list-group-item list-group-item-action">
-            <i class="bi bi-pie-chart"></i> Fechamento Caixa            </a>
-            <?php endif; ?>
             
-            <?php if (temPermissao('gerenciar_vendas_mobile')): ?>
-            <a href="vendas_mobile.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-phone"></i> Vendas
+            <a href="fechamento_caixa.php" class="list-group-item list-group-item-action">
+                <i class="bi bi-pie-chart"></i> Fechamento Caixa
+            </a>
+            
+            <?php if (temPermissao('visualizar_relatorios')): ?>
+            <a href="relatorios.php" class="list-group-item list-group-item-action">
+                <i class="bi bi-graph-up"></i> Relatórios
             </a>
             <?php endif; ?>
-
+            
+            <?php if (temPermissao('gerenciar_cartoes')): ?>
+            <a href="alocar_cartao_mobile.php" class="list-group-item list-group-item-action">
+                <i class="bi bi-credit-card"></i> Cadastrar Cliente
+            </a>
+            <?php endif; ?>
+            
             <?php if (temPermissao('gerenciar_pessoas')): ?>
             <a href="pessoas.php" class="list-group-item list-group-item-action">
                 <i class="bi bi-people"></i> Pessoas
             </a>
             <?php endif; ?>
-            <?php if (temPermissao('gerenciar_pessoas')): ?>
-            <a href="pessoas_troca.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-people"></i> Trocar Cartão
+            
+            <?php if (temPermissao('gerenciar_vendas_mobile')): ?>
+            <a href="vendas_mobile.php" class="list-group-item list-group-item-action">
+                <i class="bi bi-phone"></i> Vender
             </a>
             <?php endif; ?>
 
@@ -342,43 +367,28 @@ verificarLogin();
             </a>
             <?php endif; ?>
 
-            <!-- <?php if (temPermissao('gerenciar_produtos')): ?>
-            <a href="produtos.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-box-seam me-2"></i> Controle de Estoque
-            </a>
-            <?php endif; ?> -->
-
-            <?php if (temPermissao('visualizar_relatorios')): ?>
-            <a href="relatorios.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-graph-up"></i> Relatórios
-            </a>
-            <a href="saldos_historico.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-clock-history"></i> Histórico Vendas
-            </a>
-            <?php endif; ?>
-
             <?php if (temPermissao('gerenciar_transacoes')): ?>
-            <!-- <a href="saldos.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-wallet2"></i> Saldos
-            </a> -->
+            <a href="consulta_saldo.php" class="list-group-item list-group-item-action">
+                <i class="bi bi-wallet2"></i> Consulta Saldos
+            </a>
             
             <a href="saldos_mobile.php" class="list-group-item list-group-item-action">
                 <i class="bi bi-phone"></i> Incluir Crédito
             </a>
-            <a href="consulta_saldo.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-wallet2"></i> Consulta Saldos
-            </a>
             <?php endif; ?>
-
-            <?php if (temPermissao('gerenciar_cartoes')): ?>
-            <a href="alocar_cartao_mobile.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-credit-card"></i> Entrada Festa
-            </a>
-            <?php endif; ?>
+            
             <?php if (temPermissao('gerenciar_geracao_cartoes')): ?>
             <a href="gerar_cartoes.php" class="list-group-item list-group-item-action">
                 <i class="bi bi-upc-scan"></i> Gerar Cartões
             </a>
+            <?php endif; ?>
+            
+            <?php if (temPermissao('gerenciar_pessoas')): ?>
+            <a href="pessoas_troca.php" class="list-group-item list-group-item-action">
+                <i class="bi bi-people"></i> Trocar Cartão
+            </a>
+            <?php endif; ?>
+            
             <?php endif; ?>
 
             <!-- Divisor para seção administrativa -->
@@ -441,6 +451,27 @@ verificarLogin();
                     }
                 });
             }
+            
+            // Destacar item ativo da sidebar
+            const currentPath = window.location.pathname;
+            const currentPage = currentPath.split('/').pop() || 'index.php';
+            const sidebarLinks = document.querySelectorAll('#sidebar .list-group-item');
+            
+            sidebarLinks.forEach(function(link) {
+                const linkHref = link.getAttribute('href');
+                if (linkHref) {
+                    // Remove parâmetros de query e hash
+                    const linkPage = linkHref.split('/').pop().split('?')[0].split('#')[0];
+                    const pageToCompare = currentPage.split('?')[0].split('#')[0];
+                    
+                    // Comparar página atual com o link
+                    if (linkPage === pageToCompare || 
+                        (pageToCompare === '' && linkPage === 'index.php') ||
+                        (pageToCompare === 'index.php' && linkPage === 'index.php')) {
+                        link.classList.add('active');
+                    }
+                }
+            });
         });
         document.querySelector('#btn-menu').addEventListener('click', toggleSidebar);
         
