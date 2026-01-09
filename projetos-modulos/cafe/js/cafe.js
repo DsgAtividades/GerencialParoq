@@ -3,6 +3,66 @@
 let carrinho = [];
 let produtos = [];
 
+// Sistema de Toast Notifications
+function mostrarToast(tipo, titulo, mensagem) {
+    // Criar container se não existir
+    let container = document.querySelector('.cafe-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'cafe-toast-container';
+        document.body.appendChild(container);
+    }
+    
+    // Criar toast
+    const toast = document.createElement('div');
+    toast.className = `cafe-toast cafe-toast-${tipo}`;
+    
+    // Ícones por tipo
+    const icones = {
+        success: '<i class="fas fa-check-circle"></i>',
+        error: '<i class="fas fa-times-circle"></i>',
+        warning: '<i class="fas fa-exclamation-triangle"></i>',
+        info: '<i class="fas fa-info-circle"></i>'
+    };
+    
+    toast.innerHTML = `
+        <div class="cafe-toast-icon">${icones[tipo] || icones.info}</div>
+        <div class="cafe-toast-content">
+            <div class="cafe-toast-title">${titulo}</div>
+            <div class="cafe-toast-message">${mensagem}</div>
+        </div>
+        <button class="cafe-toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Auto-remover após 3 segundos
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Loading Overlay
+function mostrarLoading(mensagem = 'Carregando...') {
+    const overlay = document.createElement('div');
+    overlay.className = 'cafe-loading-overlay';
+    overlay.id = 'cafe-loading';
+    overlay.innerHTML = `
+        <div>
+            <div class="cafe-loading-spinner"></div>
+            <div class="cafe-loading-text">${mensagem}</div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function ocultarLoading() {
+    const overlay = document.getElementById('cafe-loading');
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     initNavigation();
@@ -171,10 +231,11 @@ function adicionarAoCarrinho(id, nome, preco, estoque) {
     
     if (itemExistente) {
         if (itemExistente.quantidade >= estoque) {
-            alert('Estoque insuficiente!');
+            mostrarToast('warning', 'Estoque Insuficiente', `Não há mais unidades de "${nome}" disponíveis.`);
             return;
         }
         itemExistente.quantidade++;
+        mostrarToast('success', 'Quantidade Atualizada', `${nome} - ${itemExistente.quantidade} unidades`);
     } else {
         carrinho.push({
             id: id,
@@ -183,6 +244,7 @@ function adicionarAoCarrinho(id, nome, preco, estoque) {
             quantidade: 1,
             estoque: estoque
         });
+        mostrarToast('success', 'Produto Adicionado', `${nome} adicionado ao carrinho`);
     }
     
     atualizarCarrinho();
@@ -201,7 +263,10 @@ function atualizarQuantidadeCarrinho(index, novaQuantidade) {
     
     const item = carrinho[index];
     if (novaQuantidade > item.estoque) {
-        alert('Estoque insuficiente!');
+        mostrarToast('warning', 'Estoque Insuficiente', `Apenas ${item.estoque} unidades disponíveis.`);
+        // Restaurar valor anterior
+        const input = document.querySelector(`input[onchange*="atualizarQuantidadeCarrinho(${index}"]`);
+        if (input) input.value = item.quantidade;
         return;
     }
     
@@ -259,7 +324,7 @@ function limparCarrinho() {
 
 function finalizarVenda() {
     if (carrinho.length === 0) {
-        alert('Carrinho vazio!');
+        mostrarToast('warning', 'Carrinho Vazio', 'Adicione produtos ao carrinho antes de finalizar.');
         return;
     }
     
@@ -267,6 +332,7 @@ function finalizarVenda() {
     document.getElementById('venda-subtotal').textContent = formatarMoeda(total);
     document.getElementById('venda-desconto-display').textContent = formatarMoeda(0);
     document.getElementById('venda-total').textContent = formatarMoeda(total);
+    document.getElementById('venda-desconto').value = 0;
     
     document.getElementById('modal-venda').classList.add('active');
 }
@@ -287,6 +353,10 @@ async function confirmarVenda(e) {
     const forma_pagamento = document.getElementById('venda-pagamento').value;
     const desconto = parseFloat(document.getElementById('venda-desconto').value) || 0;
     
+    const btnSubmit = e.target.querySelector('button[type="submit"]');
+    btnSubmit.classList.add('loading');
+    btnSubmit.disabled = true;
+    
     try {
         const formData = new FormData();
         formData.append('cliente', cliente);
@@ -302,18 +372,21 @@ async function confirmarVenda(e) {
         const result = await response.json();
         
         if (result.success) {
-            alert(`Venda #${result.numero_venda} finalizada com sucesso!`);
+            mostrarToast('success', 'Venda Finalizada!', `Venda #${result.numero_venda} registrada com sucesso.`);
             carrinho = [];
             atualizarCarrinho();
             fecharModalVenda();
             loadDashboard();
             loadProdutosPDV();
         } else {
-            alert('Erro: ' + result.message);
+            mostrarToast('error', 'Erro na Venda', result.message);
         }
     } catch(error) {
         console.error('Erro ao finalizar venda:', error);
-        alert('Erro ao finalizar venda');
+        mostrarToast('error', 'Erro ao Finalizar', 'Não foi possível finalizar a venda. Tente novamente.');
+    } finally {
+        btnSubmit.classList.remove('loading');
+        btnSubmit.disabled = false;
     }
 }
 
@@ -364,7 +437,7 @@ async function loadEstoque() {
 
 function ajustarEstoque(id) {
     // Implementar modal de ajuste de estoque se necessário
-    alert('Funcionalidade de ajuste de estoque em desenvolvimento');
+    mostrarToast('info', 'Em Desenvolvimento', 'Funcionalidade de ajuste de estoque em breve.');
 }
 
 // Vendas
@@ -411,7 +484,7 @@ function filtrarVendas() {
 
 function verDetalhesVenda(id) {
     // Implementar modal de detalhes
-    alert('Detalhes da venda em desenvolvimento');
+    mostrarToast('info', 'Em Desenvolvimento', 'Visualização de detalhes da venda em breve.');
 }
 
 // Modal Produto
@@ -449,6 +522,10 @@ function fecharModalProduto() {
 async function salvarProduto(e) {
     e.preventDefault();
     
+    const btnSubmit = e.target.querySelector('button[type="submit"]');
+    btnSubmit.classList.add('loading');
+    btnSubmit.disabled = true;
+    
     const formData = new FormData();
     formData.append('id', document.getElementById('produto-id').value);
     formData.append('codigo', document.getElementById('produto-codigo').value);
@@ -461,6 +538,8 @@ async function salvarProduto(e) {
     formData.append('unidade_medida', document.getElementById('produto-unidade').value);
     formData.append('ativo', document.getElementById('produto-ativo').value);
     
+    const isEdicao = !!document.getElementById('produto-id').value;
+    
     try {
         const response = await fetch('ajax/salvar_produto.php', {
             method: 'POST',
@@ -470,17 +549,23 @@ async function salvarProduto(e) {
         const result = await response.json();
         
         if (result.success) {
-            alert('Produto salvo com sucesso!');
+            mostrarToast('success', 
+                isEdicao ? 'Produto Atualizado!' : 'Produto Cadastrado!', 
+                `${document.getElementById('produto-nome').value} foi salvo com sucesso.`
+            );
             fecharModalProduto();
             loadProdutos();
             loadEstoque();
             loadDashboard();
         } else {
-            alert('Erro: ' + result.message);
+            mostrarToast('error', 'Erro ao Salvar', result.message);
         }
     } catch(error) {
         console.error('Erro ao salvar produto:', error);
-        alert('Erro ao salvar produto');
+        mostrarToast('error', 'Erro ao Salvar', 'Não foi possível salvar o produto. Tente novamente.');
+    } finally {
+        btnSubmit.classList.remove('loading');
+        btnSubmit.disabled = false;
     }
 }
 
