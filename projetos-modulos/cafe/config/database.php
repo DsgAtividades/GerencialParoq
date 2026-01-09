@@ -1,19 +1,27 @@
 <?php
-/**
- * Configuração de banco de dados do módulo Café
- * Usa a conexão centralizada do sistema
- */
+class Database {
+    private $host = 'dbhomolog.mysql.dbaas.com.br';
+    private $db_name = 'dbhomolog';
+    private $username = 'dbhomolog';
+    private $password = 'Dsg#1806';
+    private $conn;
 
-require_once __DIR__ . '/../../../config/database_connection.php';
+    public function getConnection() {
+        $this->conn = null;
 
-// Função helper para obter conexão
-function getCafeConnection() {
-    return getConnection();
+        try {
+            $this->conn = new PDO(
+                "mysql:host=" . $this->host . ";dbname=" . $this->db_name . ";charset=utf8mb4",
+                $this->username,
+                $this->password
+            );
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        } catch(PDOException $e) {
+            echo "Erro na conexão: " . $e->getMessage();
+        }
+
+        return $this->conn;
+    }
 }
-
-// Função helper para obter instância do Database
-function getCafeDatabase() {
-    return getDatabase();
-}
-
 ?>
