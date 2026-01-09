@@ -11,7 +11,7 @@ verificarLogin();
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Festa Junina</title>
+    <title>São Pedro café</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -104,6 +104,7 @@ verificarLogin();
                 z-index: 1000;
                 background-color: #f8f9fa;
                 overflow-y: auto;
+                overflow-x: hidden;
                 box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
             }
         
@@ -156,6 +157,7 @@ verificarLogin();
             }
             #sidebar.active {
                 display:block;
+                padding-top: 1rem;
                 width: 100%;
                 height: 100%;
                 position: absolute;
@@ -164,6 +166,8 @@ verificarLogin();
                 left: -var(--sidebar-width);
                 z-index: 1000;
                 background-color: #f8f9fa;
+                overflow-x: hidden;
+                overflow-y: auto;
             }
 
             .container.active {
@@ -251,7 +255,7 @@ verificarLogin();
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="index.php">Festa Junina</a>
+            <a class="navbar-brand" href="index.php">São Pedro café</a>
             <div class="d-flex align-items-center">
                 <a href="/gerencialParoq/dashboard.html" class="btn btn-outline-light btn-sm me-2">
                     <i class="bi bi-arrow-left"></i> Voltar aos Módulos
