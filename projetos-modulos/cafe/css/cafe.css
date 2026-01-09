@@ -1,0 +1,637 @@
+/* ============================================
+   MÓDULO CAFÉ - TEMA PRETO E AMARELO MINIMALISTA
+   Design limpo e minimalista
+   ============================================ */
+
+:root {
+    --cafe-preto: #000000;
+    --cafe-preto-escuro: #0a0a0a;
+    --cafe-preto-claro: #1a1a1a;
+    --cafe-amarelo: #ffd700;
+    --cafe-amarelo-escuro: #ccaa00;
+    --cafe-amarelo-claro: #ffed4e;
+    --cafe-dourado: #ffc107;
+    --cafe-branco: #ffffff;
+    --cafe-cinza: #333333;
+    --cafe-cinza-claro: #666666;
+    --cafe-creme: #f5f5f5;
+}
+
+/* Reset e Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--cafe-preto);
+    color: var(--cafe-branco);
+    overflow-x: hidden;
+}
+
+/* Container Principal */
+.cafe-container {
+    min-height: 100vh;
+    background: var(--cafe-preto);
+    position: relative;
+}
+
+/* Header Minimalista */
+.cafe-header {
+    background: var(--cafe-preto-claro);
+    border-bottom: 2px solid var(--cafe-amarelo);
+    position: relative;
+    z-index: 100;
+    padding: 20px 0;
+}
+
+.cafe-header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cafe-module-info h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--cafe-amarelo);
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cafe-module-info p {
+    color: var(--cafe-creme);
+    font-size: 0.95rem;
+    opacity: 0.8;
+    font-weight: 400;
+}
+
+.cafe-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.cafe-user-info span {
+    background: transparent;
+    border: 1px solid var(--cafe-amarelo);
+    padding: 10px 18px;
+    border-radius: 4px;
+    color: var(--cafe-amarelo);
+    font-weight: 500;
+}
+
+.cafe-btn-logout {
+    background: var(--cafe-amarelo);
+    color: var(--cafe-preto);
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.2s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cafe-btn-logout:hover {
+    background: var(--cafe-amarelo-escuro);
+}
+
+/* Navegação Minimalista */
+.cafe-nav {
+    background: var(--cafe-preto-claro);
+    border-bottom: 1px solid var(--cafe-cinza);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 90;
+}
+
+.cafe-nav ul {
+    list-style: none;
+    display: flex;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 30px;
+    overflow-x: auto;
+}
+
+.cafe-nav li {
+    flex-shrink: 0;
+}
+
+.cafe-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 20px;
+    color: var(--cafe-creme);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.cafe-nav-link:hover,
+.cafe-nav-link.active {
+    color: var(--cafe-amarelo);
+    border-bottom-color: var(--cafe-amarelo);
+}
+
+.cafe-nav-link i {
+    font-size: 1rem;
+}
+
+/* Conteúdo Principal */
+.cafe-main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 30px;
+    position: relative;
+    z-index: 1;
+}
+
+.cafe-section {
+    display: none;
+}
+
+.cafe-section.active {
+    display: block;
+}
+
+/* Cards Minimalistas */
+.cafe-card {
+    background: var(--cafe-preto-claro);
+    border: 1px solid var(--cafe-cinza);
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+.cafe-card h2 {
+    color: var(--cafe-amarelo);
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+/* Grid de Estatísticas */
+.cafe-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.cafe-stat-card {
+    background: var(--cafe-preto-claro);
+    border: 1px solid var(--cafe-cinza);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.2s ease;
+}
+
+.cafe-stat-card:hover {
+    border-color: var(--cafe-amarelo);
+}
+
+.cafe-stat-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    color: var(--cafe-amarelo);
+}
+
+.cafe-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--cafe-amarelo);
+    margin-bottom: 8px;
+}
+
+.cafe-stat-label {
+    color: var(--cafe-creme);
+    font-size: 0.9rem;
+    opacity: 0.8;
+    font-weight: 400;
+}
+
+/* Botões Minimalistas */
+.cafe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.cafe-btn-primary {
+    background: var(--cafe-amarelo);
+    color: var(--cafe-preto);
+}
+
+.cafe-btn-primary:hover {
+    background: var(--cafe-amarelo-escuro);
+}
+
+.cafe-btn-secondary {
+    background: transparent;
+    color: var(--cafe-amarelo);
+    border: 1px solid var(--cafe-amarelo);
+}
+
+.cafe-btn-secondary:hover {
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.cafe-btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.cafe-btn-danger:hover {
+    background: #c82333;
+}
+
+/* Formulários */
+.cafe-form-group {
+    margin-bottom: 20px;
+}
+
+.cafe-form-group label {
+    display: block;
+    color: var(--cafe-amarelo);
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.cafe-form-group input,
+.cafe-form-group select,
+.cafe-form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    background: var(--cafe-preto);
+    border: 1px solid var(--cafe-cinza);
+    border-radius: 4px;
+    color: var(--cafe-branco);
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease;
+}
+
+.cafe-form-group input:focus,
+.cafe-form-group select:focus,
+.cafe-form-group textarea:focus {
+    outline: none;
+    border-color: var(--cafe-amarelo);
+    background: var(--cafe-preto-claro);
+}
+
+.cafe-form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+/* Tabelas */
+.cafe-table-container {
+    overflow-x: auto;
+    border-radius: 4px;
+    border: 1px solid var(--cafe-cinza);
+    background: var(--cafe-preto-claro);
+}
+
+.cafe-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+}
+
+.cafe-table thead {
+    background: var(--cafe-preto);
+    border-bottom: 2px solid var(--cafe-amarelo);
+}
+
+.cafe-table thead th {
+    padding: 15px 18px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--cafe-amarelo);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cafe-table tbody tr {
+    border-bottom: 1px solid var(--cafe-cinza);
+    transition: background 0.2s ease;
+}
+
+.cafe-table tbody tr:hover {
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.cafe-table tbody td {
+    padding: 14px 18px;
+    color: var(--cafe-creme);
+}
+
+/* PDV - Ponto de Venda */
+.cafe-pdv-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
+}
+
+.cafe-produtos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 15px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.cafe-produto-card {
+    background: var(--cafe-preto-claro);
+    border: 1px solid var(--cafe-cinza);
+    border-radius: 8px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cafe-produto-card:hover {
+    border-color: var(--cafe-amarelo);
+    background: var(--cafe-preto);
+}
+
+.cafe-produto-nome {
+    font-weight: 600;
+    color: var(--cafe-amarelo);
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.cafe-produto-preco {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--cafe-amarelo);
+    margin-bottom: 8px;
+}
+
+.cafe-produto-estoque {
+    font-size: 0.85rem;
+    color: var(--cafe-creme);
+    opacity: 0.7;
+}
+
+.cafe-carrinho {
+    background: var(--cafe-preto-claro);
+    border: 1px solid var(--cafe-cinza);
+    border-radius: 8px;
+    padding: 20px;
+    position: sticky;
+    top: 100px;
+    max-height: 700px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cafe-carrinho-header {
+    border-bottom: 1px solid var(--cafe-cinza);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.cafe-carrinho-header h3 {
+    color: var(--cafe-amarelo);
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.cafe-carrinho-itens {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.cafe-carrinho-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--cafe-preto);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    border: 1px solid var(--cafe-cinza);
+}
+
+.cafe-carrinho-total {
+    border-top: 1px solid var(--cafe-cinza);
+    padding-top: 15px;
+    margin-top: 15px;
+}
+
+.cafe-carrinho-total-valor {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--cafe-amarelo);
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* Badges */
+.cafe-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.cafe-badge-success {
+    background: var(--cafe-amarelo);
+    color: var(--cafe-preto);
+}
+
+.cafe-badge-warning {
+    background: var(--cafe-dourado);
+    color: var(--cafe-preto);
+}
+
+.cafe-badge-danger {
+    background: #dc3545;
+    color: white;
+}
+
+/* Modal */
+.cafe-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.cafe-modal.active {
+    display: flex;
+}
+
+.cafe-modal-content {
+    background: var(--cafe-preto-claro);
+    border: 1px solid var(--cafe-amarelo);
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.cafe-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--cafe-cinza);
+    padding-bottom: 15px;
+}
+
+.cafe-modal-header h3 {
+    color: var(--cafe-amarelo);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.cafe-modal-close {
+    background: none;
+    border: none;
+    color: var(--cafe-amarelo);
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cafe-modal-close:hover {
+    color: var(--cafe-amarelo-escuro);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .cafe-pdv-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .cafe-stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .cafe-nav ul {
+        flex-wrap: nowrap;
+    }
+    
+    .cafe-header-content {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .cafe-module-info h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--cafe-preto);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--cafe-amarelo);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--cafe-amarelo-escuro);
+}
+
+/* Mensagens */
+.cafe-message {
+    padding: 12px 18px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cafe-message-success {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid var(--cafe-amarelo);
+    color: var(--cafe-amarelo);
+}
+
+.cafe-message-error {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid #dc3545;
+    color: #dc3545;
+}
+
+/* Remover todas as animações e efeitos neon */
+.cafe-container::before {
+    display: none;
+}
+
+.cafe-header::after {
+    display: none;
+}
+
+.cafe-card::before {
+    display: none;
+}
+
+.cafe-stat-card::before {
+    display: none;
+}
+
+.cafe-produto-card::before {
+    display: none;
+}
