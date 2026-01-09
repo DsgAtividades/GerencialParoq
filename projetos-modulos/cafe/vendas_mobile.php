@@ -47,10 +47,11 @@ foreach ($produtos as $produto) {
 
 include 'includes/header.php';
 ?>
+<link rel="stylesheet" href="css/vendas_mobile.css">
 
 <style>
     body {
-        background: #f6f8fa;
+        background: var(--cafe-bg) !important;
         font-family: 'Inter', Arial, sans-serif;
     }
     .header-mobile {

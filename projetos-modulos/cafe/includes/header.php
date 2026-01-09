@@ -16,6 +16,8 @@ verificarLogin();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Tema Cafeteria -->
+    <link href="css/cafe-theme.css" rel="stylesheet">
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- QR Code library -->
@@ -284,6 +286,7 @@ verificarLogin();
 
     <!-- Overlay for mobile -->
     <div class="overlay" onclick="toggleSidebar()"></div>
+    <div id="back"></div>
     <!-- Sidebar -->
     <div id="sidebar">
         
@@ -406,14 +409,15 @@ verificarLogin();
         // Toggle sidebar on mobile
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('btn-menu').classList.toggle('active');
+            document.getElementById('back').classList.toggle('active');
         }
         function animar(){
             window.scrollTo({
             top: 0,
             behavior: 'smooth'
             });
-            document.getElementById('btn-menu').classList.toggle('active');
-            document.getElementById('back').classList.toggle('active');
+            toggleSidebar();
         }
     </script>
     <script>
@@ -435,6 +439,12 @@ verificarLogin();
             }
         });
         document.querySelector('#btn-menu').addEventListener('click', toggleSidebar);
+        
+        // Fechar sidebar ao clicar no overlay
+        const backElement = document.getElementById('back');
+        if (backElement) {
+            backElement.addEventListener('click', toggleSidebar);
+        }
         </script>
 </body>
 </html>

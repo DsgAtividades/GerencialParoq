@@ -1,0 +1,548 @@
+/* ============================================
+   VENDAS MOBILE - TEMA CAFETERIA
+   ============================================ */
+
+/* Header Mobile com tema café */
+.header-mobile {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    background: linear-gradient(135deg, var(--cafe-cream) 0%, var(--cafe-cream-dark) 100%);
+    box-shadow: var(--shadow-md);
+    padding: 16px 0 8px 0;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 3px solid var(--cafe-brown);
+}
+
+.header-mobile h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--cafe-brown) !important;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Navegação de Categorias - Tema Café */
+.categorias-nav {
+    background: none;
+    box-shadow: none;
+    padding: 0 0 10px 0;
+    margin-bottom: 10px;
+    overflow-x: auto;
+    display: flex;
+    gap: 10px;
+    scrollbar-width: thin;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+}
+
+.categorias-nav::-webkit-scrollbar {
+    height: 6px;
+}
+
+.categorias-nav::-webkit-scrollbar-track {
+    background: var(--cafe-cream);
+    border-radius: 10px;
+}
+
+.categorias-nav::-webkit-scrollbar-thumb {
+    background: var(--cafe-brown);
+    border-radius: 10px;
+}
+
+.categorias-nav::-webkit-scrollbar-thumb:hover {
+    background: var(--cafe-brown-dark);
+}
+
+/* Botões de Categoria - Estilo Café */
+.categoria-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    border: 2px solid rgba(172, 74, 0, 0.15);
+    background: var(--cafe-white);
+    color: var(--cafe-dark);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    min-width: 90px;
+    max-width: 130px;
+    min-height: 85px;
+    font-size: 12px;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+    text-align: center;
+    gap: 6px;
+}
+
+.categoria-btn.active, .categoria-btn:hover {
+    background: linear-gradient(135deg, var(--cafe-brown) 0%, var(--cafe-brown-light) 100%);
+    color: var(--cafe-white);
+    border-color: var(--cafe-brown);
+    box-shadow: var(--shadow-brown);
+    transform: translateY(-2px);
+}
+
+.categoria-btn i {
+    font-size: 26px;
+    flex-shrink: 0;
+    transition: transform var(--transition-fast);
+}
+
+.categoria-btn.active i, .categoria-btn:hover i {
+    transform: scale(1.1);
+}
+
+.categoria-btn span {
+    text-align: center;
+    line-height: 1.3;
+    word-break: break-word;
+    hyphens: auto;
+    overflow-wrap: break-word;
+    width: 100%;
+    font-weight: 600;
+    min-height: auto;
+    white-space: normal;
+    max-height: 3em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* Seções de Categoria */
+.categoria-section {
+    display: none;
+    margin-bottom: 20px;
+}
+
+.categoria-section.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Grid de Produtos */
+.produtos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 0 2px;
+}
+
+/* Card de Produto - Tema Café */
+.produto-card {
+    border-radius: var(--radius-lg);
+    background: var(--cafe-white);
+    box-shadow: var(--shadow-sm);
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 130px;
+    position: relative;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    border: 1px solid rgba(172, 74, 0, 0.1);
+}
+
+.produto-card:hover {
+    box-shadow: var(--shadow-brown);
+    transform: translateY(-2px);
+}
+
+.produto-card:active {
+    box-shadow: var(--shadow-md);
+    background: var(--cafe-cream);
+    border-color: var(--cafe-brown);
+}
+
+.produto-card .quantidade-controls, 
+.produto-card .quantidade-input, 
+.produto-card button {
+    cursor: auto;
+}
+
+/* Nome do Produto */
+.produto-nome {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+    color: var(--cafe-dark);
+    line-height: 1.3;
+}
+
+/* Preço do Produto */
+.produto-preco {
+    color: var(--cafe-brown);
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 2px rgba(172, 74, 0, 0.1);
+}
+
+/* Estoque do Produto */
+.produto-estoque {
+    font-size: 11px;
+    color: var(--cafe-gray);
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+/* Controles de Quantidade - Tema Café */
+.quantidade-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+    width: 100%;
+}
+
+.quantidade-controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border-radius: 50%;
+    border: 2px solid var(--cafe-brown);
+    background: var(--cafe-cream);
+    color: var(--cafe-brown);
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.quantidade-controls button:hover {
+    background: var(--cafe-brown);
+    color: var(--cafe-white);
+    transform: scale(1.1);
+    box-shadow: var(--shadow-brown);
+}
+
+.quantidade-controls button:active {
+    transform: scale(0.95);
+}
+
+.quantidade-input {
+    width: 52px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    border: 2px solid rgba(172, 74, 0, 0.2);
+    background: var(--cafe-white);
+    color: var(--cafe-dark);
+    padding: 4px;
+}
+
+.quantidade-input:focus {
+    border-color: var(--cafe-brown);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(172, 74, 0, 0.1);
+}
+
+/* Ocultar elementos não usados */
+.bottom-bar, 
+#carrinho, 
+.carrinho-overlay {
+    display: none !important;
+}
+
+/* Resumo do Carrinho - Tema Café */
+#carrinho-resumo .card {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-brown);
+    border: 2px solid var(--cafe-brown);
+}
+
+#carrinho-resumo .card-header {
+    background: linear-gradient(135deg, var(--cafe-cream) 0%, var(--cafe-cream-dark) 100%);
+    border-bottom: 2px solid var(--cafe-brown);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    color: var(--cafe-dark);
+    font-weight: 700;
+    padding: 1rem;
+}
+
+#carrinho-resumo .card-body {
+    background: var(--cafe-white);
+}
+
+#carrinho-resumo .card-footer {
+    background: linear-gradient(135deg, var(--cafe-cream) 0%, var(--cafe-cream-dark) 100%);
+    border-top: 2px solid var(--cafe-brown);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+    padding: 1rem;
+}
+
+#carrinho-resumo .card-footer .text-success {
+    color: var(--cafe-brown) !important;
+}
+
+/* Card de Participante - Tema Café */
+#participanteInfo {
+    background: linear-gradient(135deg, var(--cafe-cream) 0%, var(--cafe-cream-dark) 100%);
+    border: 2px solid var(--cafe-brown);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-top: 10px;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-brown);
+}
+
+#participanteInfo h5 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: var(--cafe-dark);
+}
+
+#participanteInfo .text-muted {
+    color: var(--cafe-gray) !important;
+}
+
+#participanteInfo .text-success {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--cafe-brown) !important;
+    text-shadow: 0 1px 2px rgba(172, 74, 0, 0.1);
+}
+
+/* Botão Finalizar - Grande e Destacado */
+#btn-finalizar {
+    background: linear-gradient(135deg, var(--cafe-brown) 0%, var(--cafe-brown-light) 100%);
+    border: none;
+    color: var(--cafe-white);
+    font-weight: 700;
+    font-size: 1.3rem;
+    padding: 1rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-brown);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+#btn-finalizar:not(:disabled):hover {
+    background: linear-gradient(135deg, var(--cafe-brown-dark) 0%, var(--cafe-brown) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(172, 74, 0, 0.3);
+}
+
+#btn-finalizar:not(:disabled):active {
+    transform: translateY(0);
+}
+
+#btn-finalizar:disabled {
+    background: var(--cafe-gray-light);
+    color: var(--cafe-white);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Mensagem de Finalizar */
+#finalizar-msg {
+    color: var(--cafe-gray);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Botão de Limpar Carrinho */
+.btn-outline-danger {
+    border-color: #c44133;
+    color: #c44133;
+}
+
+.btn-outline-danger:hover {
+    background: #c44133;
+    border-color: #c44133;
+    color: var(--cafe-white);
+}
+
+/* Responsividade */
+@media (max-width: 600px) {
+    .produtos-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    #carrinho {
+        max-width: 100vw;
+        padding-bottom: 12px;
+    }
+
+    .container.mb-5.pb-5 {
+        padding-bottom: 240px !important;
+    }
+
+    .header-mobile {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .header-mobile h2 {
+        font-size: 1.2rem;
+    }
+
+    .bottom-bar {
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    .categoria-btn {
+        min-width: 75px;
+        max-width: 105px;
+        min-height: 70px;
+        font-size: 11px;
+        padding: 8px 10px;
+    }
+
+    .categoria-btn span {
+        font-size: 10px;
+        line-height: 1.2;
+        max-height: 2.6em;
+    }
+
+    .categoria-btn i {
+        font-size: 22px;
+    }
+
+    .produto-card {
+        min-height: 115px;
+        padding: 10px 8px;
+    }
+
+    .produto-nome {
+        font-size: 0.95rem;
+    }
+
+    .produto-preco {
+        font-size: 1.05rem;
+    }
+
+    .quantidade-controls button {
+        width: 32px;
+        height: 32px;
+        font-size: 1.2rem;
+    }
+
+    .quantidade-input {
+        width: 48px;
+        font-size: 1rem;
+    }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    .produtos-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (min-width: 901px) {
+    .produtos-grid {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+
+    .header-mobile h2 {
+        font-size: 1.6rem;
+    }
+}
+
+/* Container principal */
+.container.mb-5.pb-5 {
+    padding-bottom: 220px !important;
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+/* QR Reader */
+#qr-reader {
+    border: 3px solid var(--cafe-brown);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-brown);
+}
+
+/* Botão de Ler QR Code */
+#btnLerQRCode {
+    background: linear-gradient(135deg, var(--cafe-dark) 0%, #003840 100%);
+    border: none;
+    color: var(--cafe-cream);
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 0.8rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-normal);
+}
+
+#btnLerQRCode:hover {
+    background: linear-gradient(135deg, #001820 0%, var(--cafe-dark) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 41, 48, 0.25);
+}
+
+#btnLerQRCode i {
+    font-size: 1.3rem;
+}
+
+/* Itens do Carrinho */
+#carrinho-resumo .border-bottom {
+    border-color: rgba(172, 74, 0, 0.15) !important;
+    padding: 0.8rem 0;
+}
+
+#carrinho-resumo .border-bottom:last-child {
+    border-bottom: none !important;
+}
+
+#carrinho-resumo .text-success {
+    color: var(--cafe-brown) !important;
+}
+
+/* Melhorias de Acessibilidade */
+.produto-card:focus-within {
+    outline: 3px solid var(--cafe-brown);
+    outline-offset: 2px;
+}
+
+.categoria-btn:focus-visible,
+.quantidade-controls button:focus-visible,
+#btn-finalizar:focus-visible,
+#btnLerQRCode:focus-visible {
+    outline: 3px solid var(--cafe-brown);
+    outline-offset: 2px;
+}
+
+/* Animação de Loading */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
