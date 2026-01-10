@@ -226,6 +226,20 @@ body {
    ============================================ */
 /* Estilos definidos no header.php inline */
 
+/* Garantir que tooltips sejam sempre visíveis */
+.nav-tooltip {
+    z-index: 9999 !important;
+}
+
+/* Hover suave nos ícones */
+.nav-tab-item {
+    cursor: pointer !important;
+}
+
+.nav-tab-item:hover {
+    cursor: pointer !important;
+}
+
 /* ============================================
    CARDS - ESTILO CAFÉ
    ============================================ */

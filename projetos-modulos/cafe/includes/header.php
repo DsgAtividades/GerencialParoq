@@ -107,13 +107,55 @@ verificarLogin();
             box-shadow: 0 2px 8px rgba(248, 240, 175, 0.2);
         }
 
-        /* Tooltip */
-        .nav-tab-item::after {
-            content: attr(data-tooltip);
+        /* Tooltip customizado */
+        .nav-tooltip {
+            position: fixed;
+            background: #f8f0af;
+            color: #002930;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            z-index: 1060;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            border: 2px solid #ac4a00;
+        }
+
+        .nav-tooltip.show {
+            opacity: 1;
+        }
+
+        .nav-tooltip::before {
+            content: '';
             position: absolute;
-            top: calc(100% + 8px);
+            bottom: 100%;
             left: 50%;
-            transform: translateX(-50%) translateY(-5px);
+            transform: translateX(-50%);
+            border: 7px solid transparent;
+            border-bottom-color: #ac4a00;
+        }
+
+        .nav-tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: calc(100% - 2px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: #f8f0af;
+        }
+        
+        /* Fallback tooltip CSS (caso JS não carregue) */
+        .nav-tab-item[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
             background: #f8f0af;
             color: #002930;
             padding: 6px 12px;
@@ -121,34 +163,22 @@ verificarLogin();
             font-size: 0.75rem;
             font-weight: 600;
             white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.2s ease;
             z-index: 1050;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 2px solid #ac4a00;
         }
 
-        .nav-tab-item::before {
-            content: '';
-            position: absolute;
-            top: calc(100% + 2px);
-            left: 50%;
-            transform: translateX(-50%);
-            border: 6px solid transparent;
-            border-bottom-color: #f8f0af;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-            z-index: 1050;
+        /* Animação suave para ícones */
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
-
-        .nav-tab-item:hover::after,
-        .nav-tab-item:hover::before {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
+        
+        .nav-tab-item:hover i {
+            animation: iconPulse 0.6s ease-in-out;
         }
-
-        /* Responsividade */
+        
+        /* Tooltip responsivo */
         @media (max-width: 1200px) {
             .nav-icons-container {
                 max-width: calc(100vw - 500px);
@@ -161,6 +191,11 @@ verificarLogin();
             
             .nav-tab-item i {
                 font-size: 1.1rem;
+            }
+            
+            .nav-tooltip {
+                font-size: 0.75rem;
+                padding: 6px 12px;
             }
         }
 
@@ -185,8 +220,15 @@ verificarLogin();
                 font-size: 1rem;
             }
             
-            .nav-tab-item::after {
+            .nav-tooltip {
                 font-size: 0.7rem;
+                padding: 5px 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .nav-tooltip {
+                font-size: 0.65rem;
                 padding: 4px 8px;
             }
         }
@@ -354,10 +396,73 @@ verificarLogin();
                 });
             }
             
+            // Sistema de Tooltips customizado
+            let tooltipElement = null;
+            
+            function createTooltip() {
+                if (!tooltipElement) {
+                    tooltipElement = document.createElement('div');
+                    tooltipElement.className = 'nav-tooltip';
+                    document.body.appendChild(tooltipElement);
+                }
+                return tooltipElement;
+            }
+            
+            function showTooltip(element, text) {
+                const tooltip = createTooltip();
+                tooltip.textContent = text;
+                tooltip.classList.add('show');
+                
+                // Posicionar o tooltip
+                const rect = element.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+                
+                const left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                const top = rect.bottom + 10;
+                
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = top + 'px';
+            }
+            
+            function hideTooltip() {
+                if (tooltipElement) {
+                    tooltipElement.classList.remove('show');
+                }
+            }
+            
+            // Adicionar tooltips a todos os itens de navegação
+            const navItems = document.querySelectorAll('.nav-icons-container .nav-tab-item');
+            
+            navItems.forEach(function(item) {
+                const tooltipText = item.getAttribute('data-tooltip');
+                
+                if (tooltipText) {
+                    // Adicionar atributo title como fallback
+                    item.setAttribute('title', tooltipText);
+                    
+                    // Mouseenter - mostrar tooltip
+                    item.addEventListener('mouseenter', function() {
+                        showTooltip(item, tooltipText);
+                    });
+                    
+                    // Mouseleave - esconder tooltip
+                    item.addEventListener('mouseleave', function() {
+                        hideTooltip();
+                    });
+                    
+                    // Click - esconder tooltip
+                    item.addEventListener('click', function() {
+                        hideTooltip();
+                    });
+                }
+            });
+            
+            // Esconder tooltip ao rolar a página
+            window.addEventListener('scroll', hideTooltip);
+            
             // Destacar item ativo da navegação
             const currentPath = window.location.pathname;
             const currentPage = currentPath.split('/').pop() || 'index.php';
-            const navItems = document.querySelectorAll('.nav-icons-container .nav-tab-item');
             
             navItems.forEach(function(item) {
                 const itemHref = item.getAttribute('href');
