@@ -11,7 +11,7 @@ verificarLogin();
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>São Pedro café</title>
+    <title>PSPA café</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -24,238 +24,171 @@ verificarLogin();
     <script src="https://cdn.jsdelivr.net/npm/html5-qrcode/dist/html5-qrcode.min.js"></script>
     <!-- Custom CSS -->
     <style>
-        :root {
-            --sidebar-width: 250px;
-        }
-        
-        body {
-            min-height: 100vh;
-            padding-top: 60px;
+        /* Navbar com ícones integrados */
+        .navbar {
+            min-height: 60px;
+            padding: 0.5rem 1rem;
         }
 
-        .navbar-nav .nav-item {
-            position: relative;
-        }
-
-        .user-menu {
+        .navbar .container-fluid {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            color: white;
+            gap: 1rem;
+        }
+
+        /* Container de ícones */
+        .nav-icons-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            flex: 1;
+            padding: 0 0.5rem;
+            scrollbar-width: thin;
+            max-width: calc(100vw - 600px);
+        }
+
+        .nav-icons-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .nav-icons-container::-webkit-scrollbar-track {
+            background: rgba(248, 240, 175, 0.1);
+        }
+
+        .nav-icons-container::-webkit-scrollbar-thumb {
+            background: rgba(248, 240, 175, 0.3);
+            border-radius: 2px;
+        }
+
+        .nav-icons-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(248, 240, 175, 0.5);
+        }
+
+        /* Ícones de navegação */
+        .nav-tab-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 42px;
+            height: 42px;
+            padding: 0 10px;
+            background: transparent;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: #f8f0af;
             text-decoration: none;
-            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            flex-shrink: 0;
         }
 
-        .user-menu:hover {
-            color: rgba(255, 255, 255, 0.8);
+        .nav-tab-item i {
+            font-size: 1.25rem;
+            transition: transform 0.2s ease;
         }
 
-        .user-menu-dropdown {
+        .nav-tab-item:hover {
+            background: rgba(248, 240, 175, 0.15);
+            border-color: rgba(248, 240, 175, 0.3);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .nav-tab-item:hover i {
+            transform: scale(1.15);
+        }
+
+        .nav-tab-item.active {
+            background: rgba(248, 240, 175, 0.2);
+            border-color: #f8f0af;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(248, 240, 175, 0.2);
+        }
+
+        /* Tooltip */
+        .nav-tab-item::after {
+            content: attr(data-tooltip);
             position: absolute;
-            top: 100%;
-            right: 0;
-            background-color: white;
-            border: 1px solid rgba(0,0,0,.15);
-            border-radius: 0.25rem;
-            padding: 0.5rem 0;
-            min-width: 200px;
-            display: none;
-            z-index: 1000;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-5px);
+            background: #f8f0af;
+            color: #002930;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            z-index: 1050;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
-        .user-menu-dropdown.show {
-            display: block;
+        .nav-tab-item::before {
+            content: '';
+            position: absolute;
+            top: calc(100% + 2px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-bottom-color: #f8f0af;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1050;
         }
 
-        .user-menu-dropdown a {
-            display: block;
-            padding: 0.5rem 1rem;
-            color: #dc3545;
-            text-decoration: none;
+        .nav-tab-item:hover::after,
+        .nav-tab-item:hover::before {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
 
-        .user-menu-dropdown a:hover {
-            background-color: #f8f9fa;
-        }
-
-        .dropdown-toggle::after {
-            display: inline-block;
-            margin-left: 0.255em;
-            vertical-align: 0.255em;
-            content: "";
-            border-top: 0.3em solid;
-            border-right: 0.3em solid transparent;
-            border-bottom: 0;
-            border-left: 0.3em solid transparent;
-        }
-
-        .user-menu {
-            cursor: pointer;
-        }
-        
-        @media (min-width: 750px) {
-            #sidebar {
-                width: var(--sidebar-width);
-                position: fixed;
-                top: 56px;
-                bottom: 0;
-                left: -var(--sidebar-width);
-                z-index: 1000;
-                background-color: #f8f9fa;
-                overflow-y: auto;
-                overflow-x: hidden;
-                box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-            }
-        
-
-            #sidebar.active {
-                left: 0;
-            }
-
-            .overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 999;
-            }
-            #btn-menu{
-                display:none;
-            }
-
-            .navbar-toggler {
-                display: none;
-            }
-            .content {
-                margin-left: var(--sidebar-width);
-            }
-        }
-
-        .overlay.active {
-            display: block;
-        }
-
-        .content {
-            padding: 20px;
-            transition: 0.3s;
-            left: 250px
-            }
-
-        
-
-        @media (max-width: 749px) {
-            #sidebar {
-                left: 0;
-                display:none;
-            }
-            .content {
-                margin-left: 0;
-            }
-            #sidebar.active {
-                display:block;
-                padding-top: 1rem;
-                width: 100%;
-                height: 100%;
-                position: absolute;
-                top: 56px;
-                bottom: 0;
-                left: -var(--sidebar-width);
-                z-index: 1000;
-                background-color: #f8f9fa;
-                overflow-x: hidden;
-                overflow-y: auto;
-            }
-
-            .container.active {
-                display:none;
+        /* Responsividade */
+        @media (max-width: 1200px) {
+            .nav-icons-container {
+                max-width: calc(100vw - 500px);
             }
             
-            #btn-menu{
-                width: 40px;
-                height: 35px;
-                border: 1px solid #FFFFFF;
-                border-radius: 5px;
-                background-color: rgb(13, 110, 253);
-                cursor: pointer;
-            }
-
-            button.active .linha:nth-child(1){
-                transform: translateY(6px) rotate(-45deg);
-            }
-            button.active .linha:nth-child(2){
-                width:0;
-            }
-            button.active .linha:nth-child(3){
-                transform: translateY(-8px) rotate(45deg);
-            }
-
-            .linha {
-                width: 20px;
-                height: 1px;
-                background-color: #FFFFFF;
-                display: block;
-                margin: 6px auto;
-                position: relative;
-                transform-origin: center;
-                transition: 0.2s;
-            }
-            #back{
-                position: fixed;
-                top: 0;
-                left: 0;
-                background-color: rgba(0,0,0,0.5);
-                width: 100%;
-                height: 100%;
-                display: none;
-            }
-            #back.active{
-                position: fixed;
-                top: 0;
-                left: 0;
-                background-color: rgba(0,0,0,0.5);
-                width: 100%;
-                height: 100%;
-                display: block;
+            .nav-tab-item {
+                min-width: 38px;
+                height: 38px;
             }
             
-        }
-        .overlay {
-            display: none !important;
-            position: fixed;
-        }
-
-        .nav-divider {
-            height: 1px;
-            background-color: #dee2e6;
-            margin: 0.5rem 1rem;
+            .nav-tab-item i {
+                font-size: 1.1rem;
+            }
         }
 
-        .list-group-item {
-            border: none;
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem; /* Reduzido 1px do padrão (de ~15px para ~14px) */
-        }
-
-        .list-group-item:hover {
-            background-color: #F2E8C4;
-        }
-        
-        .list-group-item.active {
-            background-color: #F2E8C4 !important;
-        }
-        
-        .list-group-item.active:hover {
-            background-color: #F2E8C4;
-        }
-
-        .list-group-item i {
-            width: 24px;
-            text-align: center;
-            margin-right: 8px;
+        @media (max-width: 768px) {
+            .navbar {
+                min-height: 56px;
+            }
+            
+            .nav-icons-container {
+                max-width: calc(100vw - 200px);
+                padding: 0 0.25rem;
+                gap: 2px;
+            }
+            
+            .nav-tab-item {
+                min-width: 36px;
+                height: 36px;
+                padding: 0 8px;
+            }
+            
+            .nav-tab-item i {
+                font-size: 1rem;
+            }
+            
+            .nav-tab-item::after {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
         }
     </style>
 </head>
@@ -264,183 +197,152 @@ verificarLogin();
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="index.php">São Pedro café</a>
-            <div class="d-flex align-items-center">
-                <a href="/gerencialParoq/dashboard.html" class="btn btn-outline-light btn-sm me-2">
-                    <i class="bi bi-arrow-left"></i> Voltar aos Módulos
-                </a>
-                <a href="logout.php" class="btn btn-outline-light btn-sm me-2 d-lg-none">
-                    <i class="bi bi-box-arrow-right"></i>
-                </a>
-                <button id='btn-menu' type="button" onclick="animar()">
-                    <span class="linha"></span>
-                    <span class="linha"></span>
-                    <span class="linha"></span>
-                </button>
-            </div>
-            <div class="collapse navbar-collapse" id="navbarNavDropdown">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <div class="user-menu" id="userMenu">
-                            <i class="bi bi-person-circle"></i>
-                            <span><?= escapar($_SESSION['usuario_nome'] ?? 'Usuário') ?></span>
-                            <i class="bi bi-chevron-down"></i>
-                        </div>
-                        <div class="user-menu-dropdown" id="userMenuDropdown">
-                            <a href="logout.php">
-                                <i class="bi bi-box-arrow-right"></i> Sair do Sistema
-                            </a>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Overlay for mobile -->
-    <div class="overlay" onclick="toggleSidebar()"></div>
-    <div id="back"></div>
-    <!-- Sidebar -->
-    <div id="sidebar">
-        
-        <div class="list-group list-group-flush">
+            <a class="navbar-brand" href="index.php">PSPA café</a>
+            
+            <!-- Navigation Icons -->
+            <div class="nav-icons-container" id="navIcons">
         <?php if (temPermissao('gerenciar_dashboard')): ?>
-            <a href="index.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-house-door"></i> Início
+            <a href="index.php" class="nav-tab-item" data-tooltip="Início">
+                <i class="bi bi-house-door"></i>
             </a>
             
-            <a href="dashboard_vendas.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-graph-up"></i> Dashboard de Vendas
+            <a href="dashboard_vendas.php" class="nav-tab-item" data-tooltip="Dashboard de Vendas">
+                <i class="bi bi-graph-up"></i>
             </a>
             
-            <a href="vendas.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-cart"></i> Relatório Vendas
+            <a href="vendas.php" class="nav-tab-item" data-tooltip="Relatório Vendas">
+                <i class="bi bi-cart"></i>
             </a>
             
             <?php if (temPermissao('visualizar_relatorios')): ?>
-            <a href="saldos_historico.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-clock-history"></i> Histórico Vendas
+            <a href="saldos_historico.php" class="nav-tab-item" data-tooltip="Histórico Vendas">
+                <i class="bi bi-clock-history"></i>
             </a>
             <?php endif; ?>
             
-            <a href="relatorio_categorias.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-pie-chart"></i> Relatório por Categoria
+            <a href="relatorio_categorias.php" class="nav-tab-item" data-tooltip="Relatório por Categoria">
+                <i class="bi bi-pie-chart"></i>
             </a>
             
-            <a href="fechamento_caixa.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-pie-chart"></i> Fechamento Caixa
+            <a href="fechamento_caixa.php" class="nav-tab-item" data-tooltip="Fechamento Caixa">
+                <i class="bi bi-calculator"></i>
             </a>
             
             <?php if (temPermissao('visualizar_relatorios')): ?>
-            <a href="relatorios.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-graph-up"></i> Relatórios
+            <a href="relatorios.php" class="nav-tab-item" data-tooltip="Relatórios">
+                <i class="bi bi-file-text"></i>
             </a>
             <?php endif; ?>
             
             <?php if (temPermissao('gerenciar_cartoes')): ?>
-            <a href="alocar_cartao_mobile.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-credit-card"></i> Cadastrar Cliente
+            <a href="alocar_cartao_mobile.php" class="nav-tab-item" data-tooltip="Cadastrar Cliente">
+                <i class="bi bi-credit-card"></i>
             </a>
             <?php endif; ?>
             
             <?php if (temPermissao('gerenciar_pessoas')): ?>
-            <a href="pessoas.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-people"></i> Pessoas
+            <a href="pessoas.php" class="nav-tab-item" data-tooltip="Pessoas">
+                <i class="bi bi-people"></i>
             </a>
             <?php endif; ?>
             
             <?php if (temPermissao('gerenciar_vendas_mobile')): ?>
-            <a href="vendas_mobile.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-phone"></i> Vender
+            <a href="vendas_mobile.php" class="nav-tab-item" data-tooltip="Vender">
+                <i class="bi bi-phone"></i>
             </a>
             <?php endif; ?>
 
             <?php if (temPermissao('gerenciar_produtos')): ?>
-            <a href="produtos.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-box"></i> Produtos
+            <a href="produtos.php" class="nav-tab-item" data-tooltip="Produtos">
+                <i class="bi bi-box"></i>
             </a>
             <?php endif; ?>
 
             <?php if (temPermissao('gerenciar_categorias')): ?>
-            <a href="categorias.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-tags"></i> Categorias
+            <a href="categorias.php" class="nav-tab-item" data-tooltip="Categorias">
+                <i class="bi bi-tags"></i>
             </a>
             <?php endif; ?>
 
             <?php if (temPermissao('gerenciar_transacoes')): ?>
-            <a href="consulta_saldo.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-wallet2"></i> Consulta Saldos
+            <a href="consulta_saldo.php" class="nav-tab-item" data-tooltip="Consulta Saldos">
+                <i class="bi bi-wallet2"></i>
             </a>
             
-            <a href="saldos_mobile.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-phone"></i> Incluir Crédito
+            <a href="saldos_mobile.php" class="nav-tab-item" data-tooltip="Incluir Crédito">
+                <i class="bi bi-cash-coin"></i>
             </a>
             <?php endif; ?>
             
             <?php if (temPermissao('gerenciar_geracao_cartoes')): ?>
-            <a href="gerar_cartoes.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-upc-scan"></i> Gerar Cartões
+            <a href="gerar_cartoes.php" class="nav-tab-item" data-tooltip="Gerar Cartões">
+                <i class="bi bi-upc-scan"></i>
             </a>
             <?php endif; ?>
             
             <?php if (temPermissao('gerenciar_pessoas')): ?>
-            <a href="pessoas_troca.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-people"></i> Trocar Cartão
+            <a href="pessoas_troca.php" class="nav-tab-item" data-tooltip="Trocar Cartão">
+                <i class="bi bi-arrow-left-right"></i>
             </a>
             <?php endif; ?>
             
             <?php endif; ?>
 
-            <!-- Divisor para seção administrativa -->
+            <!-- Itens Administrativos -->
             <?php if (temPermissao('gerenciar_usuarios') || temPermissao('gerenciar_grupos') || temPermissao('gerenciar_permissoes')): ?>
-            <div class="nav-divider"></div>
 
             <?php if (temPermissao('gerenciar_usuarios')): ?>
-            <a href="usuarios_lista.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-people-fill"></i> Usuários
+            <a href="usuarios_lista.php" class="nav-tab-item" data-tooltip="Usuários">
+                <i class="bi bi-people-fill"></i>
             </a>
             <?php endif; ?>
 
             <?php if (temPermissao('gerenciar_grupos')): ?>
-            <a href="gerenciar_grupos.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-diagram-3"></i> Grupos
+            <a href="gerenciar_grupos.php" class="nav-tab-item" data-tooltip="Grupos">
+                <i class="bi bi-diagram-3"></i>
             </a>
             <?php endif; ?>
 
             <?php if (temPermissao('gerenciar_permissoes')): ?>
-            <a href="gerenciar_permissoes.php" class="list-group-item list-group-item-action">
-                <i class="bi bi-shield-lock"></i> Permissões
+            <a href="gerenciar_permissoes.php" class="nav-tab-item" data-tooltip="Permissões">
+                <i class="bi bi-shield-lock"></i>
             </a>
             <?php endif; ?>
             <?php endif; ?>
+            </div>
+            
+            <!-- User Menu -->
+            <div class="d-flex align-items-center ms-3">
+                <a href="/gerencialParoq/dashboard.html" class="btn btn-outline-light btn-sm me-2 d-none d-lg-flex">
+                    <i class="bi bi-arrow-left"></i> <span class="ms-1">Voltar</span>
+                </a>
+                <div class="user-menu" id="userMenu">
+                    <i class="bi bi-person-circle"></i>
+                    <span class="d-none d-xl-inline"><?= escapar($_SESSION['usuario_nome'] ?? 'Usuário') ?></span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="user-menu-dropdown" id="userMenuDropdown">
+                    <a href="logout.php">
+                        <i class="bi bi-box-arrow-right"></i> Sair do Sistema
+                    </a>
+                </div>
+            </div>
         </div>
-    </div>
-    <!-- Main Content -->
-    <div class="content">
-    <?php mostrarAlerta(); ?>
+    </nav>
+    
+    <!-- Main Content Wrapper -->
+    <main class="main-wrapper">
+        <?php mostrarAlerta(); ?>
         
     <script>
-        // Toggle sidebar on mobile
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-            document.getElementById('btn-menu').classList.toggle('active');
-            document.getElementById('back').classList.toggle('active');
-        }
-        function animar(){
-            window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-            });
-            toggleSidebar();
-        }
-    </script>
-    <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // User menu dropdown
             const userMenu = document.getElementById('userMenu');
             const userMenuDropdown = document.getElementById('userMenuDropdown');
 
             if (userMenu && userMenuDropdown) {
                 userMenu.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     userMenuDropdown.classList.toggle('show');
                 });
 
@@ -452,34 +354,32 @@ verificarLogin();
                 });
             }
             
-            // Destacar item ativo da sidebar
+            // Destacar item ativo da navegação
             const currentPath = window.location.pathname;
             const currentPage = currentPath.split('/').pop() || 'index.php';
-            const sidebarLinks = document.querySelectorAll('#sidebar .list-group-item');
+            const navItems = document.querySelectorAll('.nav-icons-container .nav-tab-item');
             
-            sidebarLinks.forEach(function(link) {
-                const linkHref = link.getAttribute('href');
-                if (linkHref) {
+            navItems.forEach(function(item) {
+                const itemHref = item.getAttribute('href');
+                if (itemHref) {
                     // Remove parâmetros de query e hash
-                    const linkPage = linkHref.split('/').pop().split('?')[0].split('#')[0];
+                    const itemPage = itemHref.split('/').pop().split('?')[0].split('#')[0];
                     const pageToCompare = currentPage.split('?')[0].split('#')[0];
                     
                     // Comparar página atual com o link
-                    if (linkPage === pageToCompare || 
-                        (pageToCompare === '' && linkPage === 'index.php') ||
-                        (pageToCompare === 'index.php' && linkPage === 'index.php')) {
-                        link.classList.add('active');
+                    if (itemPage === pageToCompare || 
+                        (pageToCompare === '' && itemPage === 'index.php') ||
+                        (pageToCompare === 'index.php' && itemPage === 'index.php')) {
+                        item.classList.add('active');
+                        
+                        // Scroll para o item ativo (centralizar)
+                        setTimeout(() => {
+                            item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        }, 100);
                     }
                 }
             });
         });
-        document.querySelector('#btn-menu').addEventListener('click', toggleSidebar);
-        
-        // Fechar sidebar ao clicar no overlay
-        const backElement = document.getElementById('back');
-        if (backElement) {
-            backElement.addEventListener('click', toggleSidebar);
-        }
         </script>
 </body>
 </html>

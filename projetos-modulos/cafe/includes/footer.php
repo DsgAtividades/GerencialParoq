@@ -1,7 +1,5 @@
-            </div> <!-- Fim do main-content -->
-        </div> <!-- Fim do row -->
-    </div> <!-- Fim do container-fluid -->
-    <div id="back"></div>  
+    </main> <!-- Fim do main-wrapper -->
+    
     <!-- Bootstrap 5 JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- jQuery (necessário para algumas funcionalidades) -->

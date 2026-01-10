@@ -44,6 +44,76 @@ body {
     background: var(--cafe-bg) !important;
     font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif !important;
     color: var(--cafe-dark) !important;
+    min-height: 100vh;
+    padding-top: 70px !important; /* Apenas a navbar */
+}
+
+/* Main Wrapper - Largura consistente */
+.main-wrapper {
+    width: 100%;
+    max-width: 1400px; /* Largura máxima para telas grandes */
+    margin: 0 auto;
+    padding: 20px;
+    min-height: calc(100vh - 70px); /* Altura mínima: viewport - navbar */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Container principal */
+.main-wrapper .container {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.main-wrapper .container-fluid {
+    width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+/* Cards e componentes com espaçamento adequado */
+.main-wrapper .card {
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+}
+
+.main-wrapper .card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 66px !important; /* Navbar mobile */
+    }
+    
+    .main-wrapper {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-wrapper {
+        padding: 10px;
+    }
+}
+
+/* Para telas muito grandes */
+@media (min-width: 1600px) {
+    .main-wrapper {
+        max-width: 1600px;
+    }
+}
+
+@media (min-width: 1920px) {
+    .main-wrapper {
+        max-width: 1800px;
+    }
 }
 
 /* ============================================
@@ -53,6 +123,8 @@ body {
     background: linear-gradient(135deg, var(--cafe-dark) 0%, #003840 100%) !important;
     border-bottom: 3px solid var(--cafe-brown);
     box-shadow: var(--shadow-md);
+    z-index: 1040 !important;
+    min-height: 60px !important;
 }
 
 .navbar-brand {
@@ -62,6 +134,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-shrink: 0;
 }
 
 .navbar-brand:hover {
@@ -71,6 +144,20 @@ body {
 .navbar-brand::before {
     content: '☕';
     font-size: 1.8rem;
+}
+
+@media (max-width: 768px) {
+    .navbar.navbar-dark.bg-primary {
+        min-height: 56px !important;
+    }
+    
+    .navbar-brand {
+        font-size: 1.2rem !important;
+    }
+    
+    .navbar-brand::before {
+        font-size: 1.5rem;
+    }
 }
 
 .btn-outline-light {
@@ -86,59 +173,58 @@ body {
 
 .user-menu {
     color: var(--cafe-cream) !important;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
 }
 
 .user-menu:hover {
     color: var(--cafe-white) !important;
+    background: rgba(255, 255, 255, 0.1);
 }
 
-#btn-menu {
-    border-color: var(--cafe-cream) !important;
-    background-color: var(--cafe-brown) !important;
+.user-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--cafe-white);
+    border: 2px solid var(--cafe-brown);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all var(--transition-fast);
+}
+
+.user-menu-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu-dropdown a {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #c44133;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background var(--transition-fast);
+}
+
+.user-menu-dropdown a:hover {
+    background: var(--cafe-cream);
+    color: var(--cafe-brown);
 }
 
 /* ============================================
-   SIDEBAR - TEMA MADEIRA
+   NAVEGAÇÃO INTEGRADA NO HEADER
    ============================================ */
-#sidebar {
-    background: linear-gradient(180deg, #f9f5ed 0%, #f0e9d9 100%) !important;
-    border-right: 2px solid var(--cafe-brown);
-    box-shadow: 2px 0 16px rgba(0, 41, 48, 0.08);
-    margin-top: 1rem !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-}
-
-.list-group-item {
-    background: transparent !important;
-    border: none !important;
-    color: var(--cafe-dark) !important;
-    font-weight: 500;
-    transition: all var(--transition-fast);
-    border-radius: var(--radius-sm) !important;
-    margin: 2px 8px;
-}
-
-.list-group-item:hover {
-    background: var(--cafe-cream) !important;
-    color: var(--cafe-brown) !important;
-    transform: translateX(4px);
-    padding-left: 1.5rem !important;
-}
-
-.list-group-item i {
-    color: var(--cafe-brown);
-    font-size: 1.1rem;
-}
-
-.list-group-item:hover i {
-    color: var(--cafe-brown-dark);
-}
-
-.nav-divider {
-    background: var(--cafe-brown) !important;
-    opacity: 0.3;
-}
+/* Estilos definidos no header.php inline */
 
 /* ============================================
    CARDS - ESTILO CAFÉ
@@ -537,11 +623,7 @@ body::before {
    ============================================ */
 @media (max-width: 768px) {
     .navbar-brand {
-        font-size: 1.2rem !important;
-    }
-    
-    #sidebar {
-        background: var(--cafe-white) !important;
+        font-size: 1.1rem !important;
     }
     
     .card {
@@ -549,28 +631,10 @@ body::before {
     }
 }
 
-/* Overlay para mobile */
-#back {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 41, 48, 0.7);
-    backdrop-filter: blur(4px);
-    z-index: 999;
-    display: none;
-    transition: opacity var(--transition-normal);
-}
-
-#back.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+@media (max-width: 480px) {
+    .navbar-brand {
+        font-size: 1rem !important;
+    }
 }
 
 /* ============================================
