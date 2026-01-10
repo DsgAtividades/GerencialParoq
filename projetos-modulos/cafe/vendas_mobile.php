@@ -308,6 +308,9 @@ include 'includes/header.php';
 
 
 <div class="container mb-5 pb-5">
+    <div class="header-mobile">
+        <h2>Vender</h2>
+    </div>
     <!-- Área do Cliente -->
     <div class="row mb-4">
         <div class="col-12">

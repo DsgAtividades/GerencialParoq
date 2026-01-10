@@ -12,7 +12,7 @@ $pessoa_id = isset($_POST['pessoa_id']) ? (int)$_POST['pessoa_id'] : null;
 $tipo = isset($_POST['tipo']) ? $_POST['tipo'] : null;
 $participante = isset($_POST['cpf_tel']) ? $_POST['cpf_tel'] : '';
 
-// Construir query
+// Construir query com prepared statements para segurança
 $query = "
     SELECT h.*, p.nome, p.cpf
     FROM cafe_historico_saldo h
@@ -20,21 +20,29 @@ $query = "
     WHERE 1=1
 ";
 
+$params = [];
+
 if ($participante) {
-    $query .= " AND p.cpf like '%".$participante."%' OR p.nome like '%".$participante."%' ";
+    $query .= " AND (p.cpf LIKE :participante OR p.nome LIKE :participante)";
+    $params[':participante'] = "%{$participante}%";
 }
 
 if ($tipo) {
-    $query .= " AND h.tipo_operacao = '".trim($tipo)."'";
+    $query .= " AND h.tipo_operacao = :tipo";
+    $params[':tipo'] = trim($tipo);
 }
 
 if($data_inicio && $data_fim){
-    $query .= " AND DATE(h.data_operacao) BETWEEN '$data_inicio' AND '$data_fim'";
+    $query .= " AND DATE(h.data_operacao) BETWEEN :data_inicio AND :data_fim";
+    $params[':data_inicio'] = $data_inicio;
+    $params[':data_fim'] = $data_fim;
 }
-$query .= " ORDER BY h.data_operacao DESC limit 100";
-// Buscar histórico
-$stmt = $pdo->query($query);
-//$stmt->execute($params);
+
+$query .= " ORDER BY h.data_operacao DESC LIMIT 100";
+
+// Buscar histórico usando prepared statement
+$stmt = $pdo->prepare($query);
+$stmt->execute($params);
 $historico = $stmt->fetchAll();
 
 include 'includes/header.php';
@@ -42,7 +50,7 @@ include 'includes/header.php';
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Histórico de Transações</h1>
+        <h1>Histórico Vendas</h1>
         <a href="saldos.php" class="btn btn-primary">
             <i class="bi bi-arrow-left"></i> Voltar para Saldos
         </a>

@@ -54,7 +54,7 @@ $resultados = $stmt->fetchAll();
 include 'includes/header.php';
 ?>
 <div class="container py-4">
-    <h1>Relatório de Vendas por Categoria</h1>
+    <h1>Relatório por Categoria</h1>
     <form class="row g-3 mb-4" method="post">
         <div class="col-md-3">
             <label for="data_inicial" class="form-label">Data Inicial</label>

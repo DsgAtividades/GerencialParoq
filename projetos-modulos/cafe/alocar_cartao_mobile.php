@@ -114,7 +114,7 @@ include 'includes/header.php';
 <div class="container py-4">
     <div class="row justify-content-center">
         <div class="col-12">
-            <h2 class="text-center mb-4">Alocar Cartão</h2>
+            <h2 class="text-center mb-4">Cadastrar Cliente</h2>
             
             <?php if ($mensagem): ?>
                 <div class="alert alert-<?= $tipo_mensagem ?> alert-dismissible fade show" role="alert">

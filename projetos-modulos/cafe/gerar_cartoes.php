@@ -141,7 +141,7 @@ try {
 
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Gerador de Cartões</h1>
+            <h1>Gerar Cartões</h1>
             <div class="no-print">
                 <a href="gerar_cartoes_impressao.php" class="btn btn-primary me-2">
                     <i class="bi bi-printer"></i> Imprimir Cartões

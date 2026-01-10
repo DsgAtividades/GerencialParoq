@@ -40,7 +40,7 @@ include 'includes/header.php';
 
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Pessoas Cadastradas</h1>
+        <h1>Pessoas</h1>
         <div>
             <!-- <a href="gerar_cartoes.php" class="btn btn-success me-2">
                 <i class="bi bi-upc-scan"></i> Gerar Cartões

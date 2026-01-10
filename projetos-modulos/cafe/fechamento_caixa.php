@@ -49,7 +49,7 @@ include 'includes/header.php';
 ?>
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Fechamento de Caixa</h1>
+        <h1>Fechamento Caixa</h1>
         <a href="saldos.php" class="btn btn-primary">
             <i class="bi bi-arrow-left"></i> Voltar
         </a>

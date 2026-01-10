@@ -32,6 +32,7 @@ include 'includes/header.php';
 </style>
 
 <div class="container">
+    <h1 class="mb-4">Incluir Crédito</h1>
     <!-- Área de Scanner -->
     <div class="row mb-3">
         <div class="col-12">

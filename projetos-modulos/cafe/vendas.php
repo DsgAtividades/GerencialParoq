@@ -97,7 +97,7 @@ include 'includes/header.php';
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <div class="container py-3">
     <!-- <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h4 mb-0">Vendas</h1>
+        <h1 class="h4 mb-0">Relatório Vendas</h1>
         <a href="vendas_novo.php" class="btn btn-success">
             <i class="bi bi-plus-lg"></i> Nova Venda
         </a>

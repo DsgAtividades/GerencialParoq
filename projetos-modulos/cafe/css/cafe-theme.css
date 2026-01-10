@@ -45,7 +45,8 @@ body {
     font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif !important;
     color: var(--cafe-dark) !important;
     min-height: 100vh;
-    padding-top: 70px !important; /* Apenas a navbar */
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
 /* Main Wrapper - Largura consistente */

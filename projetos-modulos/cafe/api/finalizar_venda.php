@@ -6,11 +6,12 @@ require_once '../includes/funcoes.php';
 
 $permissao = verificarPermissaoApi('finalizar_venda');
 
-if($permissao == 0){
+if(!isset($permissao['tem_permissao']) || $permissao['tem_permissao'] == 0){
     echo json_encode([
         'success' => false,
         'message' => 'Usuário sem permissão de acesso'
     ]);
+    exit;
 }
 
 // Verificar método da requisição

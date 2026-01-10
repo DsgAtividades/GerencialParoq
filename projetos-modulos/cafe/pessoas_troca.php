@@ -30,7 +30,7 @@ include 'includes/header.php';
 
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Buscar Participante pelo Cartão</h1>
+        <h1>Trocar Cartão</h1>
         <div>
           
             <a href="pessoas.php" class="btn btn-secondary">
