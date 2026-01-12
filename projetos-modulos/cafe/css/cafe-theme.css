@@ -1,0 +1,705 @@
+/* ============================================
+   TEMA CAFETERIA - FESTA JUNINA
+   Cores: Madeira, Café, Creme
+   Design Profissional e Acolhedor
+   ============================================ */
+
+:root {
+    /* Paleta de Cores */
+    --cafe-dark: #002930;        /* Azul-petróleo escuro */
+    --cafe-white: #ffffff;       /* Branco */
+    --cafe-cream: #f8f0af;       /* Creme/Bege claro */
+    --cafe-brown: #ac4a00;       /* Marrom café */
+    --cafe-black: #000000;       /* Preto */
+    
+    /* Cores Derivadas */
+    --cafe-bg: #f5f1e8;          /* Background geral */
+    --cafe-brown-light: #d4832f; /* Marrom claro */
+    --cafe-brown-dark: #8a3a00;  /* Marrom escuro */
+    --cafe-cream-dark: #e8dda0;  /* Creme escuro */
+    --cafe-gray: #6c5a4d;        /* Cinza quente */
+    --cafe-gray-light: #a89887;  /* Cinza claro */
+    
+    /* Sistema de Sombras */
+    --shadow-sm: 0 2px 8px rgba(0, 41, 48, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 41, 48, 0.12);
+    --shadow-lg: 0 8px 32px rgba(0, 41, 48, 0.16);
+    --shadow-brown: 0 4px 12px rgba(172, 74, 0, 0.15);
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    
+    /* Transições */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+}
+
+/* ============================================
+   BODY E BACKGROUND
+   ============================================ */
+body {
+    background: var(--cafe-bg) !important;
+    font-family: 'Inter', 'Segoe UI', -apple-system, sans-serif !important;
+    color: var(--cafe-dark) !important;
+    min-height: 100vh;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Main Wrapper - Largura consistente */
+.main-wrapper {
+    width: 100%;
+    max-width: 1400px; /* Largura máxima para telas grandes */
+    margin: 0 auto;
+    padding: 20px;
+    min-height: calc(100vh - 70px); /* Altura mínima: viewport - navbar */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Container principal */
+.main-wrapper .container {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.main-wrapper .container-fluid {
+    width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+/* Cards e componentes com espaçamento adequado */
+.main-wrapper .card {
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+}
+
+.main-wrapper .card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 66px !important; /* Navbar mobile */
+    }
+    
+    .main-wrapper {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-wrapper {
+        padding: 10px;
+    }
+}
+
+/* Para telas muito grandes */
+@media (min-width: 1600px) {
+    .main-wrapper {
+        max-width: 1600px;
+    }
+}
+
+@media (min-width: 1920px) {
+    .main-wrapper {
+        max-width: 1800px;
+    }
+}
+
+/* ============================================
+   NAVBAR - TEMA CAFÉ
+   ============================================ */
+.navbar.navbar-dark.bg-primary {
+    background: linear-gradient(135deg, var(--cafe-dark) 0%, #003840 100%) !important;
+    border-bottom: 3px solid var(--cafe-brown);
+    box-shadow: var(--shadow-md);
+    z-index: 1040 !important;
+    min-height: 60px !important;
+}
+
+.navbar-brand {
+    font-weight: 700 !important;
+    font-size: 1.5rem !important;
+    color: var(--cafe-cream) !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.navbar-brand:hover {
+    color: var(--cafe-white) !important;
+}
+
+.navbar-brand::before {
+    content: '☕';
+    font-size: 1.8rem;
+}
+
+@media (max-width: 768px) {
+    .navbar.navbar-dark.bg-primary {
+        min-height: 56px !important;
+    }
+    
+    .navbar-brand {
+        font-size: 1.2rem !important;
+    }
+    
+    .navbar-brand::before {
+        font-size: 1.5rem;
+    }
+}
+
+.btn-outline-light {
+    border-color: var(--cafe-cream) !important;
+    color: var(--cafe-cream) !important;
+}
+
+.btn-outline-light:hover {
+    background: var(--cafe-cream) !important;
+    color: var(--cafe-dark) !important;
+    border-color: var(--cafe-cream) !important;
+}
+
+.user-menu {
+    color: var(--cafe-cream) !important;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.user-menu:hover {
+    color: var(--cafe-white) !important;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.user-menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--cafe-white);
+    border: 2px solid var(--cafe-brown);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+    z-index: 1050;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all var(--transition-fast);
+}
+
+.user-menu-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-menu-dropdown a {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #c44133;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background var(--transition-fast);
+}
+
+.user-menu-dropdown a:hover {
+    background: var(--cafe-cream);
+    color: var(--cafe-brown);
+}
+
+/* ============================================
+   NAVEGAÇÃO INTEGRADA NO HEADER
+   ============================================ */
+/* Estilos definidos no header.php inline */
+
+/* Garantir que tooltips sejam sempre visíveis */
+.nav-tooltip {
+    z-index: 9999 !important;
+}
+
+/* Hover suave nos ícones */
+.nav-tab-item {
+    cursor: pointer !important;
+}
+
+.nav-tab-item:hover {
+    cursor: pointer !important;
+}
+
+/* ============================================
+   CARDS - ESTILO CAFÉ
+   ============================================ */
+.card {
+    background: var(--cafe-white) !important;
+    border: 1px solid rgba(172, 74, 0, 0.1) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--cafe-cream) 0%, var(--cafe-cream-dark) 100%) !important;
+    border-bottom: 2px solid var(--cafe-brown) !important;
+    color: var(--cafe-dark) !important;
+    font-weight: 600;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+}
+
+.card-body {
+    color: var(--cafe-dark) !important;
+}
+
+.card-footer {
+    background: var(--cafe-bg) !important;
+    border-top: 1px solid rgba(172, 74, 0, 0.1) !important;
+}
+
+/* Cards do Dashboard */
+.card .display-5 {
+    filter: brightness(0) saturate(100%) invert(29%) sepia(56%) saturate(1854%) hue-rotate(359deg) brightness(89%) contrast(101%);
+}
+
+.card h3, .card h5 {
+    color: var(--cafe-dark) !important;
+}
+
+/* ============================================
+   BOTÕES - TEMA CAFÉ
+   ============================================ */
+.btn-primary {
+    background: linear-gradient(135deg, var(--cafe-brown) 0%, var(--cafe-brown-light) 100%) !important;
+    border: none !important;
+    color: var(--cafe-white) !important;
+    font-weight: 600;
+    box-shadow: var(--shadow-brown);
+    transition: all var(--transition-fast);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--cafe-brown-dark) 0%, var(--cafe-brown) 100%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(172, 74, 0, 0.25);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #6d8a3e 0%, #8aa850 100%) !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(109, 138, 62, 0.15);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #5a7333 0%, #6d8a3e 100%) !important;
+    transform: translateY(-2px);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--cafe-cream-dark) 0%, #f5e88f 100%) !important;
+    border: none !important;
+    color: var(--cafe-dark) !important;
+    font-weight: 600;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #e0ca7f 0%, var(--cafe-cream-dark) 100%) !important;
+    color: var(--cafe-brown) !important;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, var(--cafe-dark) 0%, #004550 100%) !important;
+    border: none !important;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #001820 0%, var(--cafe-dark) 100%) !important;
+}
+
+.btn-secondary {
+    background: var(--cafe-gray) !important;
+    border: none !important;
+    color: var(--cafe-white) !important;
+}
+
+.btn-secondary:hover {
+    background: var(--cafe-dark) !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #c44133 0%, #d95544 100%) !important;
+    border: none !important;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #a83629 0%, #c44133 100%) !important;
+}
+
+/* ============================================
+   TABELAS - ESTILO ELEGANTE
+   ============================================ */
+.table {
+    color: var(--cafe-dark) !important;
+}
+
+.table thead {
+    background: linear-gradient(135deg, var(--cafe-dark) 0%, #003840 100%) !important;
+    color: var(--cafe-cream) !important;
+    font-weight: 600;
+}
+
+.table thead th {
+    border: none !important;
+    padding: 1rem !important;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background: rgba(248, 240, 175, 0.1) !important;
+}
+
+.table-hover tbody tr:hover {
+    background: var(--cafe-cream) !important;
+    color: var(--cafe-brown) !important;
+    cursor: pointer;
+}
+
+/* ============================================
+   BADGES - CAFÉ
+   ============================================ */
+.badge {
+    font-weight: 600;
+    padding: 0.5em 0.8em;
+    border-radius: var(--radius-sm);
+}
+
+.badge.bg-success {
+    background: #6d8a3e !important;
+}
+
+.badge.bg-danger {
+    background: #c44133 !important;
+}
+
+.badge.bg-warning {
+    background: var(--cafe-brown) !important;
+    color: var(--cafe-white) !important;
+}
+
+.badge.bg-info {
+    background: var(--cafe-dark) !important;
+}
+
+/* ============================================
+   ALERTS - TEMA CAFÉ
+   ============================================ */
+.alert {
+    border-radius: var(--radius-md);
+    border: none;
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background: rgba(109, 138, 62, 0.1) !important;
+    border-left-color: #6d8a3e !important;
+    color: #5a7333 !important;
+}
+
+.alert-danger {
+    background: rgba(196, 65, 51, 0.1) !important;
+    border-left-color: #c44133 !important;
+    color: #a83629 !important;
+}
+
+.alert-warning {
+    background: rgba(248, 240, 175, 0.3) !important;
+    border-left-color: var(--cafe-brown) !important;
+    color: var(--cafe-brown-dark) !important;
+}
+
+.alert-info {
+    background: rgba(0, 41, 48, 0.1) !important;
+    border-left-color: var(--cafe-dark) !important;
+    color: var(--cafe-dark) !important;
+}
+
+/* ============================================
+   FORMS - ESTILO CAFÉ
+   ============================================ */
+.form-control, .form-select {
+    border: 2px solid rgba(172, 74, 0, 0.2) !important;
+    border-radius: var(--radius-md) !important;
+    background: var(--cafe-white) !important;
+    color: var(--cafe-dark) !important;
+    transition: all var(--transition-fast);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--cafe-brown) !important;
+    box-shadow: 0 0 0 3px rgba(172, 74, 0, 0.1) !important;
+    background: var(--cafe-white) !important;
+}
+
+.form-label {
+    color: var(--cafe-dark) !important;
+    font-weight: 600;
+}
+
+.input-group-text {
+    background: var(--cafe-cream) !important;
+    border-color: rgba(172, 74, 0, 0.2) !important;
+    color: var(--cafe-brown) !important;
+    font-weight: 600;
+}
+
+/* ============================================
+   VENDAS MOBILE - TEMA CAFÉ
+   ============================================ */
+.header-mobile {
+    background: var(--cafe-white) !important;
+    border-bottom: 3px solid var(--cafe-brown);
+}
+
+.header-mobile h2 {
+    color: var(--cafe-brown) !important;
+}
+
+.categorias-nav::-webkit-scrollbar-thumb {
+    background: var(--cafe-brown) !important;
+}
+
+.categoria-btn {
+    background: var(--cafe-white) !important;
+    border: 2px solid rgba(172, 74, 0, 0.15) !important;
+    color: var(--cafe-dark) !important;
+}
+
+.categoria-btn.active, .categoria-btn:hover {
+    background: linear-gradient(135deg, var(--cafe-brown) 0%, var(--cafe-brown-light) 100%) !important;
+    color: var(--cafe-white) !important;
+    border-color: var(--cafe-brown) !important;
+}
+
+.produto-card {
+    background: var(--cafe-white) !important;
+    border: 1px solid rgba(172, 74, 0, 0.1) !important;
+    box-shadow: var(--shadow-sm);
+}
+
+.produto-card:active {
+    background: var(--cafe-cream) !important;
+    box-shadow: var(--shadow-brown);
+}
+
+.produto-nome {
+    color: var(--cafe-dark) !important;
+}
+
+.produto-preco {
+    color: var(--cafe-brown) !important;
+}
+
+.quantidade-controls button {
+    background: var(--cafe-cream) !important;
+    color: var(--cafe-brown) !important;
+}
+
+.quantidade-controls button:hover {
+    background: var(--cafe-brown) !important;
+    color: var(--cafe-white) !important;
+}
+
+#participanteInfo {
+    background: linear-gradient(135deg, var(--cafe-cream) 0%, var(--cafe-cream-dark) 100%) !important;
+    border: 2px solid var(--cafe-brown);
+}
+
+#participanteInfo h5 {
+    color: var(--cafe-dark) !important;
+}
+
+#participanteInfo .text-success {
+    color: var(--cafe-brown) !important;
+}
+
+/* ============================================
+   MODAL - TEMA CAFÉ
+   ============================================ */
+.modal-content {
+    border-radius: var(--radius-lg) !important;
+    border: 2px solid var(--cafe-brown);
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, var(--cafe-cream) 0%, var(--cafe-cream-dark) 100%) !important;
+    border-bottom: 2px solid var(--cafe-brown) !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+}
+
+.modal-title {
+    color: var(--cafe-dark) !important;
+    font-weight: 700;
+}
+
+.modal-footer {
+    background: var(--cafe-bg) !important;
+    border-top: 1px solid rgba(172, 74, 0, 0.1) !important;
+}
+
+/* ============================================
+   TÍTULOS E TEXTOS
+   ============================================ */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--cafe-dark) !important;
+    font-weight: 700 !important;
+}
+
+.text-muted {
+    color: var(--cafe-gray) !important;
+}
+
+.text-primary {
+    color: var(--cafe-brown) !important;
+}
+
+.text-success {
+    color: #6d8a3e !important;
+}
+
+/* ============================================
+   EFEITOS ESPECIAIS
+   ============================================ */
+
+/* Gradiente decorativo no topo */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        var(--cafe-brown) 0%, 
+        var(--cafe-cream) 25%, 
+        var(--cafe-dark) 50%, 
+        var(--cafe-cream) 75%, 
+        var(--cafe-brown) 100%);
+    z-index: 9999;
+}
+
+/* Efeito café nas bordas dos cards principais */
+.card.shadow {
+    box-shadow: var(--shadow-brown) !important;
+}
+
+/* Animação sutil nos botões */
+.btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* ============================================
+   RESPONSIVIDADE
+   ============================================ */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.1rem !important;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar-brand {
+        font-size: 1rem !important;
+    }
+}
+
+/* ============================================
+   SCROLLBAR CUSTOMIZADO
+   ============================================ */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--cafe-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--cafe-brown);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--cafe-brown-dark);
+}
+
+/* ============================================
+   ACESSIBILIDADE
+   ============================================ */
+*:focus-visible {
+    outline: 3px solid var(--cafe-brown) !important;
+    outline-offset: 2px;
+}
+
+/* ============================================
+   LOADING E ESTADOS
+   ============================================ */
+.spinner-border-sm {
+    border-color: var(--cafe-cream);
+    border-right-color: transparent;
+}
+
+.placeholder {
+    background: linear-gradient(90deg, 
+        var(--cafe-cream) 25%, 
+        var(--cafe-cream-dark) 50%, 
+        var(--cafe-cream) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+

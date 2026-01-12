@@ -7,6 +7,7 @@
 -- Este script cria todas as tabelas necessárias para o módulo de Membros
 -- Baseado na análise completa do módulo (ANALISE_COMPLETA_MODULO_MEMBROS.md)
 --
+<<<<<<< HEAD
 -- IMPORTANTE: Este script cria todas as tabelas primeiro, depois adiciona
 -- as foreign keys. Isso garante que não haverá problemas de ordem de criação.
 --
@@ -19,6 +20,13 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- PARTE 1: CRIAR TODAS AS TABELAS (SEM FOREIGN KEYS)
 -- =====================================================
 
+=======
+-- IMPORTANTE: Execute este script em ordem para garantir que as foreign keys
+-- sejam criadas corretamente
+--
+-- =====================================================
+
+>>>>>>> main
 -- =====================================================
 -- 1. TABELA PRINCIPAL: membros_membros
 -- =====================================================
@@ -73,9 +81,16 @@ CREATE TABLE IF NOT EXISTS membros_membros (
     INDEX idx_membros_celular (celular_whatsapp),
     INDEX idx_membros_data_entrada (data_entrada),
     INDEX idx_membros_created_at (created_at),
+<<<<<<< HEAD
     INDEX idx_membros_status_nome (status, nome_completo)
     -- NOTA: UNIQUE constraints removidas de campos NULL para evitar problemas
     -- Email e CPF devem ser validados na aplicação quando preenchidos
+=======
+    INDEX idx_membros_status_nome (status, nome_completo),
+    -- Constraints
+    UNIQUE KEY uk_membros_email (email),
+    UNIQUE KEY uk_membros_cpf (cpf)
+>>>>>>> main
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Tabela principal de membros paroquiais';
 
 -- =====================================================
@@ -125,7 +140,16 @@ CREATE TABLE IF NOT EXISTS membros_pastorais (
     INDEX idx_pastorais_tipo (tipo),
     INDEX idx_pastorais_ativo (ativo),
     INDEX idx_pastorais_coordenador (coordenador_id),
+<<<<<<< HEAD
     INDEX idx_pastorais_vice_coordenador (vice_coordenador_id)
+=======
+    INDEX idx_pastorais_vice_coordenador (vice_coordenador_id),
+    -- Foreign Keys
+    CONSTRAINT fk_pastorais_coordenador FOREIGN KEY (coordenador_id) 
+        REFERENCES membros_membros(id) ON DELETE SET NULL,
+    CONSTRAINT fk_pastorais_vice_coordenador FOREIGN KEY (vice_coordenador_id) 
+        REFERENCES membros_membros(id) ON DELETE SET NULL
+>>>>>>> main
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Pastorais da paróquia';
 
 -- =====================================================
@@ -156,6 +180,16 @@ CREATE TABLE IF NOT EXISTS membros_membros_pastorais (
     INDEX idx_membros_pastorais_funcao (funcao_id),
     INDEX idx_membros_pastorais_situacao (situacao_pastoral),
     INDEX idx_membros_pastorais_pastoral_membro (pastoral_id, membro_id),
+<<<<<<< HEAD
+=======
+    -- Foreign Keys
+    CONSTRAINT fk_membros_pastorais_membro FOREIGN KEY (membro_id) 
+        REFERENCES membros_membros(id) ON DELETE CASCADE,
+    CONSTRAINT fk_membros_pastorais_pastoral FOREIGN KEY (pastoral_id) 
+        REFERENCES membros_pastorais(id) ON DELETE CASCADE,
+    CONSTRAINT fk_membros_pastorais_funcao FOREIGN KEY (funcao_id) 
+        REFERENCES membros_funcoes(id) ON DELETE SET NULL,
+>>>>>>> main
     -- Constraint: Um membro não pode estar na mesma pastoral duas vezes
     UNIQUE KEY uk_membro_pastoral (membro_id, pastoral_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Relacionamento N:N entre membros e pastorais';
@@ -179,7 +213,11 @@ CREATE TABLE IF NOT EXISTS membros_eventos (
     responsavel_id VARCHAR(36) DEFAULT NULL COMMENT 'ID do responsável (FK membros_membros)',
     -- Status
     ativo TINYINT(1) DEFAULT 1 COMMENT '1 = Ativo, 0 = Inativo',
+<<<<<<< HEAD
     -- Auditoria
+=======
+    -- Auitoria
+>>>>>>> main
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Data de atualização',
     -- Índices
@@ -188,7 +226,14 @@ CREATE TABLE IF NOT EXISTS membros_eventos (
     INDEX idx_eventos_data (data_evento),
     INDEX idx_eventos_ativo (ativo),
     INDEX idx_eventos_data_ativo (data_evento, ativo),
+<<<<<<< HEAD
     INDEX idx_eventos_responsavel (responsavel_id)
+=======
+    INDEX idx_eventos_responsavel (responsavel_id),
+    -- Foreign Keys
+    CONSTRAINT fk_eventos_responsavel FOREIGN KEY (responsavel_id) 
+        REFERENCES membros_membros(id) ON DELETE SET NULL
+>>>>>>> main
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Eventos gerais da paróquia';
 
 -- =====================================================
@@ -202,6 +247,14 @@ CREATE TABLE IF NOT EXISTS membros_eventos_pastorais (
         -- Índices
     INDEX idx_eventos_pastorais_evento (evento_id),
     INDEX idx_eventos_pastorais_pastoral (pastoral_id),
+<<<<<<< HEAD
+=======
+        -- Foreign Keys
+    CONSTRAINT fk_eventos_pastorais_evento FOREIGN KEY (evento_id) 
+        REFERENCES membros_eventos(id) ON DELETE CASCADE,
+    CONSTRAINT fk_eventos_pastorais_pastoral FOREIGN KEY (pastoral_id) 
+        REFERENCES membros_pastorais(id) ON DELETE CASCADE,
+>>>>>>> main
         -- Constraint: Um evento não pode estar vinculado à mesma pastoral duas vezes
     UNIQUE KEY uk_evento_pastoral (evento_id, pastoral_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Relacionamento N:N entre eventos e pastorais';
@@ -211,11 +264,20 @@ CREATE TABLE IF NOT EXISTS membros_eventos_pastorais (
 -- =====================================================
 CREATE TABLE IF NOT EXISTS membros_escalas_eventos (
     id VARCHAR(36) NOT NULL PRIMARY KEY COMMENT 'UUID da escala',
+<<<<<<< HEAD
     titulo VARCHAR(255) NOT NULL COMMENT 'Título/nome da escala',
     descricao TEXT DEFAULT NULL COMMENT 'Descrição da escala',
         -- Data e Hora
     data DATE NOT NULL COMMENT 'Data do evento da escala',
     hora TIME DEFAULT NULL COMMENT 'Hora do evento',
+=======
+    nome VARCHAR(255) NOT NULL COMMENT 'Nome/título da escala',
+    descricao TEXT DEFAULT NULL COMMENT 'Descrição da escala',
+        -- Data e Hora
+    data_evento DATE NOT NULL COMMENT 'Data do evento da escala',
+    hora_inicio TIME DEFAULT NULL COMMENT 'Hora de início',
+    hora_fim TIME DEFAULT NULL COMMENT 'Hora de término',
+>>>>>>> main
         -- Pastoral e Local
     pastoral_id VARCHAR(36) NOT NULL COMMENT 'ID da pastoral (FK membros_pastorais)',
     local VARCHAR(255) DEFAULT NULL COMMENT 'Local do evento',
@@ -226,11 +288,24 @@ CREATE TABLE IF NOT EXISTS membros_escalas_eventos (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Data de atualização',
         -- Índices
+<<<<<<< HEAD
     INDEX idx_escalas_eventos_titulo (titulo),
     INDEX idx_escalas_eventos_data (data),
     INDEX idx_escalas_eventos_pastoral (pastoral_id),
     INDEX idx_escalas_eventos_pastoral_data (pastoral_id, data),
     INDEX idx_escalas_eventos_created_by (created_by)
+=======
+    INDEX idx_escalas_eventos_nome (nome),
+    INDEX idx_escalas_eventos_data (data_evento),
+    INDEX idx_escalas_eventos_pastoral (pastoral_id),
+    INDEX idx_escalas_eventos_pastoral_data (pastoral_id, data_evento),
+    INDEX idx_escalas_eventos_created_by (created_by),
+        -- Foreign Keys
+    CONSTRAINT fk_escalas_eventos_pastoral FOREIGN KEY (pastoral_id) 
+        REFERENCES membros_pastorais(id) ON DELETE CASCADE,
+    CONSTRAINT fk_escalas_eventos_created_by FOREIGN KEY (created_by) 
+        REFERENCES membros_membros(id) ON DELETE SET NULL
+>>>>>>> main
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Escalas de eventos com funções e membros atribuídos';
 
 -- =====================================================
@@ -246,7 +321,14 @@ CREATE TABLE IF NOT EXISTS membros_escalas_funcoes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
         -- Índices
     INDEX idx_escalas_funcoes_evento (evento_id),
+<<<<<<< HEAD
     INDEX idx_escalas_funcoes_nome (nome_funcao)
+=======
+    INDEX idx_escalas_funcoes_nome (nome_funcao),
+        -- Foreign Keys
+    CONSTRAINT fk_escalas_funcoes_evento FOREIGN KEY (evento_id) 
+        REFERENCES membros_escalas_eventos(id) ON DELETE CASCADE
+>>>>>>> main
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Funções dentro de uma escala de evento';
 
 -- =====================================================
@@ -264,6 +346,14 @@ CREATE TABLE IF NOT EXISTS membros_escalas_funcao_membros (
     INDEX idx_escalas_funcao_membros_funcao (funcao_id),
     INDEX idx_escalas_funcao_membros_membro (membro_id),
     INDEX idx_escalas_funcao_membros_status (status),
+<<<<<<< HEAD
+=======
+        -- Foreign Keys
+    CONSTRAINT fk_escalas_funcao_membros_funcao FOREIGN KEY (funcao_id) 
+        REFERENCES membros_escalas_funcoes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_escalas_funcao_membros_membro FOREIGN KEY (membro_id) 
+        REFERENCES membros_membros(id) ON DELETE CASCADE,
+>>>>>>> main
         -- Constraint: Um membro não pode ter a mesma função duas vezes
     UNIQUE KEY uk_funcao_membro (funcao_id, membro_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Membros atribuídos a funções em escalas';
@@ -282,7 +372,14 @@ CREATE TABLE IF NOT EXISTS membros_escalas_logs (
     INDEX idx_escalas_logs_evento (evento_id),
     INDEX idx_escalas_logs_usuario (usuario_id),
     INDEX idx_escalas_logs_acao (acao),
+<<<<<<< HEAD
     INDEX idx_escalas_logs_created_at (created_at)
+=======
+    INDEX idx_escalas_logs_created_at (created_at),
+        -- Foreign Keys
+    CONSTRAINT fk_escalas_logs_evento FOREIGN KEY (evento_id) 
+        REFERENCES membros_escalas_eventos(id) ON DELETE CASCADE
+>>>>>>> main
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Logs de ações nas escalas';
 
 -- =====================================================
@@ -298,10 +395,20 @@ CREATE TABLE IF NOT EXISTS membros_consentimentos_lgpd (
     user_agent TEXT DEFAULT NULL COMMENT 'User agent do navegador',
     versao_termo VARCHAR(50) DEFAULT NULL COMMENT 'Versão do termo de consentimento',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
+<<<<<<< HEAD
     -- Índices
     INDEX idx_consentimentos_membro (membro_id),
     INDEX idx_consentimentos_finalidade (finalidade),
     INDEX idx_consentimentos_data (data_consentimento)
+=======
+        -- Ídices
+    INDEX idx_consentimentos_membro (membro_id),
+    INDEX idx_consentimentos_finalidade (finalidade),
+    INDEX idx_consentimentos_data (data_consentimento),
+        -- Foreign Keys
+    CONSTRAINT fk_consentimentos_membro FOREIGN KEY (membro_id) 
+        REFERENCES membros_membros(id) ON DELETE CASCADE
+>>>>>>> main
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Consentimentos LGPD dos membros';
 
 -- =====================================================
@@ -327,6 +434,7 @@ CREATE TABLE IF NOT EXISTS membros_auditoria_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Logs de auditoria de todas as ações do sistema';
 
 -- =====================================================
+<<<<<<< HEAD
 -- 13. TABELA: membros_enderecos_membro
 -- =====================================================
 CREATE TABLE IF NOT EXISTS membros_enderecos_membro (
@@ -653,11 +761,32 @@ ALTER TABLE membros_anexos
 
 -- Reabilitar verificação de foreign keys
 SET FOREIGN_KEY_CHECKS = 1;
+=======
+-- 13. TABELA: membros_anexos
+-- =====================================================
+CREATE TABLE IF NOT EXISTS membros_anexos (
+    id VARCHAR(36) NOT NULL PRIMARY KEY COMMENT 'UUID do anexo',
+    membro_id VARCHAR(36) DEFAULT NULL COMMENT 'ID do membro (FK membros_membros)',
+    tipo ENUM('foto', 'documento', 'outro') DEFAULT 'outro' COMMENT 'Tipo do anexo',
+    nome_arquivo VARCHAR(255) NOT NULL COMMENT 'Nome do arquivo',
+    caminho_arquivo VARCHAR(500) NOT NULL COMMENT 'Caminho completo do arquivo',
+    tamanho INT DEFAULT NULL COMMENT 'Tamanho em bytes',
+    mime_type VARCHAR(100) DEFAULT NULL COMMENT 'Tipo MIME (image/jpeg, application/pdf, etc)',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'Data de criação',
+        -- Índices
+    INDEX idx_anexos_membro (membro_id),
+    INDEX idx_anexos_tipo (tipo),
+        -- Foreign Keys
+    CONSTRAINT fk_anexos_membro FOREIGN KEY (membro_id) 
+        REFERENCES membros_membros(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Anexos de membros (fotos, documentos, etc)';
+>>>>>>> main
 
 -- =====================================================
 -- FIM DO SCRIPT
 -- =====================================================
 -- 
+<<<<<<< HEAD
 -- RESUMO DAS TABELAS CRIADAS (21 tabelas):
 -- 
 -- Tabelas Principais:
@@ -693,6 +822,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 20. membros_auditoria_logs - Logs de auditoria
 -- 21. membros_anexos - Anexos (fotos, documentos)
 -- 
+=======
+>>>>>>> main
 -- Observações importantes:
 -- 
 -- 1. Todas as tabelas usam UUID (VARCHAR(36)) como chave primária
@@ -701,14 +832,22 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- 4. Auditoria completa com created_at, updated_at, created_by, updated_by
 -- 5. Foreign keys configuradas com ON DELETE CASCADE ou ON DELETE SET NULL
 -- 6. Índices criados para otimização de queries frequentes
+<<<<<<< HEAD
 -- 7. Tabelas de endereços, contatos e documentos permitem múltiplos registros por membro
 -- 8. Tabela de anexos suporta múltiplas entidades (membros, pastorais, eventos)
+=======
+>>>>>>> main
 -- 
 -- Para aplicar os índices de performance, execute também:
 -- performance_indices.sql
 -- 
+<<<<<<< HEAD
 -- Verificar se todas as tabelas foram criadas:
 -- Execute: SHOW TABLES LIKE 'membros_%';
 -- Deve retornar 21 tabelas
 -- 
 -- =====================================================
+=======
+-- =====================================================
+
+>>>>>>> main

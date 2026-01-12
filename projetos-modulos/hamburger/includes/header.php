@@ -13,7 +13,7 @@
     <!-- Início do cabeçalho do sistema -->
     <header class="p-4 bg-gray-800 text-white flex justify-between items-center">
         <h1 class="text-2xl font-bold">Hamburger - Sistema de Gestão</h1>
-        <a href="/gerencialParoquia/dashboard.html" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
+        <a href="/gerencialParoq/dashboard.html" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
             <i class="bi bi-arrow-left"></i>
             Voltar aos Módulos
         </a>

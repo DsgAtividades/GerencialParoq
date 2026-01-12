@@ -5,12 +5,17 @@
  */
 
 // Configurações do banco de dados
-define('DB_HOST', 'gerencialparoq.mysql.dbaas.com.br');
-define('DB_NAME', 'gerencialparoq');
-define('DB_USER', 'gerencialparoq');
-define('DB_PASS', 'Dsg#1806');
-define('DB_CHARSET', 'utf8mb4');
+//define('DB_HOST', 'gerencialparoq.mysql.dbaas.com.br');
+//define('DB_NAME', 'gerencialparoq');
+//define('DB_USER', 'gerencialparoq');
+//define('DB_PASS', 'Dsg#1806');
+//define('DB_CHARSET', 'utf8mb4');
 
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'gerencialparoq');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_CHARSET', 'utf8mb4');
 // Configurações de sessão
 define('SESSION_TIMEOUT', 3600); // 1 hora em segundos
 

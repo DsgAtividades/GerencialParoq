@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
 /**
  * Gera UUID v4 conforme RFC 4122 usando random_bytes (criptograficamente seguro)
  * Compatível com PHP 7.0+
@@ -21,3 +22,18 @@ function uuid_v4() {
         bin2hex(substr($data, 10, 6))
     );
 }
+=======
+function uuid_v4() {
+    return sprintf(
+        '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+        mt_rand(0, 0xffff),
+        mt_rand(0, 0x0fff) | 0x4000,
+        mt_rand(0, 0x3fff) | 0x8000,
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+    );
+}
+?>
+
+
+>>>>>>> main

@@ -5,6 +5,7 @@
  * URL: /api/pastorais
  */
 
+<<<<<<< HEAD
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../utils/Response.php';
 require_once __DIR__ . '/../utils/Cache.php';
@@ -23,6 +24,10 @@ if (!Permissions::canCreatePastorais()) {
 }
 
 ob_start(); // Iniciar buffer de output
+=======
+require_once '../config/database.php';
+
+>>>>>>> main
 try {
     // Obter dados do body
     $input = json_decode(file_get_contents('php://input'), true);
@@ -48,6 +53,7 @@ try {
         Response::error('Tipo inválido. Tipos permitidos: ' . implode(', ', $tiposPermitidos), 400);
     }
     
+<<<<<<< HEAD
     // Validar email do grupo se fornecido
     if (isset($input['email_grupo']) && !empty($input['email_grupo'])) {
         $validation = new Validation();
@@ -73,6 +79,18 @@ try {
     
     // Gerar UUID para o ID (usando função RFC 4122)
     $pastoral_id = uuid_v4();
+=======
+    $db = new MembrosDatabase();
+    
+    // Gerar UUID para o ID
+    $pastoral_id = sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+        mt_rand(0, 0xffff),
+        mt_rand(0, 0x0fff) | 0x4000,
+        mt_rand(0, 0x3fff) | 0x8000,
+        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+    );
+>>>>>>> main
     
     // Campos permitidos para criação
     $campos = ['id', 'nome', 'tipo'];
@@ -80,6 +98,10 @@ try {
     
     // Campos opcionais
     $camposOpcionais = [
+<<<<<<< HEAD
+=======
+        'comunidade_ou_capelania',
+>>>>>>> main
         'finalidade_descricao',
         'whatsapp_grupo_link',
         'email_grupo',
@@ -131,6 +153,7 @@ try {
         Response::error('Erro ao recuperar pastoral criada', 500);
     }
     
+<<<<<<< HEAD
     // Invalidar cache de pastorais após criar nova pastoral
     try {
         $cache = new Cache();
@@ -147,6 +170,8 @@ try {
         // Não falhar a criação por causa do cache
     }
     
+=======
+>>>>>>> main
     // Buscar nome do coordenador se houver
     if (!empty($pastoral['coordenador_id'])) {
         $coordQuery = "SELECT nome_completo, apelido FROM membros_membros WHERE id = ?";
@@ -169,6 +194,7 @@ try {
         }
     }
     
+<<<<<<< HEAD
     ob_end_clean();
     Response::success($pastoral, 'Pastoral criada com sucesso');
     
@@ -185,5 +211,12 @@ try {
     ob_end_clean();
     error_log("Erro fatal ao criar pastoral: " . $e->getMessage());
     Response::error('Erro interno do servidor', 500);
+=======
+    Response::success($pastoral, 'Pastoral criada com sucesso');
+    
+} catch (Exception $e) {
+    error_log("Erro ao criar pastoral: " . $e->getMessage());
+    Response::error('Erro interno do servidor: ' . $e->getMessage(), 500);
+>>>>>>> main
 }
 ?>

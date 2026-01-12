@@ -251,7 +251,7 @@ verificarLogin();
         <div class="container-fluid">
             <a class="navbar-brand" href="index.php">Festa Junina</a>
             <div class="d-flex align-items-center">
-                <a href="/gerencialParoquia/dashboard.html" class="btn btn-outline-light btn-sm me-2">
+                <a href="/gerencialParoq/dashboard.html" class="btn btn-outline-light btn-sm me-2">
                     <i class="bi bi-arrow-left"></i> Voltar aos Módulos
                 </a>
                 <a href="logout.php" class="btn btn-outline-light btn-sm me-2 d-lg-none">

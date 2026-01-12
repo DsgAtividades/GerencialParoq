@@ -37,7 +37,7 @@
                     <h4>Sistema de Obras</h4>
                     <small class="text-muted">Bem-vindo, <?php echo htmlspecialchars($_SESSION['nome_completo']); ?></small>
                     <div class="mt-3">
-                        <a href="/gerencialParoquia/dashboard.html" class="btn btn-outline-primary btn-sm">
+                        <a href="/gerencialParoq/dashboard.html" class="btn btn-outline-primary btn-sm">
                             <i class="bi bi-arrow-left"></i> Voltar aos Módulos
                         </a>
                     </div>
