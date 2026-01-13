@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once 'includes/funcoes.php';
 
 // Armazenar o nome do usuário antes de destruir a sessão

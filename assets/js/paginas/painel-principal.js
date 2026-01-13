@@ -114,6 +114,12 @@ document.addEventListener('DOMContentLoaded', function() {
         modulos.forEach(modulo => {
             const cartaoModulo = document.createElement('div');
             cartaoModulo.className = 'cartao-modulo';
+            
+            // Módulo café usa seu próprio sistema de login
+            const linkLogin = modulo.id === 'cafe' 
+                ? 'modules/cafe/login.php'
+                : `module_login.html?module=${modulo.id}`;
+            
             cartaoModulo.innerHTML = `
                 <div class="cabecalho-modulo">
                     <div class="icone-modulo" style="background: ${modulo.cor};">
@@ -128,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${modulo.descricao}
                 </div>
                 <div class="acoes-modulo">
-                    <a href="module_login.html?module=${modulo.id}" class="botao-principal">
+                    <a href="${linkLogin}" class="botao-principal">
                         <i class="fas fa-sign-in-alt"></i> Fazer Login no Módulo
                     </a>
                     <a href="#" class="botao-secundario" onclick="mostrarInfoModulo('${modulo.id}')">
