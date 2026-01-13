@@ -8,3 +8,4 @@ AFTER descricao;
 -- Verificar se a coluna foi adicionada
 DESCRIBE membros_eventos;
 
+
