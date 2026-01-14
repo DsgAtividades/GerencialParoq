@@ -349,16 +349,6 @@ require_once 'includes/header.php';
     <!-- Cards de Resumo -->
     <div class="row mb-4">
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stat-card stat-card-primary">
-                <div class="stat-icon">
-                    <i class="bi bi-wallet2"></i>
-                </div>
-                <div class="stat-label">Total de Créditos Inseridos</div>
-                <div class="stat-value" id="totalCreditosCartoes">R$ 0,00</div>
-                <div class="stat-comparison" id="teste">&nbsp;</div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
             <div class="stat-card stat-card-success">
                 <div class="stat-icon">
                     <i class="bi bi-cart-check"></i>
@@ -381,44 +371,11 @@ require_once 'includes/header.php';
         <div class="col-md-3 col-sm-6 mb-3">
             <div class="stat-card stat-card-secondary">
                 <div class="stat-icon">
-                    <i class="bi bi-credit-card"></i>
-                </div>
-                <div class="stat-label">Receita com Cartão</div>
-                <div class="stat-value" id="custoCartao">R$ 0,00</div>
-                <div class="stat-comparison" id="qtdeCartao">&nbsp;</div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stat-card stat-card-dark">
-                <div class="stat-icon">
-                    <i class="bi bi-wallet"></i>
-                </div>
-                <div class="stat-label">Saldo Total em Cartões</div>
-                <div class="stat-value" id="saldoTotalCartoes">R$ 0,00</div>
-                <div class="stat-comparison" id="teste">&nbsp;</div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stat-card stat-card-secondary">
-                <div class="stat-icon">
                     <i class="bi bi-box-seam"></i>
                 </div>
                 <div class="stat-label">Quantidade Vendida</div>
                 <div class="stat-value" id="quantidadeVendida">0</div>
                 <div class="stat-comparison" id="comparacaoQuantidade"></div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="stat-card stat-card-success">
-                <div class="stat-icon">
-                    <i class="bi bi-check-circle"></i>
-                </div>
-                <div class="stat-label">Cartões Ativos</div>
-                <div class="stat-value" id="qtdCartoesAtivos">0</div>
-                <div class="stat-comparison" id="teste">&nbsp;</div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
@@ -559,12 +516,6 @@ function atualizarDados() {
             // Atualizar cards
             document.getElementById('totalVendas').textContent = formatMoney(data.resumo.total_vendas || 0);
             document.getElementById('quantidadeVendida').textContent = data.resumo.quantidade_vendida || 0;
-            
-            document.getElementById('custoCartao').textContent = formatMoney(data.resumo.custo_cartao || 0);
-            const qtdeCartaoEl = document.getElementById('qtdeCartao');
-            if (qtdeCartaoEl) {
-                qtdeCartaoEl.textContent = "Quantidade: " + (data.resumo.qtde_cartao || 0);
-            }
             document.getElementById('estornoTotalCartoes').textContent = formatMoney(data.resumo.total_estorno || 0);
             const qtdeEstornoEl = document.getElementById('qtdeEstorno');
             if (qtdeEstornoEl) {
@@ -581,18 +532,8 @@ function atualizarDados() {
             const variacaoQuantidade = data.resumo.variacao_quantidade || 0;
             comparacaoQuantidadeEl.textContent = `${variacaoQuantidade > 0 ? '+' : ''}${variacaoQuantidade}% vs período anterior`;
             comparacaoQuantidadeEl.className = 'stat-comparison ' + (variacaoQuantidade > 0 ? 'positive' : variacaoQuantidade < 0 ? 'negative' : '');
-
-            // Atualizar cards de saldo dos cartões
-            if (data.saldos_cartao) {
-                const totalCreditos = data.saldos_cartao.total_creditos || 0;
-                const saldoTotal = data.saldos_cartao.saldo_total || 0;
-                const custoCartao = data.resumo.custo_cartao || 0;
-                document.getElementById('saldoTotalCartoes').textContent = formatMoney(totalCreditos > 0 ? (totalCreditos - saldoTotal - custoCartao) : 0);
-                document.getElementById('qtdCartoesAtivos').textContent = totalCreditos > 0 ? (data.saldos_cartao.qtd_cartoes || 0) : 0;
-                document.getElementById('totalCreditosCartoes').textContent = formatMoney(totalCreditos);
-            }
             
-            document.getElementById('totalReceita').textContent = formatMoney((data.resumo.total_vendas || 0) + (data.resumo.custo_cartao || 0));
+            document.getElementById('totalReceita').textContent = formatMoney(data.resumo.total_vendas || 0);
 
             // Limpar e preencher tabela
             const tbody = document.querySelector('#tabelaProdutos tbody');
@@ -622,15 +563,15 @@ function atualizarDados() {
                     <td><strong style="color: #198754;">${formatMoney(produto.valor_vendido)}</strong></td>
                     <td>
                         <div class="progress-modern">
-                            <div class="progress-bar" role="progressbar" style="width: ${produto.percentual}%">
-                                ${produto.percentual.toFixed(1)}%
+                            <div class="progress-bar" role="progressbar" style="width: ${parseFloat(produto.percentual || 0)}%">
+                                ${parseFloat(produto.percentual || 0).toFixed(1)}%
                             </div>
                         </div>
                     </td>
                     <td>
                         <span class="badge bg-${produto.tendencia > 0 ? 'success' : produto.tendencia < 0 ? 'danger' : 'secondary'}" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
                             ${produto.tendencia > 0 ? '↑' : produto.tendencia < 0 ? '↓' : '→'} 
-                            ${Math.abs(produto.tendencia).toFixed(1)}%
+                            ${Math.abs(parseFloat(produto.tendencia || 0)).toFixed(1)}%
                         </span>
                     </td>
                 `;

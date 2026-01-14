@@ -49,6 +49,7 @@ include 'includes/header.php';
 ?>
 <link rel="stylesheet" href="css/vendas_mobile.css">
 
+<!-- Layout em Colunas por Categoria -->
 <style>
     body {
         background: var(--cafe-bg) !important;
@@ -73,110 +74,21 @@ include 'includes/header.php';
         color: #0d6efd;
         letter-spacing: 1px;
     }
-    .categorias-nav {
-        background: none;
-        box-shadow: none;
-        padding: 0 0 10px 0;
-        margin-bottom: 10px;
-        overflow-x: auto;
-        display: flex;
-        gap: 10px;
-        scrollbar-width: thin;
-        flex-wrap: nowrap;
-        -webkit-overflow-scrolling: touch;
-    }
-    .categorias-nav::-webkit-scrollbar {
-        height: 4px;
-    }
-    .categorias-nav::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 10px;
-    }
-    .categorias-nav::-webkit-scrollbar-thumb {
-        background: #c1c1c1;
-        border-radius: 10px;
-    }
-    .categorias-nav::-webkit-scrollbar-thumb:hover {
-        background: #a8a8a8;
-    }
-    .categoria-btn {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 10px;
-        border-radius: 12px;
-        border: none;
-        background: #f1f3f6;
-        color: #6c757d;
-        cursor: pointer;
-        transition: all 0.2s;
-        min-width: 80px;
-        max-width: 120px;
-        min-height: 75px;
-        font-size: 12px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        flex-shrink: 0;
-        text-align: center;
-        gap: 4px;
-    }
-    .categoria-btn.active, .categoria-btn:hover {
-        background: #0d6efd;
-        color: #fff;
-        box-shadow: 0 2px 8px rgba(13,110,253,0.08);
-    }
-    .categoria-btn i {
-        font-size: 22px;
-        flex-shrink: 0;
-    }
-    .categoria-btn span {
-        text-align: center;
-        line-height: 1.2;
-        word-break: break-word;
-        hyphens: auto;
-        overflow-wrap: break-word;
-        width: 100%;
-        font-weight: 500;
-        min-height: auto;
-        white-space: normal;
-        max-height: 2.8em;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-    }
-    /* Fallback para navegadores que não suportam -webkit-line-clamp */
-    .categoria-btn span:not(:supports(-webkit-line-clamp: 2)) {
-        display: block;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-    }
-    .categoria-section {
-        display: none;
-        margin-bottom: 20px;
-    }
-    .categoria-section.active {
-        display: block;
-    }
-    .produtos-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 10px;
-        padding: 0 2px;
-    }
     .produto-card {
         border-radius: 12px;
         background: #fff;
         box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        padding: 10px 6px 10px 6px;
+        padding: 12px 10px;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        min-height: 120px;
+        min-height: 150px;
         position: relative;
         transition: box-shadow 0.2s;
         cursor: pointer;
+        box-sizing: border-box;
+        width: 100%;
+        overflow: visible;
     }
     .produto-card:active {
         box-shadow: 0 4px 16px rgba(13,110,253,0.10);
@@ -208,20 +120,9 @@ include 'includes/header.php';
         gap: 8px;
         margin-top: auto;
         width: 100%;
-    }
-    .quantidade-controls button {
-        width: 32px;
-        height: 32px;
-        font-size: 1.2rem;
-        border-radius: 50%;
-        border: none;
-        background: #f1f3f6;
-        color: #0d6efd;
-        transition: background 0.2s;
-    }
-    .quantidade-controls button:hover {
-        background: #0d6efd;
-        color: #fff;
+        padding-top: 8px;
+        flex-shrink: 0;
+        box-sizing: border-box;
     }
     .quantidade-input {
         width: 48px;
@@ -243,66 +144,107 @@ include 'includes/header.php';
     #carrinho-resumo .card-footer {
         border-radius: 0 0 14px 14px;
     }
-    /* Participante */
-    #participanteInfo {
-        background: #f1f3f6;
-        border-radius: 12px;
-        padding: 12px 14px;
-        margin-top: 10px;
-        margin-bottom: 0;
-        display: flex;
-        align-items: center;
+    /* Tipos de Pagamento */
+    .payment-types {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
         gap: 12px;
     }
-    #participanteInfo h5 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 2px;
+    
+    .btn-payment {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px 10px;
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        background: #fff;
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 100px;
     }
-    #participanteInfo .text-success {
-        font-size: 1.1rem;
-        font-weight: 700;
+    
+    .btn-payment:hover {
+        border-color: var(--cafe-brown);
+        color: var(--cafe-brown);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(172, 74, 0, 0.2);
     }
-    /* Responsivo */
+    
+    .btn-payment.active {
+        background: linear-gradient(135deg, var(--cafe-brown) 0%, var(--cafe-brown-light) 100%);
+        border-color: var(--cafe-brown-dark);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(172, 74, 0, 0.3);
+    }
+    
+    .btn-payment i {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+    
+    .btn-payment span {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    #tipoPagamentoSelecionado {
+        text-align: center;
+        margin-bottom: 0;
+    }
+    
     @media (max-width: 600px) {
-        .produtos-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
+        .payment-types {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
         }
-        #carrinho {
-            max-width: 100vw;
-            padding-bottom: 12px;
+        .btn-payment {
+            padding: 15px 8px;
+            min-height: 85px;
         }
-        .container.mb-5.pb-5 {
-            padding-bottom: 240px !important;
+        .btn-payment i {
+            font-size: 1.5rem;
+            margin-bottom: 6px;
         }
-        .header-mobile {
-            padding-left: 8px;
-            padding-right: 8px;
-        }
-        .bottom-bar {
-            padding-left: 4px;
-            padding-right: 4px;
-        }
-        .categoria-btn {
-            min-width: 75px;
-            max-width: 100px;
-            min-height: 65px;
-            font-size: 11px;
-            padding: 8px 10px;
-        }
-        .categoria-btn span {
-            font-size: 10px;
-            line-height: 1.1;
-            max-height: 2.4em;
-        }
-        .categoria-btn i {
-            font-size: 20px;
+        .btn-payment span {
+            font-size: 0.85rem;
         }
     }
     .container.mb-5.pb-5 {
         padding-bottom: 220px !important; /* Espaço extra para barra e drawer */
         max-width: 100vw;
         overflow-x: hidden;
+        overflow-y: visible;
+        box-sizing: border-box;
+    }
+    
+    /* Garantir que os containers de categorias sejam visíveis */
+    .categorias-container {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .categoria-coluna {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .produtos-lista {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    .produto-card {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 </style>
 
@@ -311,73 +253,82 @@ include 'includes/header.php';
     <div class="header-mobile">
         <h2>Vender</h2>
     </div>
-    <!-- Área do Cliente -->
+    <!-- Seleção de Tipo de Pagamento -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <div class="mb-3">
-                        <button class="btn btn-primary btn-lg w-100" type="button" id="btnLerQRCode" onclick="abrirLeitor()">
-                            <i class="bi bi-qr-code-scan"></i> Ler QR Code do Participante
+                    <h5 class="mb-3"><i class="bi bi-credit-card"></i> Selecione o Tipo de Pagamento</h5>
+                    <div class="payment-types">
+                        <button type="button" class="btn-payment" data-tipo="dinheiro" onclick="selecionarTipoPagamento('dinheiro')">
+                            <i class="bi bi-cash-stack"></i>
+                            <span>Dinheiro</span>
+                        </button>
+                        <button type="button" class="btn-payment" data-tipo="credito" onclick="selecionarTipoPagamento('credito')">
+                            <i class="bi bi-credit-card"></i>
+                            <span>Crédito</span>
+                        </button>
+                        <button type="button" class="btn-payment" data-tipo="debito" onclick="selecionarTipoPagamento('debito')">
+                            <i class="bi bi-credit-card-2-front"></i>
+                            <span>Débito</span>
                         </button>
                     </div>
-                    <div class="mb-12">
-                        <div id="qr-reader" style="display: none; max-width: 250px; margin: 0 auto;" class="mt-3"></div>
-                    </div>
-                    <div id="participanteInfo" class="d-none">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="mb-1" id="participanteNome"></h5>
-                                <div class="text-muted small" id="participanteCPF"></div>
-                            </div>
-                            <div class="text-end">
-                                <div class="text-success fw-bold" id="participanteSaldo"></div>
-                                <div class="text-muted small">Saldo disponível</div>
-                            </div>
-                        </div>
+                    <div id="tipoPagamentoSelecionado" class="alert alert-info mt-3" style="display: none;">
+                        <i class="bi bi-check-circle-fill"></i> <strong>Forma de pagamento:</strong> <span id="tipoPagamentoTexto"></span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Categorias -->
-    <div class="categorias-nav">
-        <?php foreach ($categorias as $idCategoria => $categoria): ?>
-            <button class="categoria-btn" data-categoria="<?php echo $idCategoria; ?>" title="<?php echo htmlspecialchars($categoria['nome']); ?>">
-                <?php if ($categoria['icone']): ?>
-                    <i class="bi bi-<?php echo $categoria['icone']; ?>"></i>
-                <?php else: ?>
-                    <i class="bi bi-box"></i>
-                <?php endif; ?>
-                <span><?php echo $categoria['nome']; ?></span>
-            </button>
-        <?php endforeach; ?>
-    </div>
-
-    <!-- Produtos por Categoria -->
-    <?php foreach ($categorias as $idCategoria => $categoria): ?>
-        <div class="categoria-section" id="categoria-<?php echo $idCategoria; ?>">
-            <div class="produtos-grid">
-                <?php foreach ($categoria['produtos'] as $produto): ?>
-                    <div class="produto-card" onclick="cardClick(event, <?php echo $produto['id']; ?>)">
-                        <div class="produto-nome"><?php echo $produto['nome_produto']; ?></div>
-                        <div class="produto-preco">R$ <?php echo number_format($produto['preco'], 2, ',', '.'); ?></div>
-                        <div class="produto-estoque">Disponível: <?php echo $produto['estoque']; ?></div>
-                        <div class="quantidade-controls mt-2">
-                            <button class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation(); diminuirQuantidade(<?php echo $produto['id']; ?>)">-</button>
-                            <input type="number" id="qtd_<?php echo $produto['id']; ?>" 
-                                   class="form-control form-control-sm quantidade-input" 
-                                   value="0" min="0" max="<?php echo $produto['estoque']; ?>" 
-                                   data-max="<?php echo $produto['estoque']; ?>"
-                                   onchange="validarQuantidade(this)" onclick="event.stopPropagation();" style="width: 60px">
-                            <button class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation(); aumentarQuantidade(<?php echo $produto['id']; ?>)">+</button>
+    <!-- Produtos Organizados por Categoria em Colunas -->
+    <?php 
+    // Debug: Verificar se há categorias
+    if (empty($categorias)): 
+    ?>
+        <div class="alert alert-warning text-center">
+            <i class="bi bi-exclamation-triangle"></i> Nenhum produto disponível no momento.
+            <br><small>Total de produtos encontrados: <?php echo count($produtos); ?></small>
+        </div>
+    <?php else: ?>
+        <div class="categorias-container">
+            <?php foreach ($categorias as $idCategoria => $categoria): ?>
+                <?php if (!empty($categoria['produtos'])): ?>
+                    <div class="categoria-coluna" data-categoria="<?php echo $idCategoria; ?>">
+                        <!-- Cabeçalho da Categoria -->
+                        <div class="categoria-header">
+                            <?php if ($categoria['icone']): ?>
+                                <i class="bi bi-<?php echo htmlspecialchars($categoria['icone']); ?>"></i>
+                            <?php else: ?>
+                                <i class="bi bi-box"></i>
+                            <?php endif; ?>
+                            <span><?php echo htmlspecialchars($categoria['nome']); ?></span>
+                        </div>
+                        
+                        <!-- Produtos da Categoria -->
+                        <div class="produtos-lista">
+                            <?php foreach ($categoria['produtos'] as $produto): ?>
+                                <div class="produto-card" onclick="cardClick(event, <?php echo $produto['id']; ?>)">
+                                    <div class="produto-nome"><?php echo htmlspecialchars($produto['nome_produto']); ?></div>
+                                    <div class="produto-preco">R$ <?php echo number_format($produto['preco'], 2, ',', '.'); ?></div>
+                                    <div class="produto-estoque">Disponível: <?php echo $produto['estoque']; ?></div>
+                                    <div class="quantidade-controls">
+                                        <button class="btn-quantidade" onclick="event.stopPropagation(); diminuirQuantidade(<?php echo $produto['id']; ?>)" title="Diminuir">-</button>
+                                        <input type="number" id="qtd_<?php echo $produto['id']; ?>" 
+                                               class="quantidade-input" 
+                                               value="0" min="0" max="<?php echo $produto['estoque']; ?>" 
+                                               data-max="<?php echo $produto['estoque']; ?>"
+                                               onchange="validarQuantidade(this)" onclick="event.stopPropagation();">
+                                        <button class="btn-quantidade" onclick="event.stopPropagation(); aumentarQuantidade(<?php echo $produto['id']; ?>)" title="Aumentar">+</button>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            </div>
+                <?php endif; ?>
+            <?php endforeach; ?>
         </div>
-    <?php endforeach; ?>
+    <?php endif; ?>
 
     <!-- Carrinho e Finalizar Venda -->
     <div id="carrinho-resumo" class="mt-4 mb-3" style="display:none;"></div>
@@ -387,105 +338,45 @@ include 'includes/header.php';
     <div id="finalizar-msg" class="text-center text-muted small mt-2 mb-4" style="display:none;"></div>
 </div>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
 <script>
-    let participanteSelecionado = null;
+    let tipoPagamentoSelecionado = null;
     let carrinho = [];
-    let scanner = null;
     const produtos = <?php echo json_encode($produtos); ?>;
-    const html5QrCode = new Html5Qrcode("qr-reader");
-    let scanning = false;
+    const ID_PESSOA_DEFAULT = 1; // ID da pessoa "Default"
 
-    function abrirLeitor(){
-        const qrReader = document.getElementById('qr-reader');
-            
-            if (!scanning) {
-                qrReader.style.display = 'block';
-                
-                html5QrCode.start(
-                    { facingMode: "environment" },
-                    {
-                        fps: 10,
-                        qrbox: { width: 200, height: 200 },
-                        aspectRatio: 1.0
-                    },
-                    (decodedText) => {
-                        stopScanning();
-                        // Buscar informações do participante
-                        fetch('api/buscar_participante.php', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ codigo: decodedText })
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                participanteSelecionado = data.participante;
-                                document.getElementById('participanteInfo').classList.remove('d-none');
-                                document.getElementById('participanteNome').textContent = participanteSelecionado.nome;
-                                document.getElementById('participanteCPF').textContent = 'CPF: ' + participanteSelecionado.cpf;
-                                document.getElementById('participanteSaldo').textContent = 'R$ ' + participanteSelecionado.saldo;
-                                document.getElementById('btn-finalizar').disabled = false;
-
-                            } else {
-                                alert('Erro: ' + data.message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Erro:', error);
-                            alert('Erro ao buscar informações do participante');
-                        });
-                    },
-                    (error) => {
-                        // Ignorar erros de leitura
-                    }
-                ).catch((err) => {
-                    console.error("Erro ao iniciar scanner:", err);
-                    alert("Erro ao acessar a câmera. Verifique as permissões do navegador.");
-                });
-                
-                scanning = true;
-            } else {
-                stopScanning();
-            }
-
-    }
-
-    function stopScanning() {
-            if (scanning) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('qr-reader').style.display = 'none';
-                    scanning = false;
-                });
-            }
+    function selecionarTipoPagamento(tipo) {
+        // Remover classe active de todos os botões
+        document.querySelectorAll('.btn-payment').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Adicionar classe active ao botão selecionado
+        const btnSelecionado = document.querySelector(`.btn-payment[data-tipo="${tipo}"]`);
+        if (btnSelecionado) {
+            btnSelecionado.classList.add('active');
         }
-
-    window.addEventListener('beforeunload', stopScanning);
+        
+        // Armazenar tipo selecionado
+        tipoPagamentoSelecionado = tipo;
+        
+        // Mostrar mensagem de confirmação
+        const tipoTexto = {
+            'dinheiro': 'Dinheiro',
+            'credito': 'Cartão de Crédito',
+            'debito': 'Cartão de Débito'
+        };
+        
+        document.getElementById('tipoPagamentoTexto').textContent = tipoTexto[tipo];
+        document.getElementById('tipoPagamentoSelecionado').style.display = 'block';
+        
+        // Habilitar botão finalizar se houver itens no carrinho
+        atualizarCarrinho();
+    }
 
     // Inicialização
     document.addEventListener('DOMContentLoaded', function() {
-        // Mostrar primeira categoria
-        const primeiroBotao = document.querySelector('.categoria-btn');
-        if (primeiroBotao) {
-            primeiroBotao.click();
-        }
-
-        // Configurar botões de categoria
-        document.querySelectorAll('.categoria-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const categoriaId = this.dataset.categoria;
-                
-                // Atualizar botões
-                document.querySelectorAll('.categoria-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Atualizar seções
-                document.querySelectorAll('.categoria-section').forEach(section => section.classList.remove('active'));
-                document.getElementById(`categoria-${categoriaId}`).classList.add('active');
-            });
-        });
+        // Layout em colunas - nenhuma inicialização especial necessária
+        console.log('Layout de colunas por categoria carregado');
     });
     
     function validarQuantidade(input) {
@@ -574,13 +465,13 @@ include 'includes/header.php';
             carrinhoResumo.innerHTML = '';
         }
         // Atualizar botão finalizar
-        const podeFinalizar = carrinho.length > 0 && participanteSelecionado;
+        const podeFinalizar = carrinho.length > 0 && tipoPagamentoSelecionado;
         btnFinalizar.disabled = !podeFinalizar;
         if (!podeFinalizar) {
-            if (!participanteSelecionado && carrinho.length === 0) {
-                finalizarMsg.textContent = 'Selecione um participante e adicione produtos para finalizar a venda.';
-            } else if (!participanteSelecionado) {
-                finalizarMsg.textContent = 'Selecione um participante para finalizar a venda.';
+            if (!tipoPagamentoSelecionado && carrinho.length === 0) {
+                finalizarMsg.textContent = 'Selecione o tipo de pagamento e adicione produtos para finalizar a venda.';
+            } else if (!tipoPagamentoSelecionado) {
+                finalizarMsg.textContent = 'Selecione o tipo de pagamento para finalizar a venda.';
             } else if (carrinho.length === 0) {
                 finalizarMsg.textContent = 'Adicione produtos ao carrinho para finalizar a venda.';
             }
@@ -604,8 +495,9 @@ include 'includes/header.php';
 
     function finalizarVenda() {
         desabilita();
-        if (!participanteSelecionado) {
-            alert('Por favor, selecione um participante antes de finalizar a venda.');
+        
+        if (!tipoPagamentoSelecionado) {
+            alert('Por favor, selecione o tipo de pagamento antes de finalizar a venda.');
             habilita();
             return;
         }
@@ -616,12 +508,19 @@ include 'includes/header.php';
             return;
         }
 
-        if (confirm('Confirmar a finalização da venda?')) {
+        const tipoTexto = {
+            'dinheiro': 'Dinheiro',
+            'credito': 'Cartão de Crédito',
+            'debito': 'Cartão de Débito'
+        };
+
+        if (confirm(`Confirmar venda no ${tipoTexto[tipoPagamentoSelecionado]}?`)) {
             const dados = {
-                pessoa_id: participanteSelecionado.id,
+                pessoa_id: ID_PESSOA_DEFAULT, // Usar pessoa "Default" (ID 1)
+                tipo_venda: tipoPagamentoSelecionado,
                 itens: carrinho
             };
-            //console.log(dados);
+            
             fetch('api/finalizar_venda.php', {
                 method: 'POST',
                 headers: {
@@ -633,12 +532,13 @@ include 'includes/header.php';
             .then(data => {
                 if (data.success) {
                     alert('Venda finalizada com sucesso!');
-                    // Atualizar saldo do participante
-                    participanteSelecionado.saldo = data.novo_saldo;
-                    document.getElementById('participanteSaldo').textContent = 'R$ ' + data.novo_saldo;
                     // Limpar carrinho
                     limparCarrinho();
-                    // Atualizar quantidades em estoque
+                    // Limpar seleção de tipo de pagamento
+                    tipoPagamentoSelecionado = null;
+                    document.querySelectorAll('.btn-payment').forEach(btn => btn.classList.remove('active'));
+                    document.getElementById('tipoPagamentoSelecionado').style.display = 'none';
+                    // Atualizar página para recarregar estoque
                     location.reload();
                 } else {
                     alert('Erro: ' + data.message);
@@ -650,6 +550,8 @@ include 'includes/header.php';
                 alert('Erro ao finalizar a venda');
                 habilita();
             });
+        } else {
+            habilita();
         }
     }
 
