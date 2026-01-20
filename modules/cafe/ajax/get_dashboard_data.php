@@ -78,7 +78,7 @@ $query_base = "
     JOIN cafe_produtos p ON vi.id_produto = p.id
     JOIN cafe_vendas v ON vi.id_venda = v.id_venda
     LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
-    WHERE (v.estornada IS NULL OR v.estornada = 0) AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim
+    WHERE v.estornada is null and date(v.data_venda) BETWEEN :data_inicio AND :data_fim
 ";
 
 $params = [
@@ -174,10 +174,10 @@ $query = "
         SUM(vi.quantidade) as quantidade_vendida,
         SUM(vi.quantidade * vi.valor_unitario) as valor_vendido,
         ROUND((SUM(vi.quantidade * vi.valor_unitario) / (
-        SELECT SUM(vi2.quantidade * vi2.valor_unitario)
-        FROM cafe_itens_venda vi2
-        JOIN cafe_vendas v2 ON vi2.id_venda = v2.id_venda
-        WHERE (v2.estornada IS NULL OR v2.estornada = 0) AND date(v2.data_venda) BETWEEN :data_inicio_sub AND :data_fim_sub
+            SELECT SUM(vi2.quantidade * vi2.valor_unitario)
+            FROM cafe_itens_venda vi2
+            JOIN cafe_vendas v2 ON vi2.id_venda = v2.id_venda
+            WHERE v2.estornada is null and date(v2.data_venda) BETWEEN :data_inicio_sub AND :data_fim_sub
         )) * 100, 1) as percentual
     " . $query_base . "
     GROUP BY p.id, p.nome_produto, c.nome, p.estoque
@@ -205,7 +205,7 @@ foreach ($produtos as $key => $produto) {
         SELECT SUM(vi.quantidade * vi.valor_unitario) as valor_anterior
         FROM cafe_itens_venda vi
         JOIN cafe_vendas v ON vi.id_venda = v.id_venda
-        WHERE (v.estornada IS NULL OR v.estornada = 0) AND vi.id_produto = :produto_id
+        WHERE v.estornada is null and vi.id_produto = :produto_id
         AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim
     ";
     

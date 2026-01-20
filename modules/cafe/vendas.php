@@ -10,20 +10,11 @@ $dia_atual = date('Y-m-d');
 // Filtros
 $data_inicio = isset($_POST['data_inicio']) ? $_POST['data_inicio'] : date('Y-m-d', strtotime("0 day", strtotime($dia_atual)));
 $data_fim = isset($_POST['data_fim']) ? $_POST['data_fim'] : date('Y-m-d', strtotime("0 day", strtotime($dia_atual)));
-$atendente = isset($_POST['atendente']) ? trim($_POST['atendente']) : '';
+$participante = isset($_POST['cpf_tel']) ? $_POST['cpf_tel'] : '';
 $filtro = "";
-if($atendente && $atendente !== ''){
-    $filtro = " AND COALESCE(v.Atendente, 'N/A') = '". addslashes($atendente) ."' ";
+if($participante){
+    $filtro = " AND (p.cpf like '%". $participante ."%' OR p.nome like '%".$participante."%') ";
 }
-
-// Buscar lista de atendentes únicos
-$stmt_atendentes = $pdo->query("
-    SELECT DISTINCT COALESCE(Atendente, 'N/A') as atendente 
-    FROM cafe_vendas 
-    ORDER BY atendente ASC
-");
-$atendentes_list = $stmt_atendentes->fetchAll(PDO::FETCH_COLUMN);
-$atendentes = $atendentes_list ? array_unique($atendentes_list) : [];
 // Buscar vendas
 $stmt = $pdo->prepare("
     SELECT 
@@ -31,7 +22,6 @@ $stmt = $pdo->prepare("
         v.data_venda,
         v.valor_total,
         v.estornada,
-        COALESCE(v.Atendente, 'N/A') as atendente,
         p.nome as cliente_nome,
         p.cpf as cliente_cpf,
         GROUP_CONCAT(pr.nome_produto SEPARATOR ', ') as produtos
@@ -39,9 +29,9 @@ $stmt = $pdo->prepare("
     JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
     JOIN cafe_itens_venda vi ON v.id_venda = vi.id_venda
     JOIN cafe_produtos pr ON vi.id_produto = pr.id
-    WHERE (v.estornada IS NULL OR v.estornada = 0) AND DATE(v.data_venda) BETWEEN ? AND ?
+    WHERE v.estornada is null and DATE(v.data_venda) BETWEEN ? AND ? AND pr.bloqueado = 0
     $filtro
-    GROUP BY v.id_venda, v.data_venda, v.valor_total, v.estornada, v.Atendente, p.nome, p.cpf
+    GROUP BY v.id_venda, v.data_venda, v.valor_total, p.nome, p.cpf
     ORDER BY v.data_venda DESC LIMIT 100
 ");
 $stmt->execute([$data_inicio, $data_fim]);
@@ -54,7 +44,6 @@ $stmt = $pdo->prepare("
         v.data_venda,
         v.valor_total,
         v.estornada,
-        COALESCE(v.Atendente, 'N/A') as atendente,
         p.nome as cliente_nome,
         p.cpf as cliente_cpf,
         GROUP_CONCAT(pr.nome_produto SEPARATOR ', ') as produtos
@@ -62,9 +51,9 @@ $stmt = $pdo->prepare("
     JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
     JOIN cafe_itens_venda vi ON v.id_venda = vi.id_venda
     JOIN cafe_produtos pr ON vi.id_produto = pr.id
-    WHERE DATE(v.data_venda) BETWEEN ? AND ?
+    WHERE DATE(v.data_venda) BETWEEN ? AND ? AND pr.bloqueado = 0
     $filtro
-    GROUP BY v.id_venda, v.data_venda, v.valor_total, v.estornada, v.Atendente, p.nome, p.cpf
+    GROUP BY v.id_venda, v.data_venda, v.valor_total, p.nome, p.cpf
     ORDER BY v.data_venda DESC LIMIT 100
 ");
 $stmt->execute([$data_inicio, $data_fim]);
@@ -84,7 +73,7 @@ $stmt = $pdo->prepare("
     FROM cafe_itens_venda vi
     JOIN cafe_produtos p ON vi.id_produto = p.id
     JOIN cafe_vendas v ON vi.id_venda = v.id_venda
-    WHERE DATE(v.data_venda) BETWEEN ? AND ? AND (v.estornada IS NULL OR v.estornada = 0)
+    WHERE DATE(v.data_venda) BETWEEN ? AND ? AND p.bloqueado = 0 and v.estornada is null
     GROUP BY p.id, p.nome_produto
     ORDER BY total_vendido DESC
     LIMIT 20
@@ -98,7 +87,7 @@ $stmt = $pdo->prepare("
         COUNT(*) as total,
         SUM(valor_total) as valor_total
     FROM cafe_vendas
-    WHERE (estornada IS NULL OR estornada = 0) AND DATE(data_venda) BETWEEN ? AND ?
+    WHERE estornada is null and DATE(data_venda) BETWEEN ? AND ?
 ");
 $stmt->execute([$data_inicio, $data_fim]);
 $vendas_por_status = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -129,15 +118,9 @@ include 'includes/header.php';
                            value="<?= htmlspecialchars($data_fim) ?>">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Atendente</label>
-                    <select class="form-select" name="atendente">
-                        <option value="">Todos</option>
-                        <?php foreach ($atendentes as $atend): ?>
-                            <option value="<?= htmlspecialchars($atend) ?>" <?php echo $atendente === $atend ? 'selected' : ''; ?>>
-                                <?= htmlspecialchars($atend) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                    <label class="form-label">CPF ou Nome</label>
+                    <input type="text" name="cpf_tel" class="form-control" 
+                           value="<?= htmlspecialchars($participante) ?>">
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">
@@ -264,7 +247,8 @@ include 'includes/header.php';
                         <tr>
                             <th>#</th>
                             <th>Data</th>
-                            <th>Atendente</th>
+                            <th>Cliente</th>
+                            <th>CPF</th>
                             <th>Produtos</th>
                             <th class="text-end">Valor</th>
                             <th></th>
@@ -274,7 +258,7 @@ include 'includes/header.php';
                     <tbody>
                         <?php if (empty($vendas)): ?>
                             <tr>
-                                <td colspan="7" class="text-center py-3 text-muted">
+                                <td colspan="8" class="text-center py-3 text-muted">
                                     Nenhuma venda registrada
                                 </td>
                             </tr>
@@ -283,7 +267,8 @@ include 'includes/header.php';
                                 <tr>
                                     <td><?= $venda['id_venda'] ?></td>
                                     <td><?= date('d/m/Y H:i', strtotime($venda['data_venda'])) ?></td>
-                                    <td><?= htmlspecialchars($venda['atendente'] ?? 'N/A') ?></td>
+                                    <td><?= htmlspecialchars($venda['cliente_nome']) ?></td>
+                                    <td><?= $venda['cliente_cpf'] ?></td>
                                     <td>
                                         <span class="text-muted" style="font-size: 0.875em;">
                                             <?= htmlspecialchars($venda['produtos']) ?>

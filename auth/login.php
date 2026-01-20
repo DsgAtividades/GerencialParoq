@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 require_once '../config/database_connection.php';
 
 try {
-    $pdo = DatabaseConnection::getInstance()->getConnection();
+    $pdo = getConnection();
 } catch(Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Erro de conexão com o banco de dados']);
     exit;
@@ -37,16 +37,6 @@ $valid_modules = [
 
 if (!in_array($module, $valid_modules)) {
     echo json_encode(['success' => false, 'message' => 'Módulo inválido']);
-    exit;
-}
-
-// Módulo café usa seu próprio sistema de autenticação
-if ($module === 'cafe') {
-    echo json_encode([
-        'success' => true,
-        'message' => 'Redirecionando para login do módulo',
-        'redirect' => 'modules/cafe/login.php'
-    ]);
     exit;
 }
 
@@ -82,6 +72,11 @@ try {
             $redirect = "projetos-modulos/pastoral_social/login.php";
         } elseif ($module === 'obras') {
             $redirect = "projetos-modulos/obras/index.php";
+<<<<<<< HEAD
+=======
+        } elseif ($module === 'cafe') {
+            $redirect = "projetos-modulos/cafe/index.php";
+>>>>>>> main
         } else {
             $redirect = "modules/$module/index.php";
         }

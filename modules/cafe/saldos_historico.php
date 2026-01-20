@@ -8,58 +8,37 @@ verificarPermissao('visualizar_relatorios');
 // Filtros
 $data_inicio = isset($_POST['data_inicio']) ? $_POST['data_inicio'] : date('Y-m-d', strtotime('-30 days'));
 $data_fim = isset($_POST['data_fim']) ? $_POST['data_fim'] : date('Y-m-d');
+$pessoa_id = isset($_POST['pessoa_id']) ? (int)$_POST['pessoa_id'] : null;
 $tipo = isset($_POST['tipo']) ? $_POST['tipo'] : null;
-$atendente = isset($_POST['atendente']) ? trim($_POST['atendente']) : '';
-
-// Buscar lista de atendentes únicos
-$stmt_atendentes = $pdo->query("
-    SELECT DISTINCT COALESCE(Atendente, 'N/A') as atendente 
-    FROM cafe_vendas 
-    ORDER BY atendente ASC
-");
-$atendentes_list = $stmt_atendentes->fetchAll(PDO::FETCH_COLUMN);
-$atendentes = $atendentes_list ? array_unique($atendentes_list) : [];
+$participante = isset($_POST['cpf_tel']) ? $_POST['cpf_tel'] : '';
 
 // Construir query com prepared statements para segurança
-// Consultar vendas em vez de histórico de saldo
 $query = "
-    SELECT 
-        v.id_venda,
-        v.valor_total as valor,
-        COALESCE(v.Tipo_venda, 'N/A') as tipo_venda,
-        v.data_venda as data_operacao,
-        COALESCE(v.Atendente, 'N/A') as atendente,
-        p.nome,
-        p.cpf,
-        CONCAT('Venda #', v.id_venda, ' (', UPPER(COALESCE(v.Tipo_venda, 'N/A')), ')') as motivo
-    FROM cafe_vendas v
-    JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
+    SELECT h.*, p.nome, p.cpf
+    FROM cafe_historico_saldo h
+    JOIN cafe_pessoas p ON h.id_pessoa = p.id_pessoa
     WHERE 1=1
 ";
 
 $params = [];
 
-if ($atendente && $atendente !== '') {
-    $query .= " AND COALESCE(v.Atendente, 'N/A') = :atendente";
-    $params[':atendente'] = $atendente;
+if ($participante) {
+    $query .= " AND (p.cpf LIKE :participante OR p.nome LIKE :participante)";
+    $params[':participante'] = "%{$participante}%";
 }
 
 if ($tipo) {
-    // Filtrar por tipo de pagamento: dinheiro, credito ou debito
-    $tipo_limpo = strtolower(trim($tipo));
-    if (in_array($tipo_limpo, ['dinheiro', 'credito', 'debito'])) {
-        $query .= " AND v.Tipo_venda = :tipo";
-        $params[':tipo'] = $tipo_limpo;
-    }
+    $query .= " AND h.tipo_operacao = :tipo";
+    $params[':tipo'] = trim($tipo);
 }
 
 if($data_inicio && $data_fim){
-    $query .= " AND DATE(v.data_venda) BETWEEN :data_inicio AND :data_fim";
+    $query .= " AND DATE(h.data_operacao) BETWEEN :data_inicio AND :data_fim";
     $params[':data_inicio'] = $data_inicio;
     $params[':data_fim'] = $data_fim;
 }
 
-$query .= " ORDER BY v.data_venda DESC LIMIT 100";
+$query .= " ORDER BY h.data_operacao DESC LIMIT 100";
 
 // Buscar histórico usando prepared statement
 $stmt = $pdo->prepare($query);
@@ -91,27 +70,21 @@ include 'includes/header.php';
                     <input type="date" class="form-control" id="data_fim" name="data_fim" 
                            value="<?php echo $data_fim; ?>">
                 </div>
-                <div class="col-md-2">
-                    <label for="atendente" class="form-label">Atendente</label>
-                    <select class="form-select" id="atendente" name="atendente">
-                        <option value="">Todos</option>
-                        <?php foreach ($atendentes as $atend): ?>
-                            <option value="<?= htmlspecialchars($atend) ?>" <?php echo $atendente === $atend ? 'selected' : ''; ?>>
-                                <?= htmlspecialchars($atend) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                <div class="col-md-3">
+                    <label class="form-label">CPF ou Nome</label>
+                    <input type="text" name="cpf_tel" class="form-control" 
+                           value="<?= htmlspecialchars($participante) ?>">
                 </div>
                 <div class="col-md-2">
-                    <label for="tipo" class="form-label">Tipo Pagamento</label>
+                    <label for="tipo" class="form-label">Tipo</label>
                     <select class="form-select" id="tipo" name="tipo">
                         <option value="">Todos</option>
-                        <option value="dinheiro" <?php echo $tipo === 'dinheiro' ? 'selected' : ''; ?>>Dinheiro</option>
                         <option value="credito" <?php echo $tipo === 'credito' ? 'selected' : ''; ?>>Crédito</option>
                         <option value="debito" <?php echo $tipo === 'debito' ? 'selected' : ''; ?>>Débito</option>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
                     <button type="submit" class="btn btn-primary w-100">Filtrar</button>
                 </div>
             </form>
@@ -124,44 +97,33 @@ include 'includes/header.php';
             <thead>
                 <tr>
                     <th>Data</th>
-                    <th>Tipo Pagamento</th>
-                    <th>Atendente</th>
+                    <th>Participante</th>
+                    <th>CPF</th>
+                    <th>Tipo</th>
                     <th>Valor</th>
-                    <th>Venda</th>
+                    <th>Motivo</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($historico)): ?>
                     <tr>
-                        <td colspan="5" class="text-center">Nenhum registro encontrado.</td>
+                        <td colspan="6" class="text-center">Nenhum registro encontrado.</td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($historico as $h): ?>
                         <tr>
                             <td><?php echo date('d/m/Y H:i', strtotime($h['data_operacao'])); ?></td>
+                            <td><?php echo htmlspecialchars($h['nome']); ?></td>
+                            <td><?php echo htmlspecialchars($h['cpf']); ?></td>
                             <td>
-                                <?php 
-                                $tipo_venda = strtolower($h['tipo_venda'] ?? '');
-                                $badge_class = 'secondary';
-                                if ($tipo_venda === 'dinheiro') $badge_class = 'warning';
-                                elseif ($tipo_venda === 'credito') $badge_class = 'success';
-                                elseif ($tipo_venda === 'debito') $badge_class = 'info';
-                                ?>
-                                <span class="badge bg-<?php echo $badge_class; ?>">
-                                    <?php echo ucfirst($h['tipo_venda'] ?? 'N/A'); ?>
+                                <span class="badge bg-<?php echo $h['tipo_operacao'] === 'credito' ? 'success' : 'danger'; ?>">
+                                    <?php echo ucwords($h['tipo_operacao']); ?>
                                 </span>
                             </td>
-                            <td><?php echo htmlspecialchars($h['atendente'] ?? 'N/A'); ?></td>
-                            <td class="text-primary fw-bold">
-                                R$ <?php echo number_format($h['valor'], 2, ',', '.'); ?>
+                            <td class="<?=$h['tipo_operacao'] === 'credito' ? 'text-success' : 'text-danger'; ?>">
+                                R$ <?php echo number_format(abs($h['valor']), 2, ',', '.'); ?>
                             </td>
-                            <td>
-                                <a href="vendas_detalhes.php?id=<?php echo $h['id_venda']; ?>" 
-                                   class="text-decoration-none" 
-                                   title="Ver detalhes da venda">
-                                    <?php echo htmlspecialchars($h['motivo']); ?>
-                                </a>
-                            </td>
+                            <td><?php echo htmlspecialchars($h['motivo']); ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>

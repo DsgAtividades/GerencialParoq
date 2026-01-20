@@ -29,16 +29,19 @@ try {
         throw new Exception('Dados da venda incompletos');
     }
     
-    // Verificar se tipo_venda foi enviado
-    $tipo_venda = isset($data['tipo_venda']) ? $data['tipo_venda'] : null;
-    if (empty($tipo_venda)) {
-        throw new Exception('Tipo de pagamento não informado');
-    }
-    
     // Iniciar transação
     $pdo->beginTransaction();
     
-    // Calcular total da venda e validar estoque
+    // Verificar saldo do cliente
+    $stmt = $pdo->prepare("SELECT saldo FROM cafe_saldos_cartao WHERE id_pessoa = ?");
+    $stmt->execute([$data['pessoa_id']]);
+    $saldo = $stmt->fetchColumn();
+    
+    if ($saldo === false) {
+        $saldo = 0; // Se não tiver registro, considera saldo zero
+    }
+    
+    // Calcular total da venda
     $total_venda = 0;
     foreach ($data['itens'] as $item) {
         if (!isset($item['id_produto']) || !isset($item['quantidade'])) {
@@ -61,19 +64,22 @@ try {
         $total_venda += $item['quantidade'] * $produto['preco'];
     }
     
-    // Formatar total da venda
+    if ($total_venda > $saldo) {
+        throw new Exception('Saldo insuficiente. Saldo atual: R$ ' . number_format($saldo, 2, ',', '.') . 
+                          '. Total da venda: R$ ' . number_format($total_venda, 2, ',', '.'));
+    }
     $total_venda = number_format($total_venda, 2, '.', '');
     if($total_venda >= (float)1000.00){
         $total_venda = str_replace(',', '',$total_venda);
     }
+        
     
-    // Registrar venda com tipo de pagamento e nome do atendente
-    $nome_atendente = $_SESSION['usuario_nome'] ?? 'Sistema';
+    // Registrar venda
     $stmt = $pdo->prepare("
-        INSERT INTO cafe_vendas (id_pessoa, valor_total, Tipo_venda, Atendente, data_venda)
-        VALUES (?, ?, ?, ?, NOW())
+        INSERT INTO cafe_vendas (id_pessoa, valor_total, data_venda)
+        VALUES (?, ?, NOW())
     ");
-    $stmt->execute([$data['pessoa_id'], $total_venda, $tipo_venda, $nome_atendente]);
+    $stmt->execute([$data['pessoa_id'], $total_venda]);
     $id_venda = $pdo->lastInsertId();
     
     // Registrar itens da venda e atualizar estoque
@@ -109,8 +115,35 @@ try {
         ]);
     }
     
-    // Preparar registro de venda para o log
-    $reg_venda = 'Venda #' . $id_venda . ' (' . ucfirst($tipo_venda) . ')';
+    $saldoAtual = number_format(($saldo - $total_venda), 2);
+    $saldoAtual2 = str_replace(',', '',$saldoAtual);
+ 
+    #echo ' Saldo Atual ' . $saldoAtual . ' Saldo Novo ' . $saldoAtual2;
+     // Atualizar saldo do cliente
+    $stmt = $pdo->prepare("
+        UPDATE cafe_saldos_cartao SET saldo = ? WHERE id_pessoa = ? 
+    ");
+    $stmt->execute([$saldoAtual2, $data['pessoa_id']]);
+    
+     // Registrar movimentação no histórico
+    $stmt = $pdo->prepare("
+        INSERT INTO cafe_historico_saldo 
+        (id_pessoa, valor, tipo_operacao, saldo_anterior, saldo_novo, motivo, data_operacao)
+        VALUES (?, ?, 'debito', ?, ?, ?, NOW())
+    ");
+    $stmt->execute([
+        $data['pessoa_id'],
+        $total_venda,
+        $saldo,
+        $saldoAtual2,
+        'Venda #' . $id_venda
+    ]);
+    
+    // Buscar novo saldo
+    $stmt = $pdo->prepare("SELECT saldo FROM cafe_saldos_cartao WHERE id_pessoa = ?");
+    $stmt->execute([$data['pessoa_id']]);
+    $novo_saldo = $stmt->fetchColumn();
+    $reg_venda = 'Venda #' . $id_venda;
 
     // Buscar codigo_cartao
     $stmt = $pdo->prepare("SELECT codigo FROM cafe_cartoes WHERE id_pessoa = ? and usado = 1");
@@ -133,8 +166,7 @@ try {
         'success' => true,
         'message' => 'Venda finalizada com sucesso',
         'id_venda' => $id_venda,
-        'tipo_venda' => $tipo_venda,
-        'valor_total' => number_format($total_venda, 2, ',', '.')
+        'novo_saldo' => number_format($novo_saldo, 2, ',', '.')
     ]);
     
 } catch (Exception $e) {
