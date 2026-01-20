@@ -1,11 +1,12 @@
 <?php
 require_once 'config/database.php';
+require_once 'includes/funcoes.php';
 $database = new Database();
 $db = $database->getConnection();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nome = trim($_POST['nome'] ?? '');
-    $icone = trim($_POST['icone'] ?? '');
+    $icone = normalizarIcone($_POST['icone'] ?? '');
     $ordem = (int)($_POST['ordem'] ?? 0);
     
     $erro = false;
@@ -69,10 +70,11 @@ include 'includes/header.php';
                             <span class="input-group-text">bi-</span>
                             <input type="text" class="form-control" id="icone" name="icone"
                                    value="<?= $_POST['icone'] ?? '' ?>"
-                                   placeholder="cart, bag-check, etc">
+                                   placeholder="cup-straw ou &lt;i class=&quot;bi bi-cup-straw&quot;&gt;&lt;/i&gt;">
                         </div>
                         <div class="form-text">
-                            Nome do ícone do <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>
+                            Aceita: nome do ícone (ex: cup-straw) ou HTML completo (ex: &lt;i class="bi bi-cup-straw"&gt;&lt;/i&gt;)
+                            <br><a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>
                         </div>
                     </div>
 
@@ -104,10 +106,46 @@ include 'includes/header.php';
 </div>
 
 <script>
+// Função para normalizar o ícone (mesma lógica do PHP)
+function normalizarIconeInput(icone) {
+    if (!icone) return '';
+    
+    icone = icone.trim();
+    
+    // Se contém HTML completo <i class="bi bi-..."></i>
+    const matchHtml = icone.match(/<i\s+class=["']bi\s+bi-([^"']+)["']/i);
+    if (matchHtml) {
+        return matchHtml[1];
+    }
+    
+    // Se contém apenas as classes "bi bi-..."
+    const matchClasses = icone.match(/bi\s+bi-([^\s]+)/i);
+    if (matchClasses) {
+        return matchClasses[1];
+    }
+    
+    // Se contém "bi-..." no início
+    const matchPrefix = icone.match(/^bi-([^\s]+)/i);
+    if (matchPrefix) {
+        return matchPrefix[1];
+    }
+    
+    // Se já está no formato correto (apenas o nome), retorna como está
+    return icone;
+}
+
 // Preview do ícone
 document.getElementById('icone').addEventListener('input', function(e) {
     const preview = document.getElementById('previewIcone');
-    preview.className = 'bi bi-' + e.target.value + ' fs-3';
+    const iconeNormalizado = normalizarIconeInput(e.target.value);
+    preview.className = 'bi bi-' + iconeNormalizado + ' fs-3';
+});
+
+// Normalizar antes de enviar o formulário
+document.querySelector('form').addEventListener('submit', function(e) {
+    const iconeInput = document.getElementById('icone');
+    const iconeNormalizado = normalizarIconeInput(iconeInput.value);
+    iconeInput.value = iconeNormalizado;
 });
 
 // Validação do formulário
