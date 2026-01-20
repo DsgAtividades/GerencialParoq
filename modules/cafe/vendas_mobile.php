@@ -4,27 +4,17 @@ require_once 'includes/verifica_permissao.php';
 require_once 'includes/funcoes.php';
 
 verificarPermissao('vendas_mobile');
-$permissao_categoria = verificaGrupoPermissao();
 
 // Buscar produtos disponíveis agrupados por categoria
-if($permissao_categoria != 'Administrador' && $permissao_categoria != 'Gerente' && $permissao_categoria != 'Admin_Paroquia' && $permissao_categoria != 'Apoio_Quermesse'){
-    $stmt = $pdo->prepare("SELECT p.id, p.nome_produto, p.preco, p.estoque, p.bloqueado,
-                           c.id as id_categoria, c.nome as nome_categoria, c.icone
-                    FROM cafe_produtos p
-                    LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
-                    WHERE p.estoque > 0 AND p.bloqueado = 0 
-                    AND c.nome in (?)
-                    ORDER BY c.nome, p.nome_produto");
-                    $stmt->execute([$permissao_categoria]);
-}else{
-    $stmt = $pdo->prepare("SELECT p.id, p.nome_produto, p.preco, p.estoque, p.bloqueado,
-                           c.id as id_categoria, c.nome as nome_categoria, c.icone
-                    FROM cafe_produtos p
-                    LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
-                    WHERE p.estoque > 0 AND p.bloqueado = 0 
-                    ORDER BY c.nome, p.nome_produto");
-                    $stmt->execute();
-}
+// Todos os usuários com permissão vendas_mobile podem ver todos os produtos
+
+$stmt = $pdo->prepare("SELECT p.id, p.nome_produto, p.preco, p.estoque, p.bloqueado,
+                       c.id as id_categoria, c.nome as nome_categoria, c.icone
+                FROM cafe_produtos p
+                LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
+                WHERE p.estoque > 0 AND p.bloqueado = 0 
+                ORDER BY c.nome, p.nome_produto");
+$stmt->execute();
 
     
 $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -173,24 +163,24 @@ include 'includes/header.php';
         color: var(--cafe-brown);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(172, 74, 0, 0.2);
-    }
+        }
     
     .btn-payment.active {
         background: linear-gradient(135deg, var(--cafe-brown) 0%, var(--cafe-brown-light) 100%);
         border-color: var(--cafe-brown-dark);
         color: #fff;
         box-shadow: 0 4px 16px rgba(172, 74, 0, 0.3);
-    }
+        }
     
     .btn-payment i {
         font-size: 2rem;
         margin-bottom: 8px;
-    }
+        }
     
     .btn-payment span {
         font-size: 1rem;
         font-weight: 600;
-    }
+        }
     
     #tipoPagamentoSelecionado {
         text-align: center;
@@ -292,41 +282,41 @@ include 'includes/header.php';
         </div>
     <?php else: ?>
         <div class="categorias-container">
-            <?php foreach ($categorias as $idCategoria => $categoria): ?>
+        <?php foreach ($categorias as $idCategoria => $categoria): ?>
                 <?php if (!empty($categoria['produtos'])): ?>
                     <div class="categoria-coluna" data-categoria="<?php echo $idCategoria; ?>">
                         <!-- Cabeçalho da Categoria -->
                         <div class="categoria-header">
-                            <?php if ($categoria['icone']): ?>
+                <?php if ($categoria['icone']): ?>
                                 <i class="bi bi-<?php echo htmlspecialchars($categoria['icone']); ?>"></i>
-                            <?php else: ?>
-                                <i class="bi bi-box"></i>
-                            <?php endif; ?>
+                <?php else: ?>
+                    <i class="bi bi-box"></i>
+                <?php endif; ?>
                             <span><?php echo htmlspecialchars($categoria['nome']); ?></span>
-                        </div>
-                        
+    </div>
+
                         <!-- Produtos da Categoria -->
                         <div class="produtos-lista">
-                            <?php foreach ($categoria['produtos'] as $produto): ?>
-                                <div class="produto-card" onclick="cardClick(event, <?php echo $produto['id']; ?>)">
+                <?php foreach ($categoria['produtos'] as $produto): ?>
+                    <div class="produto-card" onclick="cardClick(event, <?php echo $produto['id']; ?>)">
                                     <div class="produto-nome"><?php echo htmlspecialchars($produto['nome_produto']); ?></div>
-                                    <div class="produto-preco">R$ <?php echo number_format($produto['preco'], 2, ',', '.'); ?></div>
-                                    <div class="produto-estoque">Disponível: <?php echo $produto['estoque']; ?></div>
+                        <div class="produto-preco">R$ <?php echo number_format($produto['preco'], 2, ',', '.'); ?></div>
+                        <div class="produto-estoque">Disponível: <?php echo $produto['estoque']; ?></div>
                                     <div class="quantidade-controls">
                                         <button class="btn-quantidade" onclick="event.stopPropagation(); diminuirQuantidade(<?php echo $produto['id']; ?>)" title="Diminuir">-</button>
-                                        <input type="number" id="qtd_<?php echo $produto['id']; ?>" 
+                            <input type="number" id="qtd_<?php echo $produto['id']; ?>" 
                                                class="quantidade-input" 
-                                               value="0" min="0" max="<?php echo $produto['estoque']; ?>" 
-                                               data-max="<?php echo $produto['estoque']; ?>"
+                                   value="0" min="0" max="<?php echo $produto['estoque']; ?>" 
+                                   data-max="<?php echo $produto['estoque']; ?>"
                                                onchange="validarQuantidade(this)" onclick="event.stopPropagation();">
                                         <button class="btn-quantidade" onclick="event.stopPropagation(); aumentarQuantidade(<?php echo $produto['id']; ?>)" title="Aumentar">+</button>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
                         </div>
                     </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
                 <?php endif; ?>
-            <?php endforeach; ?>
+    <?php endforeach; ?>
         </div>
     <?php endif; ?>
 
@@ -354,7 +344,7 @@ include 'includes/header.php';
         const btnSelecionado = document.querySelector(`.btn-payment[data-tipo="${tipo}"]`);
         if (btnSelecionado) {
             btnSelecionado.classList.add('active');
-        }
+                            }
         
         // Armazenar tipo selecionado
         tipoPagamentoSelecionado = tipo;

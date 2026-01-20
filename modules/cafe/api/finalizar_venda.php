@@ -4,14 +4,45 @@ require_once '../includes/conexao.php';
 require_once '../includes/verifica_permissao.php';
 require_once '../includes/funcoes.php';
 
+// #region agent log H11
+$logData = json_encode(['location'=>'finalizar_venda.php:7','message'=>'Verificando permissão finalizar_venda','data'=>['usuario_id'=>$_SESSION['usuario_id']??'null','usuario_nome'=>$_SESSION['usuario_nome']??'null'],'timestamp'=>round(microtime(true)*1000),'sessionId'=>'debug-session','runId'=>'run3','hypothesisId'=>'H11']);
+@file_put_contents('c:\\xampp\\htdocs\\PROJETOS\\GerencialParoq\\.cursor\\debug.log', $logData.PHP_EOL, FILE_APPEND);
+// #endregion
+
 $permissao = verificarPermissaoApi('finalizar_venda');
 
+// #region agent log H11
+$logData = json_encode(['location'=>'finalizar_venda.php:11','message'=>'Resultado verificarPermissaoApi finalizar_venda','data'=>['permissao'=>$permissao,'tem_permissao'=>$permissao['tem_permissao']??'null'],'timestamp'=>round(microtime(true)*1000),'sessionId'=>'debug-session','runId'=>'run3','hypothesisId'=>'H11']);
+@file_put_contents('c:\\xampp\\htdocs\\PROJETOS\\GerencialParoq\\.cursor\\debug.log', $logData.PHP_EOL, FILE_APPEND);
+// #endregion
+
+// Testar também com api_finalizar_venda
+$permissao_api = verificarPermissaoApi('api_finalizar_venda');
+
+// #region agent log H11
+$logData = json_encode(['location'=>'finalizar_venda.php:16','message'=>'Resultado verificarPermissaoApi api_finalizar_venda','data'=>['permissao_api'=>$permissao_api,'tem_permissao'=>$permissao_api['tem_permissao']??'null'],'timestamp'=>round(microtime(true)*1000),'sessionId'=>'debug-session','runId'=>'run3','hypothesisId'=>'H11']);
+@file_put_contents('c:\\xampp\\htdocs\\PROJETOS\\GerencialParoq\\.cursor\\debug.log', $logData.PHP_EOL, FILE_APPEND);
+// #endregion
+
 if(!isset($permissao['tem_permissao']) || $permissao['tem_permissao'] == 0){
-    echo json_encode([
-        'success' => false,
-        'message' => 'Usuário sem permissão de acesso'
-    ]);
-    exit;
+    // Tentar com api_finalizar_venda
+    if(isset($permissao_api['tem_permissao']) && $permissao_api['tem_permissao'] > 0){
+        // #region agent log H11
+        $logData = json_encode(['location'=>'finalizar_venda.php:22','message'=>'Permissão encontrada com api_finalizar_venda, continuando','data'=>[],'timestamp'=>round(microtime(true)*1000),'sessionId'=>'debug-session','runId'=>'run3','hypothesisId'=>'H11']);
+        @file_put_contents('c:\\xampp\\htdocs\\PROJETOS\\GerencialParoq\\.cursor\\debug.log', $logData.PHP_EOL, FILE_APPEND);
+        // #endregion
+        // Continuar normalmente
+    } else {
+        // #region agent log H11
+        $logData = json_encode(['location'=>'finalizar_venda.php:27','message'=>'SEM PERMISSÃO - ambas verificações falharam','data'=>['finalizar_venda'=>$permissao,'api_finalizar_venda'=>$permissao_api],'timestamp'=>round(microtime(true)*1000),'sessionId'=>'debug-session','runId'=>'run3','hypothesisId'=>'H11']);
+        @file_put_contents('c:\\xampp\\htdocs\\PROJETOS\\GerencialParoq\\.cursor\\debug.log', $logData.PHP_EOL, FILE_APPEND);
+        // #endregion
+        echo json_encode([
+            'success' => false,
+            'message' => 'Usuário sem permissão de acesso'
+        ]);
+        exit;
+    }
 }
 
 // Verificar método da requisição
@@ -66,7 +97,7 @@ try {
     if($total_venda >= (float)1000.00){
         $total_venda = str_replace(',', '',$total_venda);
     }
-    
+        
     // Registrar venda com tipo de pagamento e nome do atendente
     $nome_atendente = $_SESSION['usuario_nome'] ?? 'Sistema';
     $stmt = $pdo->prepare("

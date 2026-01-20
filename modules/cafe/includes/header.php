@@ -468,14 +468,6 @@ verificarLogin();
                 <span class="nav-label">Pessoas</span>
             </a>
             <?php endif; ?>
-            
-            <?php if (temPermissao('vendas_mobile')): ?>
-            <!-- LINK VENDAS MOBILE RENDERIZADO -->
-            <a href="vendas_mobile.php" class="nav-tab-item" data-tooltip="Vender">
-                <i class="bi bi-phone"></i>
-                <span class="nav-label">Vender</span>
-            </a>
-            <?php endif; ?>
 
             <?php if (temPermissao('gerenciar_produtos')): ?>
             <a href="produtos.php" class="nav-tab-item" data-tooltip="Produtos">
@@ -517,6 +509,14 @@ verificarLogin();
             </a>
             <?php endif; ?>
             
+            <?php endif; ?>
+            
+            <!-- Link de Vendas Mobile (para atendentes) -->
+            <?php if (temPermissao('vendas_mobile')): ?>
+            <a href="vendas_mobile.php" class="nav-tab-item" data-tooltip="Vender">
+                <i class="bi bi-phone"></i>
+                <span class="nav-label">Vender</span>
+            </a>
             <?php endif; ?>
 
             <!-- Itens Administrativos -->
