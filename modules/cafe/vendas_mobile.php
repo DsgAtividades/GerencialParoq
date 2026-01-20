@@ -55,34 +55,15 @@ include 'includes/header.php';
         background: var(--cafe-bg) !important;
         font-family: 'Inter', Arial, sans-serif;
     }
-    .header-mobile {
-        position: sticky;
-        top: 0;
-        z-index: 1100;
-        background: #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        padding: 16px 0 8px 0;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .header-mobile h2 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        margin: 0;
-        color: #0d6efd;
-        letter-spacing: 1px;
-    }
     .produto-card {
-        border-radius: 12px;
+        border-radius: 10px;
         background: #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        padding: 12px 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        padding: 10px 8px;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        min-height: 150px;
+        min-height: 120px;
         position: relative;
         transition: box-shadow 0.2s;
         cursor: pointer;
@@ -99,51 +80,40 @@ include 'includes/header.php';
     }
     .produto-nome {
         font-weight: 600;
-        font-size: 1.05rem;
+        font-size: 0.9rem;
         margin-bottom: 2px;
         color: #222;
     }
     .produto-preco {
         color: #28a745;
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1rem;
         margin-bottom: 2px;
     }
     .produto-estoque {
-        font-size: 12px;
+        font-size: 10px;
         color: #888;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
     .quantidade-controls {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         margin-top: auto;
         width: 100%;
-        padding-top: 8px;
+        padding-top: 6px;
         flex-shrink: 0;
         box-sizing: border-box;
     }
     .quantidade-input {
-        width: 48px;
+        width: 44px;
         text-align: center;
-        font-size: 1rem;
-        border-radius: 8px;
+        font-size: 0.9rem;
+        border-radius: 6px;
         border: 1px solid #dee2e6;
         background: #f8f9fa;
     }
     .bottom-bar, #carrinho, .carrinho-overlay { display: none !important; }
-    #carrinho-resumo .card {
-        border-radius: 14px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    #carrinho-resumo .card-header, #carrinho-resumo .card-footer {
-        background: #f8f9fa;
-        border-radius: 14px 14px 0 0;
-    }
-    #carrinho-resumo .card-footer {
-        border-radius: 0 0 14px 14px;
-    }
     /* Tipos de Pagamento */
     .payment-types {
         display: grid;
@@ -250,35 +220,8 @@ include 'includes/header.php';
 
 
 <div class="container mb-5 pb-5">
-    <div class="header-mobile">
-        <h2>Vender</h2>
-    </div>
-    <!-- Seleção de Tipo de Pagamento -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="mb-3"><i class="bi bi-credit-card"></i> Selecione o Tipo de Pagamento</h5>
-                    <div class="payment-types">
-                        <button type="button" class="btn-payment" data-tipo="dinheiro" onclick="selecionarTipoPagamento('dinheiro')">
-                            <i class="bi bi-cash-stack"></i>
-                            <span>Dinheiro</span>
-                        </button>
-                        <button type="button" class="btn-payment" data-tipo="credito" onclick="selecionarTipoPagamento('credito')">
-                            <i class="bi bi-credit-card"></i>
-                            <span>Crédito</span>
-                        </button>
-                        <button type="button" class="btn-payment" data-tipo="debito" onclick="selecionarTipoPagamento('debito')">
-                            <i class="bi bi-credit-card-2-front"></i>
-                            <span>Débito</span>
-                        </button>
-                    </div>
-                    <div id="tipoPagamentoSelecionado" class="alert alert-info mt-3" style="display: none;">
-                        <i class="bi bi-check-circle-fill"></i> <strong>Forma de pagamento:</strong> <span id="tipoPagamentoTexto"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">Vender</h1>
     </div>
 
     <!-- Produtos Organizados por Categoria em Colunas -->
@@ -330,8 +273,38 @@ include 'includes/header.php';
         </div>
     <?php endif; ?>
 
-    <!-- Carrinho e Finalizar Venda -->
+    <!-- Carrinho Resumo -->
     <div id="carrinho-resumo" class="mt-4 mb-3" style="display:none;"></div>
+
+    <!-- Seleção de Tipo de Pagamento -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-3"><i class="bi bi-credit-card"></i> Selecione o Tipo de Pagamento</h5>
+                    <div class="payment-types">
+                        <button type="button" class="btn-payment" data-tipo="dinheiro" onclick="selecionarTipoPagamento('dinheiro')">
+                            <i class="bi bi-cash-stack"></i>
+                            <span>Dinheiro</span>
+                        </button>
+                        <button type="button" class="btn-payment" data-tipo="credito" onclick="selecionarTipoPagamento('credito')">
+                            <i class="bi bi-credit-card"></i>
+                            <span>Crédito</span>
+                        </button>
+                        <button type="button" class="btn-payment" data-tipo="debito" onclick="selecionarTipoPagamento('debito')">
+                            <i class="bi bi-credit-card-2-front"></i>
+                            <span>Débito</span>
+                        </button>
+                    </div>
+                    <div id="tipoPagamentoSelecionado" class="alert alert-info mt-3" style="display: none;">
+                        <i class="bi bi-check-circle-fill"></i> <strong>Forma de pagamento:</strong> <span id="tipoPagamentoTexto"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finalizar Venda -->
     <button id="btn-finalizar" class="btn btn-success btn-lg w-100 mb-4" onclick="finalizarVenda()" disabled>
         Finalizar Venda
     </button>
@@ -438,25 +411,36 @@ include 'includes/header.php';
         if (carrinho.length > 0) {
             carrinhoResumo.style.display = 'block';
             carrinhoResumo.innerHTML = `
-                <div class='card shadow-sm mb-2'>
-                    <div class='card-header d-flex justify-content-between align-items-center'>
-                        <span><i class='bi bi-cart'></i> Carrinho (${totalItens} itens)</span>
-                        <button class='btn btn-sm btn-outline-danger' onclick='limparCarrinho()'>Limpar</button>
+                <div class='carrinho-card'>
+                    <div class='carrinho-header'>
+                        <div class='carrinho-title'>
+                            <i class='bi bi-cart-fill'></i>
+                            <span>Carrinho</span>
+                            <span class='carrinho-badge'>${totalItens}</span>
+                        </div>
+                        <button class='btn-limpar-carrinho' onclick='limparCarrinho()' title='Limpar carrinho'>
+                            <i class='bi bi-trash'></i>
+                        </button>
                     </div>
-                    <div class='card-body p-2'>
+                    <div class='carrinho-body'>
                         ${carrinho.map(item => `
-                            <div class='d-flex justify-content-between align-items-center border-bottom py-1'>
-                                <div>
-                                    <strong>${item.nome_produto}</strong><br>
-                                    <small>${item.quantidade}x R$ ${item.preco.toFixed(2).replace('.', ',')}</small>
+                            <div class='carrinho-item'>
+                                <div class='carrinho-item-info'>
+                                    <div class='carrinho-item-nome'>${item.nome_produto}</div>
+                                    <div class='carrinho-item-detalhes'>
+                                        <span class='carrinho-item-qtd'>${item.quantidade}x</span>
+                                        <span class='carrinho-item-preco-unit'>R$ ${item.preco.toFixed(2).replace('.', ',')}</span>
+                                    </div>
                                 </div>
-                                <div class='text-success fw-bold'>R$ ${item.total.toFixed(2).replace('.', ',')}</div>
+                                <div class='carrinho-item-total'>
+                                    R$ ${item.total.toFixed(2).replace('.', ',')}
+                                </div>
                             </div>
                         `).join('')}
                     </div>
-                    <div class='card-footer d-flex justify-content-between align-items-center'>
-                        <span class='fw-bold'>Total:</span>
-                        <span class='text-success fw-bold fs-5'>R$ ${totalValor.toFixed(2).replace('.', ',')}</span>
+                    <div class='carrinho-footer'>
+                        <div class='carrinho-total-label'>Total</div>
+                        <div class='carrinho-total-valor'>R$ ${totalValor.toFixed(2).replace('.', ',')}</div>
                     </div>
                 </div>
             `;
