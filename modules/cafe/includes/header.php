@@ -153,29 +153,39 @@ verificarLogin();
             display: flex;
             align-items: center;
             gap: 3px;
-            overflow-x: hidden;
+            overflow-x: auto;
             overflow-y: hidden;
             flex: 1;
             padding: 12px 0.5rem 10px 0.5rem;
             scrollbar-width: thin;
             min-width: 0;
+            -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+            scroll-behavior: smooth; /* Scroll suave */
         }
 
         .nav-icons-container::-webkit-scrollbar {
-            height: 4px;
+            height: 6px;
         }
 
         .nav-icons-container::-webkit-scrollbar-track {
             background: rgba(248, 240, 175, 0.1);
+            border-radius: 3px;
         }
 
         .nav-icons-container::-webkit-scrollbar-thumb {
-            background: rgba(248, 240, 175, 0.3);
-            border-radius: 2px;
+            background: rgba(248, 240, 175, 0.4);
+            border-radius: 3px;
+            transition: background 0.2s ease;
         }
 
         .nav-icons-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(248, 240, 175, 0.5);
+            background: rgba(248, 240, 175, 0.6);
+        }
+        
+        /* Para Firefox */
+        .nav-icons-container {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(248, 240, 175, 0.4) rgba(248, 240, 175, 0.1);
         }
 
         /* Ícones de navegação */
