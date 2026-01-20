@@ -469,7 +469,8 @@ verificarLogin();
             </a>
             <?php endif; ?>
             
-            <?php if (temPermissao('gerenciar_vendas_mobile')): ?>
+            <?php if (temPermissao('vendas_mobile')): ?>
+            <!-- LINK VENDAS MOBILE RENDERIZADO -->
             <a href="vendas_mobile.php" class="nav-tab-item" data-tooltip="Vender">
                 <i class="bi bi-phone"></i>
                 <span class="nav-label">Vender</span>
