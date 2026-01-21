@@ -157,6 +157,38 @@ include 'includes/header.php';
         margin-bottom: 0;
     }
     
+    /* Estilos do Modal de Troco */
+    #modalTroco .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    #modalTroco .modal-header {
+        border-radius: 15px 15px 0 0;
+    }
+    
+    #modalTroco .input-group-lg .form-control {
+        font-size: 1.5rem;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    #modalTroco #valorRecebido {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    #modalTroco #trocoInfo {
+        border-radius: 10px;
+        border-left: 4px solid #0d6efd;
+    }
+    
+    #modalTroco #trocoNegativo {
+        border-radius: 10px;
+        border-left: 4px solid #ffc107;
+    }
+    
     @media (max-width: 600px) {
         .payment-types {
             grid-template-columns: repeat(3, 1fr);
@@ -301,6 +333,66 @@ include 'includes/header.php';
     <div id="finalizar-msg" class="text-center text-muted small mt-2 mb-4" style="display:none;"></div>
 </div>
 
+<!-- Modal de Troco (para pagamento em dinheiro) -->
+<div class="modal fade" id="modalTroco" tabindex="-1" aria-labelledby="modalTrocoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalTrocoLabel">
+                    <i class="bi bi-cash-stack"></i> Pagamento em Dinheiro
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-4 text-center">
+                    <h4 class="text-muted mb-2">Total da Venda</h4>
+                    <h2 class="text-success fw-bold" id="totalVendaModal">R$ 0,00</h2>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="valorRecebido" class="form-label fw-bold">
+                        <i class="bi bi-currency-dollar"></i> Valor Recebido
+                    </label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text">R$</span>
+                        <input type="text" 
+                               class="form-control form-control-lg" 
+                               id="valorRecebido" 
+                               placeholder="0,00"
+                               autofocus
+                               oninput="calcularTroco()">
+                    </div>
+                    <small class="text-muted">Digite o valor recebido do cliente</small>
+                </div>
+                
+                <div class="alert alert-info mb-0" id="trocoInfo" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-calculator"></i> <strong>Troco:</strong>
+                        </div>
+                        <div>
+                            <span class="h4 mb-0 text-primary fw-bold" id="valorTroco">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning mt-3" id="trocoNegativo" style="display: none;">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    <strong>Atenção!</strong> O valor recebido é menor que o total da venda.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="cancelarVenda()">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" id="btnConfirmarTroco" onclick="confirmarVendaDinheiro()" disabled>
+                    <i class="bi bi-check-circle"></i> Confirmar Venda
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     let tipoPagamentoSelecionado = null;
     let carrinho = [];
@@ -340,6 +432,32 @@ include 'includes/header.php';
     document.addEventListener('DOMContentLoaded', function() {
         // Layout em colunas - nenhuma inicialização especial necessária
         console.log('Layout de colunas por categoria carregado');
+        
+        // Formatar campo de valor recebido como moeda
+        const valorRecebidoInput = document.getElementById('valorRecebido');
+        if (valorRecebidoInput) {
+            valorRecebidoInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 0) {
+                    value = (parseInt(value) / 100).toFixed(2);
+                    value = value.replace('.', ',');
+                    e.target.value = value;
+                } else {
+                    e.target.value = '';
+                }
+                calcularTroco();
+            });
+            
+            // Permitir Enter para confirmar
+            valorRecebidoInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const btnConfirmar = document.getElementById('btnConfirmarTroco');
+                    if (!btnConfirmar.disabled) {
+                        confirmarVendaDinheiro();
+                    }
+                }
+            });
+        }
     });
     
     function validarQuantidade(input) {
@@ -468,65 +586,174 @@ include 'includes/header.php';
     }
 
     function finalizarVenda() {
-        desabilita();
-        
         if (!tipoPagamentoSelecionado) {
             alert('Por favor, selecione o tipo de pagamento antes de finalizar a venda.');
-            habilita();
             return;
         }
 
         if (carrinho.length === 0) {
             alert('O carrinho está vazio.');
-            habilita();
             return;
         }
 
-        const tipoTexto = {
-            'dinheiro': 'Dinheiro',
-            'credito': 'Cartão de Crédito',
-            'debito': 'Cartão de Débito'
-        };
+        // Calcular total da venda
+        let totalVenda = 0;
+        carrinho.forEach(item => {
+            totalVenda += item.total;
+        });
 
-        if (confirm(`Confirmar venda no ${tipoTexto[tipoPagamentoSelecionado]}?`)) {
-            const dados = {
-                pessoa_id: ID_PESSOA_DEFAULT, // Usar pessoa "Default" (ID 1)
-                tipo_venda: tipoPagamentoSelecionado,
-                itens: carrinho
-            };
-            
-            fetch('api/finalizar_venda.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dados)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Venda finalizada com sucesso!');
-                    // Limpar carrinho
-                    limparCarrinho();
-                    // Limpar seleção de tipo de pagamento
-                    tipoPagamentoSelecionado = null;
-                    document.querySelectorAll('.btn-payment').forEach(btn => btn.classList.remove('active'));
-                    document.getElementById('tipoPagamentoSelecionado').style.display = 'none';
-                    // Atualizar página para recarregar estoque
-                    location.reload();
-                } else {
-                    alert('Erro: ' + data.message);
-                    habilita();
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro ao finalizar a venda');
-                habilita();
-            });
+        // Se for pagamento em dinheiro, mostrar modal de troco
+        if (tipoPagamentoSelecionado === 'dinheiro') {
+            mostrarModalTroco(totalVenda);
         } else {
-            habilita();
+            // Para crédito/débito, usar confirmação simples
+            const tipoTexto = {
+                'credito': 'Cartão de Crédito',
+                'debito': 'Cartão de Débito'
+            };
+
+            if (confirm(`Confirmar venda no ${tipoTexto[tipoPagamentoSelecionado]}?`)) {
+                processarVenda();
+            }
         }
+    }
+
+    function mostrarModalTroco(totalVenda) {
+        // Formatar total para exibição
+        const totalFormatado = totalVenda.toFixed(2).replace('.', ',');
+        document.getElementById('totalVendaModal').textContent = `R$ ${totalFormatado}`;
+        
+        // Limpar campo de valor recebido
+        document.getElementById('valorRecebido').value = '';
+        document.getElementById('trocoInfo').style.display = 'none';
+        document.getElementById('trocoNegativo').style.display = 'none';
+        document.getElementById('btnConfirmarTroco').disabled = true;
+        
+        // Armazenar total da venda para uso posterior
+        window.totalVendaAtual = totalVenda;
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('modalTroco'));
+        modal.show();
+        
+        // Focar no campo de valor recebido
+        setTimeout(() => {
+            document.getElementById('valorRecebido').focus();
+        }, 300);
+    }
+
+    function calcularTroco() {
+        const valorRecebidoInput = document.getElementById('valorRecebido');
+        const valorRecebidoStr = valorRecebidoInput.value.replace(/[^\d,]/g, '').replace(',', '.');
+        const valorRecebido = parseFloat(valorRecebidoStr) || 0;
+        const totalVenda = window.totalVendaAtual || 0;
+        
+        const trocoInfo = document.getElementById('trocoInfo');
+        const trocoNegativo = document.getElementById('trocoNegativo');
+        const valorTrocoSpan = document.getElementById('valorTroco');
+        const btnConfirmar = document.getElementById('btnConfirmarTroco');
+        
+        if (valorRecebido > 0) {
+            const troco = valorRecebido - totalVenda;
+            
+            if (troco >= 0) {
+                // Troco positivo ou zero
+                trocoInfo.style.display = 'block';
+                trocoNegativo.style.display = 'none';
+                valorTrocoSpan.textContent = `R$ ${troco.toFixed(2).replace('.', ',')}`;
+                valorTrocoSpan.className = 'h4 mb-0 text-success fw-bold';
+                btnConfirmar.disabled = false;
+            } else {
+                // Valor insuficiente
+                trocoInfo.style.display = 'block';
+                trocoNegativo.style.display = 'block';
+                valorTrocoSpan.textContent = `R$ ${Math.abs(troco).toFixed(2).replace('.', ',')}`;
+                valorTrocoSpan.className = 'h4 mb-0 text-danger fw-bold';
+                btnConfirmar.disabled = true;
+            }
+        } else {
+            trocoInfo.style.display = 'none';
+            trocoNegativo.style.display = 'none';
+            btnConfirmar.disabled = true;
+        }
+    }
+
+    function confirmarVendaDinheiro() {
+        const valorRecebidoInput = document.getElementById('valorRecebido');
+        const valorRecebidoStr = valorRecebidoInput.value.replace(/[^\d,]/g, '').replace(',', '.');
+        const valorRecebido = parseFloat(valorRecebidoStr) || 0;
+        const totalVenda = window.totalVendaAtual || 0;
+        
+        if (valorRecebido < totalVenda) {
+            alert('O valor recebido deve ser maior ou igual ao total da venda!');
+            return;
+        }
+        
+        // Calcular troco dado
+        const trocoDado = valorRecebido - totalVenda;
+        
+        // Armazenar troco para uso no processarVenda
+        window.trocoDadoAtual = trocoDado;
+        
+        // Fechar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalTroco'));
+        modal.hide();
+        
+        // Processar venda
+        processarVenda();
+    }
+
+    function cancelarVenda() {
+        // Reabilitar botão finalizar
+        habilita();
+    }
+
+    function processarVenda() {
+        desabilita();
+        
+        const dados = {
+            pessoa_id: ID_PESSOA_DEFAULT, // Usar pessoa "Default" (ID 1)
+            tipo_venda: tipoPagamentoSelecionado,
+            itens: carrinho
+        };
+        
+        // Se for venda em dinheiro, incluir o troco dado
+        if (tipoPagamentoSelecionado === 'dinheiro' && window.trocoDadoAtual !== undefined) {
+            dados.troco_dado = window.trocoDadoAtual;
+        }
+        
+        fetch('api/finalizar_venda.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dados)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Venda finalizada com sucesso!');
+                // Limpar variáveis temporárias
+                window.totalVendaAtual = undefined;
+                window.trocoDadoAtual = undefined;
+                // Limpar carrinho
+                limparCarrinho();
+                // Limpar seleção de tipo de pagamento
+                tipoPagamentoSelecionado = null;
+                document.querySelectorAll('.btn-payment').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('tipoPagamentoSelecionado').style.display = 'none';
+                // Atualizar página para recarregar estoque
+                location.reload();
+            } else {
+                alert('Erro: ' + data.message);
+                habilita();
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao finalizar a venda');
+            habilita();
+        });
     }
 
     function limparCarrinho() {

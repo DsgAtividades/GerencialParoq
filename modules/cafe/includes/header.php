@@ -518,6 +518,14 @@ verificarLogin();
                 <span class="nav-label">Vender</span>
             </a>
             <?php endif; ?>
+            
+            <!-- Link para Gerenciamento de Caixa -->
+            <?php if (temPermissao('visualizar_caixa')): ?>
+            <a href="caixa.php" class="nav-tab-item" data-tooltip="Caixa">
+                <i class="bi bi-cash-register"></i>
+                <span class="nav-label">Caixa</span>
+            </a>
+            <?php endif; ?>
 
             <!-- Itens Administrativos -->
             <?php if (temPermissao('gerenciar_usuarios') || temPermissao('gerenciar_grupos') || temPermissao('gerenciar_permissoes')): ?>
