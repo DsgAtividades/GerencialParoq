@@ -522,7 +522,7 @@ verificarLogin();
             <!-- Link para Gerenciamento de Caixa -->
             <?php if (temPermissao('visualizar_caixa')): ?>
             <a href="caixa.php" class="nav-tab-item" data-tooltip="Caixa">
-                <i class="bi bi-cash-register"></i>
+                <i class="bi bi-cash-stack"></i>
                 <span class="nav-label">Caixa</span>
             </a>
             <?php endif; ?>
