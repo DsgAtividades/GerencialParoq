@@ -9,10 +9,6 @@ verificarPermissao('visualizar_caixa');
 $stmt = $pdo->query("SELECT * FROM vw_cafe_caixas_resumo WHERE status = 'aberto' ORDER BY data_abertura DESC LIMIT 1");
 $caixaAberto = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Buscar últimos caixas fechados
-$stmt = $pdo->query("SELECT * FROM vw_cafe_caixas_resumo WHERE status = 'fechado' ORDER BY data_fechamento DESC LIMIT 10");
-$caixasFechados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 include 'includes/header.php';
 ?>
 
@@ -214,52 +210,172 @@ include 'includes/header.php';
         </div>
     <?php endif; ?>
 
-    <!-- Histórico de Caixas -->
-    <?php if (!empty($caixasFechados)): ?>
-    <div class="card mt-4">
-        <div class="card-header bg-secondary text-white">
-            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Histórico de Caixas</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Abertura</th>
-                            <th>Fechamento</th>
-                            <th>Usuário</th>
-                            <th>Vendas</th>
-                            <th>Total</th>
-                            <th>Troco Inicial</th>
-                            <th>Troco Final</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($caixasFechados as $caixa): ?>
-                        <tr>
-                            <td><?= $caixa['id'] ?></td>
-                            <td><?= date('d/m/Y H:i', strtotime($caixa['data_abertura'])) ?></td>
-                            <td><?= date('d/m/Y H:i', strtotime($caixa['data_fechamento'])) ?></td>
-                            <td><?= htmlspecialchars($caixa['usuario_abertura_nome']) ?></td>
-                            <td><?= $caixa['total_vendas'] ?></td>
-                            <td><strong>R$ <?= number_format($caixa['total_geral'], 2, ',', '.') ?></strong></td>
-                            <td>R$ <?= number_format($caixa['valor_troco_inicial'], 2, ',', '.') ?></td>
-                            <td>R$ <?= number_format($caixa['valor_troco_final'], 2, ',', '.') ?></td>
-                            <td>
-                                <button class="btn btn-sm btn-info" onclick="verDetalhesCaixa(<?= $caixa['id'] ?>)">
-                                    <i class="bi bi-eye"></i> Ver
-                                </button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+</div>
+
+<!-- Modal Detalhes do Caixa -->
+<div class="modal fade" id="modalDetalhesCaixa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle-fill"></i> Detalhes do Caixa #<span id="detalhesCaixaId">-</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading -->
+                <div id="detalhesCaixaLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Carregando detalhes do caixa...</p>
+                </div>
+                
+                <!-- Error -->
+                <div id="detalhesCaixaError" class="alert alert-danger" style="display: none;"></div>
+                
+                <!-- Content -->
+                <div id="detalhesCaixaContent" style="display: none;">
+                    <!-- Informações do Caixa -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-calendar"></i> Informações do Caixa</h6>
+                                    <p class="mb-2"><strong>Abertura:</strong> <span id="detalhesCaixaAbertura">-</span></p>
+                                    <p class="mb-2"><strong>Fechamento:</strong> <span id="detalhesCaixaFechamento">-</span></p>
+                                    <p class="mb-0"><strong>Usuário:</strong> <span id="detalhesCaixaUsuario">-</span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-cash-stack"></i> Controle de Troco</h6>
+                                    <p class="mb-2"><strong>Troco Inicial:</strong> R$ <span id="detalhesCaixaTrocoInicial">0,00</span></p>
+                                    <p class="mb-2"><strong>Trocos Dados:</strong> R$ <span id="detalhesCaixaTrocosDados">0,00</span></p>
+                                    <p class="mb-0"><strong>Troco Final:</strong> R$ <span id="detalhesCaixaTrocoFinal">0,00</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Resumo Financeiro -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-3"><i class="bi bi-graph-up"></i> Resumo Financeiro</h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <p class="mb-1"><small>Total de Vendas</small></p>
+                                            <h4 class="mb-0"><span id="detalhesCaixaTotalVendas">0</span></h4>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="mb-1"><small>Dinheiro</small></p>
+                                            <h4 class="mb-0">R$ <span id="detalhesCaixaTotalDinheiro">0,00</span></h4>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="mb-1"><small>Crédito</small></p>
+                                            <h4 class="mb-0">R$ <span id="detalhesCaixaTotalCredito">0,00</span></h4>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="mb-1"><small>Débito</small></p>
+                                            <h4 class="mb-0">R$ <span id="detalhesCaixaTotalDebito">0,00</span></h4>
+                                        </div>
+                                    </div>
+                                    <hr class="bg-white">
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <p class="mb-0"><strong>Total Geral:</strong> 
+                                                <span class="h3">R$ <span id="detalhesCaixaTotalGeral">0,00</span></span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Observações -->
+                    <div id="detalhesCaixaObsAberturaContainer" class="alert alert-secondary mb-3" style="display: none;">
+                        <strong><i class="bi bi-chat-left-text"></i> Observação da Abertura:</strong><br>
+                        <span id="detalhesCaixaObsAbertura"></span>
+                    </div>
+                    <div id="detalhesCaixaObsFechamentoContainer" class="alert alert-secondary mb-3" style="display: none;">
+                        <strong><i class="bi bi-chat-left-text"></i> Observação do Fechamento:</strong><br>
+                        <span id="detalhesCaixaObsFechamento"></span>
+                    </div>
+                    
+                    <!-- Lista de Vendas -->
+                    <h6 class="mb-3"><i class="bi bi-list-ul"></i> Vendas Realizadas</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Data/Hora</th>
+                                    <th>Atendente</th>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detalhesCaixaVendasBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">Carregando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>
-    <?php endif; ?>
+</div>
+
+<!-- Modal Itens da Venda -->
+<div class="modal fade" id="modalItensVenda" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-list-ul"></i> Itens da Venda #<span id="itensVendaId">-</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <p class="mb-1"><strong>Data:</strong> <span id="itensVendaData">-</span></p>
+                    <p class="mb-1"><strong>Tipo:</strong> <span id="itensVendaTipo">-</span></p>
+                    <p class="mb-0"><strong>Total:</strong> <span id="itensVendaTotal">-</span></p>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th class="text-center">Quantidade</th>
+                                <th class="text-end">Valor Unit.</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itensVendaBody">
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Carregando...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal Abrir Caixa -->
@@ -536,7 +652,190 @@ function mostrarVendas(vendas) {
 }
 
 function verDetalhesCaixa(id) {
-    window.location.href = 'caixa_detalhes.php?id=' + id;
+    // Mostrar loading
+    document.getElementById('detalhesCaixaLoading').style.display = 'block';
+    document.getElementById('detalhesCaixaContent').style.display = 'none';
+    document.getElementById('detalhesCaixaError').style.display = 'none';
+    
+    // Abrir modal
+    const modal = new bootstrap.Modal(document.getElementById('modalDetalhesCaixa'));
+    modal.show();
+    
+    // Buscar detalhes
+    fetch(`api/caixa_detalhes.php?id=${id}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('detalhesCaixaLoading').style.display = 'none';
+            
+            if (data.success) {
+                mostrarDetalhesCaixa(data.caixa, data.vendas);
+                document.getElementById('detalhesCaixaContent').style.display = 'block';
+            } else {
+                document.getElementById('detalhesCaixaError').textContent = data.message;
+                document.getElementById('detalhesCaixaError').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            document.getElementById('detalhesCaixaLoading').style.display = 'none';
+            document.getElementById('detalhesCaixaError').textContent = 'Erro ao carregar detalhes do caixa';
+            document.getElementById('detalhesCaixaError').style.display = 'block';
+        });
+}
+
+function mostrarDetalhesCaixa(caixa, vendas) {
+    // Informações do caixa
+    document.getElementById('detalhesCaixaId').textContent = caixa.id;
+    
+    // Usar data formatada do servidor ou formatar localmente
+    if (caixa.data_abertura_formatada) {
+        document.getElementById('detalhesCaixaAbertura').textContent = caixa.data_abertura_formatada;
+    } else {
+        const dataAbertura = new Date(caixa.data_abertura);
+        document.getElementById('detalhesCaixaAbertura').textContent = 
+            dataAbertura.toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+    }
+    
+    // Formatar data de fechamento
+    if (caixa.data_fechamento_formatada) {
+        document.getElementById('detalhesCaixaFechamento').textContent = caixa.data_fechamento_formatada;
+    } else if (caixa.data_fechamento) {
+        const dataFechamento = new Date(caixa.data_fechamento);
+        document.getElementById('detalhesCaixaFechamento').textContent = 
+            dataFechamento.toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'});
+    } else {
+        document.getElementById('detalhesCaixaFechamento').textContent = 'Não fechado';
+    }
+    
+    document.getElementById('detalhesCaixaUsuario').textContent = caixa.usuario_abertura_nome || 'N/A';
+    document.getElementById('detalhesCaixaTrocoInicial').textContent = 
+        parseFloat(caixa.valor_troco_inicial).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('detalhesCaixaTrocosDados').textContent = 
+        parseFloat(caixa.total_trocos_dados).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('detalhesCaixaTrocoFinal').textContent = 
+        caixa.valor_troco_final ? parseFloat(caixa.valor_troco_final).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-';
+    
+    // Resumo
+    document.getElementById('detalhesCaixaTotalVendas').textContent = caixa.total_vendas;
+    document.getElementById('detalhesCaixaTotalDinheiro').textContent = 
+        parseFloat(caixa.total_dinheiro).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('detalhesCaixaTotalCredito').textContent = 
+        parseFloat(caixa.total_credito).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('detalhesCaixaTotalDebito').textContent = 
+        parseFloat(caixa.total_debito).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('detalhesCaixaTotalGeral').textContent = 
+        parseFloat(caixa.total_geral).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    
+    // Observações
+    if (caixa.observacao_abertura) {
+        document.getElementById('detalhesCaixaObsAbertura').textContent = caixa.observacao_abertura;
+        document.getElementById('detalhesCaixaObsAberturaContainer').style.display = 'block';
+    } else {
+        document.getElementById('detalhesCaixaObsAberturaContainer').style.display = 'none';
+    }
+    
+    if (caixa.observacao_fechamento) {
+        document.getElementById('detalhesCaixaObsFechamento').textContent = caixa.observacao_fechamento;
+        document.getElementById('detalhesCaixaObsFechamentoContainer').style.display = 'block';
+    } else {
+        document.getElementById('detalhesCaixaObsFechamentoContainer').style.display = 'none';
+    }
+    
+    // Lista de vendas
+    const tbody = document.getElementById('detalhesCaixaVendasBody');
+    tbody.innerHTML = '';
+    
+    if (vendas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Nenhuma venda registrada</td></tr>';
+        return;
+    }
+    
+    vendas.forEach(venda => {
+        const tipoBadge = {
+            'dinheiro': 'success',
+            'credito': 'info',
+            'debito': 'warning'
+        }[venda.tipo_venda] || 'secondary';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>#${venda.id_venda}</td>
+            <td>${venda.data_venda_formatada}</td>
+            <td>${venda.atendente || 'N/A'}</td>
+            <td><span class="badge bg-${tipoBadge}">${venda.tipo_venda.toUpperCase()}</span></td>
+            <td><strong>R$ ${venda.valor_formatado}</strong></td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="verItensVenda(${venda.id_venda}, '${venda.data_venda_formatada.replace(/'/g, "\\'")}', '${venda.tipo_venda}', '${venda.valor_formatado}')">
+                    <i class="bi bi-list-ul"></i> Itens
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function verItensVenda(idVenda, dataVenda, tipoVenda, valorTotal) {
+    // Mostrar loading
+    document.getElementById('itensVendaBody').innerHTML = '<tr><td colspan="4" class="text-center text-muted">Carregando...</td></tr>';
+    
+    // Abrir modal primeiro
+    const modal = new bootstrap.Modal(document.getElementById('modalItensVenda'));
+    modal.show();
+    
+    // Preencher informações básicas
+    document.getElementById('itensVendaId').textContent = idVenda;
+    document.getElementById('itensVendaData').textContent = dataVenda;
+    document.getElementById('itensVendaTipo').textContent = tipoVenda.toUpperCase();
+    document.getElementById('itensVendaTotal').textContent = `R$ ${valorTotal}`;
+    
+    // Buscar itens da venda
+    fetch(`api/venda_itens.php?id_venda=${idVenda}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarItensVenda(data.itens);
+            } else {
+                document.getElementById('itensVendaBody').innerHTML = 
+                    '<tr><td colspan="4" class="text-center text-danger">Erro ao carregar itens</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            document.getElementById('itensVendaBody').innerHTML = 
+                '<tr><td colspan="4" class="text-center text-danger">Erro ao carregar itens</td></tr>';
+        });
+}
+
+function mostrarItensVenda(itens) {
+    const tbody = document.getElementById('itensVendaBody');
+    tbody.innerHTML = '';
+    
+    if (itens.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Nenhum item encontrado</td></tr>';
+        return;
+    }
+    
+    itens.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${escapeHtml(item.nome_produto)}</td>
+            <td class="text-center">${item.quantidade}</td>
+            <td class="text-end">R$ ${item.valor_unitario_formatado}</td>
+            <td class="text-end"><strong>R$ ${item.subtotal_formatado}</strong></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
 }
 </script>
 

@@ -238,6 +238,42 @@ include 'includes/header.php';
         visibility: visible !important;
         opacity: 1 !important;
     }
+    
+    /* Estilos para modal de caixa fechado */
+    #modalCaixaFechado {
+        z-index: 1050 !important;
+    }
+    
+    #modalCaixaFechado .modal-content {
+        border: none;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        background: #fff !important;
+    }
+    
+    #modalCaixaFechado .modal-header {
+        background: #dc3545 !important;
+        color: #fff !important;
+    }
+    
+    #modalCaixaFechado .modal-body {
+        padding: 2rem;
+        background: #fff !important;
+    }
+    
+    #modalCaixaFechado .modal-footer {
+        background: #fff !important;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    /* Garantir que o modal backdrop não bloqueie navegação do navegador */
+    .modal-backdrop {
+        z-index: 1040;
+    }
+    
+    /* Permitir que o backdrop não bloqueie completamente (para navegação) */
+    #modalCaixaFechado + .modal-backdrop {
+        pointer-events: auto;
+    }
 </style>
 
 
@@ -294,6 +330,34 @@ include 'includes/header.php';
     <?php endforeach; ?>
         </div>
     <?php endif; ?>
+
+    <!-- Modal: Caixa Fechado (Centralizado) -->
+    <div class="modal fade" id="modalCaixaFechado" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="modalCaixaFechadoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="modalCaixaFechadoLabel">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Caixa Fechado
+                    </h5>
+                </div>
+                <div class="modal-body bg-white">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-lock-fill text-danger" style="font-size: 4rem;"></i>
+                    </div>
+                    <p class="text-center mb-0">
+                        <strong>Não é possível realizar vendas sem um caixa aberto.</strong><br>
+                        Por favor, abra um caixa antes de continuar.
+                    </p>
+                </div>
+                <div class="modal-footer bg-white">
+                    <a href="caixa.php" class="btn btn-warning w-100">
+                        <i class="bi bi-cash-stack"></i> Ir para Página de Caixa
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Carrinho Resumo -->
     <div id="carrinho-resumo" class="mt-4 mb-3" style="display:none;"></div>
@@ -400,6 +464,11 @@ include 'includes/header.php';
     const ID_PESSOA_DEFAULT = 1; // ID da pessoa "Default"
 
     function selecionarTipoPagamento(tipo) {
+        if (!caixaAberto) {
+            alert('Não é possível selecionar forma de pagamento sem um caixa aberto.');
+            return;
+        }
+        
         // Remover classe active de todos os botões
         document.querySelectorAll('.btn-payment').forEach(btn => {
             btn.classList.remove('active');
@@ -428,8 +497,119 @@ include 'includes/header.php';
         atualizarCarrinho();
     }
 
+    // Variável global para controlar se há caixa aberto
+    let caixaAberto = false;
+
+    // Função para verificar status do caixa
+    function verificarStatusCaixa() {
+        fetch('api/caixa_status_vendas.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    caixaAberto = data.caixa_aberto;
+                    
+                    if (!caixaAberto) {
+                        // Mostrar modal centralizado
+                        const modal = new bootstrap.Modal(document.getElementById('modalCaixaFechado'));
+                        modal.show();
+                        
+                        // Desabilitar interações
+                        desabilitarInteracoes();
+                    } else {
+                        // Ocultar modal
+                        const modalElement = document.getElementById('modalCaixaFechado');
+                        const modal = bootstrap.Modal.getInstance(modalElement);
+                        if (modal) {
+                            modal.hide();
+                        }
+                        
+                        // Reabilitar interações
+                        habilitarInteracoes();
+                    }
+                } else {
+                    console.error('Erro ao verificar status do caixa:', data.message);
+                    // Em caso de erro, assumir que não há caixa aberto por segurança
+                    caixaAberto = false;
+                    const modal = new bootstrap.Modal(document.getElementById('modalCaixaFechado'));
+                    modal.show();
+                    desabilitarInteracoes();
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao verificar status do caixa:', error);
+                // Em caso de erro, assumir que não há caixa aberto por segurança
+                caixaAberto = false;
+                const modal = new bootstrap.Modal(document.getElementById('modalCaixaFechado'));
+                modal.show();
+                desabilitarInteracoes();
+            });
+    }
+
+    // Função para desabilitar interações quando caixa fechado
+    function desabilitarInteracoes() {
+        // Desabilitar todos os cards de produtos
+        document.querySelectorAll('.produto-card').forEach(card => {
+            card.style.pointerEvents = 'none';
+            card.style.opacity = '0.5';
+        });
+        
+        // Desabilitar botões de quantidade
+        document.querySelectorAll('.btn-quantidade').forEach(btn => {
+            btn.disabled = true;
+        });
+        
+        // Desabilitar inputs de quantidade
+        document.querySelectorAll('.quantidade-input').forEach(input => {
+            input.disabled = true;
+        });
+        
+        // Desabilitar botões de pagamento
+        document.querySelectorAll('.btn-payment').forEach(btn => {
+            btn.disabled = true;
+        });
+        
+        // Desabilitar botão finalizar
+        const btnFinalizar = document.getElementById('btn-finalizar');
+        if (btnFinalizar) {
+            btnFinalizar.disabled = true;
+        }
+    }
+
+    // Função para reabilitar interações quando caixa aberto
+    function habilitarInteracoes() {
+        // Reabilitar todos os cards de produtos
+        document.querySelectorAll('.produto-card').forEach(card => {
+            card.style.pointerEvents = 'auto';
+            card.style.opacity = '1';
+        });
+        
+        // Reabilitar botões de quantidade
+        document.querySelectorAll('.btn-quantidade').forEach(btn => {
+            btn.disabled = false;
+        });
+        
+        // Reabilitar inputs de quantidade
+        document.querySelectorAll('.quantidade-input').forEach(input => {
+            input.disabled = false;
+        });
+        
+        // Reabilitar botões de pagamento
+        document.querySelectorAll('.btn-payment').forEach(btn => {
+            btn.disabled = false;
+        });
+        
+        // Reabilitar botão finalizar (se houver itens no carrinho)
+        atualizarCarrinho();
+    }
+
     // Inicialização
     document.addEventListener('DOMContentLoaded', function() {
+        // Verificar status do caixa ao carregar
+        verificarStatusCaixa();
+        
+        // Verificar status do caixa a cada 30 segundos
+        setInterval(verificarStatusCaixa, 30000);
+        
         // Layout em colunas - nenhuma inicialização especial necessária
         console.log('Layout de colunas por categoria carregado');
         
@@ -472,6 +652,10 @@ include 'includes/header.php';
     }
 
     function aumentarQuantidade(idProduto) {
+        if (!caixaAberto) {
+            return; // Não permitir se caixa fechado
+        }
+        
         const input = document.getElementById(`qtd_${idProduto}`);
         const atual = parseInt(input.value) || 0;
         const max = parseInt(input.dataset.max);
@@ -483,6 +667,10 @@ include 'includes/header.php';
     }
 
     function diminuirQuantidade(idProduto) {
+        if (!caixaAberto) {
+            return; // Não permitir se caixa fechado
+        }
+        
         const input = document.getElementById(`qtd_${idProduto}`);
         const atual = parseInt(input.value) || 0;
         
@@ -556,8 +744,8 @@ include 'includes/header.php';
             carrinhoResumo.style.display = 'none';
             carrinhoResumo.innerHTML = '';
         }
-        // Atualizar botão finalizar
-        const podeFinalizar = carrinho.length > 0 && tipoPagamentoSelecionado;
+        // Atualizar botão finalizar (só habilita se houver caixa aberto)
+        const podeFinalizar = caixaAberto && carrinho.length > 0 && tipoPagamentoSelecionado;
         btnFinalizar.disabled = !podeFinalizar;
         if (!podeFinalizar) {
             if (!tipoPagamentoSelecionado && carrinho.length === 0) {
@@ -586,6 +774,11 @@ include 'includes/header.php';
     }
 
     function finalizarVenda() {
+        if (!caixaAberto) {
+            alert('Não é possível finalizar venda sem um caixa aberto. Por favor, abra um caixa primeiro.');
+            return;
+        }
+        
         if (!tipoPagamentoSelecionado) {
             alert('Por favor, selecione o tipo de pagamento antes de finalizar a venda.');
             return;
@@ -766,6 +959,10 @@ include 'includes/header.php';
     }
 
     function cardClick(event, idProduto) {
+        if (!caixaAberto) {
+            return; // Não permitir se caixa fechado
+        }
+        
         // Evita conflito se clicar nos controles de quantidade
         if (
             event.target.closest('.quantidade-controls') ||

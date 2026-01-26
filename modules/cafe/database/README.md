@@ -672,3 +672,4 @@ mysqldump -u usuario -p --no-create-info banco_de_dados > dados_cafe.sql
 **Última Atualização:** 21/01/2026  
 **Versão do Banco:** 1.0.0
 
+
