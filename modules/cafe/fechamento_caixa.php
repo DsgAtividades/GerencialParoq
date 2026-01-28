@@ -448,7 +448,9 @@ function verDetalhesCaixa(id) {
                 
                 // Carregar sobras se existirem
                 if (data.sobras && data.sobras.length > 0) {
-                    mostrarSobrasDetalhes(data.sobras, data.resumo_sobras);
+                    mostrarSobrasDetalhes(data.sobras, data.resumo_sobras, data.caixa.status);
+                } else {
+                    document.getElementById('detalhesCaixaSobrasContainer').style.display = 'none';
                 }
             } else {
                 document.getElementById('detalhesCaixaError').textContent = data.message;

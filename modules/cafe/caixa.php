@@ -1243,16 +1243,24 @@ function renderizarListaSobras(sobras, resumo) {
                         <th>Quantidade</th>
                         <th>Valor Unit.</th>
                         <th>Valor Total</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${sobras.map(sobra => `
-                        <tr>
+                        <tr id="sobra-row-${sobra.id}">
                             <td>${escapeHtml(sobra.produto_nome)}</td>
                             <td>${sobra.quantidade}</td>
                             <td>R$ ${parseFloat(sobra.produto_valor_unitario).toFixed(2).replace('.', ',')}</td>
                             <td class="text-danger">
                                 <strong>R$ ${parseFloat(sobra.valor_total_perdido).toFixed(2).replace('.', ',')}</strong>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        onclick="event.preventDefault(); event.stopPropagation(); removerSobra(${sobra.id}, '${escapeHtml(sobra.produto_nome)}', event);"
+                                        title="Remover sobra">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     `).join('')}
@@ -1263,11 +1271,68 @@ function renderizarListaSobras(sobras, resumo) {
                         <td>${resumo.total_quantidade}</td>
                         <td>-</td>
                         <td class="text-danger">R$ ${parseFloat(resumo.total_valor_perdido).toFixed(2).replace('.', ',')}</td>
+                        <td>-</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
     `;
+}
+
+function removerSobra(sobraId, produtoNome, event) {
+    // Prevenir comportamento padrão e propagação do evento
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    if (!confirm(`Deseja realmente remover a sobra do produto "${produtoNome}"?\n\nO estoque será restaurado automaticamente.`)) {
+        return false;
+    }
+    
+    fetch('api/sobras_remover.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sobra_id: sobraId })
+    })
+    .then(response => {
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            return response.text().then(text => {
+                throw new Error('Resposta não é JSON: ' + text.substring(0, 200));
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.sucesso) {
+            // Usar toast/notificação ao invés de alert para não fechar o modal
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                <i class="bi bi-check-circle"></i> ${data.mensagem}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // Remover o alert após 3 segundos
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+            
+            // Atualizar lista de sobras no modal de fechamento
+            atualizarListaSobras();
+        } else {
+            alert('Erro: ' + data.mensagem);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao remover sobra: ' + error.message);
+    });
+    
+    return false;
 }
 
 function carregarSobrasDetalhes(caixaId) {
