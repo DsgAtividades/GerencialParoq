@@ -71,6 +71,17 @@ include 'includes/header.php';
         transform: translateY(-2px);
         box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
+    
+    .produto-sobra-card {
+        transition: all 0.2s;
+        border: 2px solid transparent;
+    }
+    
+    .produto-sobra-card:hover {
+        border-color: var(--cafe-brown);
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
 </style>
 
 <div class="container-fluid py-4">
@@ -307,8 +318,14 @@ include 'includes/header.php';
                         <span id="detalhesCaixaObsFechamento"></span>
                     </div>
                     
+                    <!-- Sobras -->
+                    <div id="detalhesCaixaSobrasContainer" style="display: none;">
+                        <h6 class="mb-3"><i class="bi bi-box-seam"></i> Sobras Registradas</h6>
+                        <div id="detalhesCaixaSobrasContent"></div>
+                    </div>
+                    
                     <!-- Lista de Vendas -->
-                    <h6 class="mb-3"><i class="bi bi-list-ul"></i> Vendas Realizadas</h6>
+                    <h6 class="mb-3 mt-4"><i class="bi bi-list-ul"></i> Vendas Realizadas</h6>
                     <div class="table-responsive">
                         <table class="table table-hover table-sm">
                             <thead>
@@ -479,6 +496,25 @@ include 'includes/header.php';
                 </div>
 
                 <form id="formFecharCaixa">
+                    <!-- Seção de Sobras -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="form-label mb-0">
+                                <i class="bi bi-box-seam"></i> Produtos que Sobraram
+                            </label>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="abrirModalSobras()">
+                                <i class="bi bi-plus-circle"></i> Adicionar Sobras
+                            </button>
+                        </div>
+                        
+                        <div id="listaSobras" class="border rounded p-3 bg-light">
+                            <div class="text-center text-muted">
+                                <i class="bi bi-inbox"></i>
+                                <p class="mb-0 small">Nenhuma sobra registrada</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="mb-3">
                         <label for="observacaoFechamento" class="form-label">
                             <i class="bi bi-chat-left-text"></i> Observações (opcional)
@@ -492,6 +528,73 @@ include 'includes/header.php';
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-danger" onclick="confirmarFecharCaixa()">
                     <i class="bi bi-lock-fill"></i> Confirmar Fechamento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Sobras - Seleção de Produtos -->
+<div class="modal fade" id="modalSobras" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="bi bi-box-seam"></i> Registrar Sobras de Produtos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Selecione os produtos que sobraram ao final do expediente. 
+                    Estas quantidades serão descontadas do estoque, mas não geram receita.
+                </div>
+                
+                <!-- Buscar Produto -->
+                <div class="mb-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="buscarProdutoSobra" 
+                               placeholder="Buscar produto...">
+                    </div>
+                </div>
+                
+                <!-- Lista de Produtos -->
+                <div class="row" id="listaProdutosSobras">
+                    <div class="col-12 text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Carrinho de Sobras -->
+                <h6 class="mb-3"><i class="bi bi-cart3"></i> Produtos Selecionados</h6>
+                <div id="carrinhoSobras" class="border rounded p-3 bg-light mb-3">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-inbox"></i>
+                        <p class="mb-0 small">Nenhum produto selecionado</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Total de produtos:</strong> <span id="totalProdutosSobras">0</span><br>
+                        <strong>Quantidade total:</strong> <span id="quantidadeTotalSobras">0</span>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">Valor total estimado:</small>
+                        <h4 class="mb-0 text-danger">R$ <span id="valorTotalSobras">0,00</span></h4>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="confirmarSobras()">
+                    <i class="bi bi-check-circle"></i> Confirmar Sobras
                 </button>
             </div>
         </div>
@@ -573,6 +676,9 @@ function abrirModalFecharCaixa() {
     document.getElementById('resumoTrocoInicial').textContent = '<?= number_format($caixaAberto['valor_troco_inicial'], 2, ',', '.') ?>';
     document.getElementById('resumoTrocosDados').textContent = '<?= number_format($caixaAberto['total_trocos_dados'], 2, ',', '.') ?>';
     document.getElementById('resumoTrocoFinal').textContent = '<?= number_format($caixaAberto['troco_atual'], 2, ',', '.') ?>';
+    
+    // Carregar sobras registradas
+    atualizarListaSobras();
     <?php endif; ?>
     
     document.getElementById('observacaoFechamento').value = '';
@@ -670,6 +776,9 @@ function verDetalhesCaixa(id) {
             if (data.success) {
                 mostrarDetalhesCaixa(data.caixa, data.vendas);
                 document.getElementById('detalhesCaixaContent').style.display = 'block';
+                
+                // Carregar sobras
+                carregarSobrasDetalhes(id);
             } else {
                 document.getElementById('detalhesCaixaError').textContent = data.message;
                 document.getElementById('detalhesCaixaError').style.display = 'block';
@@ -836,6 +945,393 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
+}
+
+// ==========================================
+// SISTEMA DE SOBRAS
+// ==========================================
+
+let produtosSobras = [];
+let carrinhoSobrasAtual = [];
+
+function abrirModalSobras() {
+    // Limpar carrinho
+    carrinhoSobrasAtual = [];
+    atualizarCarrinhoSobras();
+    
+    // Carregar produtos
+    carregarProdutosSobras();
+    
+    // Abrir modal
+    const modal = new bootstrap.Modal(document.getElementById('modalSobras'));
+    modal.show();
+}
+
+function carregarProdutosSobras() {
+    const container = document.getElementById('listaProdutosSobras');
+    container.innerHTML = '<div class="col-12 text-center"><div class="spinner-border"></div></div>';
+    
+    fetch('api/produtos_listar.php')
+        .then(response => {
+            // Verificar se a resposta é JSON
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                return response.text().then(text => {
+                    throw new Error('Resposta não é JSON: ' + text.substring(0, 200));
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                produtosSobras = data.produtos;
+                renderizarProdutosSobras(produtosSobras);
+                
+                // Configurar busca
+                const buscaInput = document.getElementById('buscarProdutoSobra');
+                if (buscaInput) {
+                    buscaInput.addEventListener('input', filtrarProdutosSobras);
+                }
+            } else {
+                container.innerHTML = '<div class="col-12 text-center text-danger">Erro: ' + (data.message || 'Erro ao carregar produtos') + '</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            container.innerHTML = '<div class="col-12 text-center text-danger">Erro ao carregar produtos: ' + error.message + '</div>';
+        });
+}
+
+function renderizarProdutosSobras(produtos) {
+    const container = document.getElementById('listaProdutosSobras');
+    
+    if (produtos.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center text-muted">Nenhum produto encontrado</div>';
+        return;
+    }
+    
+    container.innerHTML = produtos.map(produto => `
+        <div class="col-md-4 col-lg-3 mb-3">
+            <div class="card h-100 produto-sobra-card" style="cursor: pointer;" 
+                 onclick="selecionarProdutoSobra(${produto.id})">
+                <div class="card-body">
+                    <h6 class="card-title">${escapeHtml(produto.nome)}</h6>
+                    <p class="card-text">
+                        <small class="text-muted">Estoque: ${produto.estoque}</small><br>
+                        <strong>R$ ${parseFloat(produto.preco).toFixed(2).replace('.', ',')}</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filtrarProdutosSobras() {
+    const termo = document.getElementById('buscarProdutoSobra').value.toLowerCase();
+    const produtosFiltrados = produtosSobras.filter(p => 
+        p.nome.toLowerCase().includes(termo)
+    );
+    renderizarProdutosSobras(produtosFiltrados);
+}
+
+function selecionarProdutoSobra(produtoId) {
+    const produto = produtosSobras.find(p => p.id === produtoId);
+    if (!produto) return;
+    
+    // Verificar se já está no carrinho
+    const itemExistente = carrinhoSobrasAtual.find(item => item.produto_id === produtoId);
+    
+    if (itemExistente) {
+        // Incrementar quantidade
+        if (itemExistente.quantidade < produto.estoque) {
+            itemExistente.quantidade++;
+        } else {
+            alert('Quantidade não pode ser maior que o estoque disponível!');
+        }
+    } else {
+        // Adicionar novo item
+        carrinhoSobrasAtual.push({
+            produto_id: produtoId,
+            nome: produto.nome,
+            preco: parseFloat(produto.preco),
+            estoque: produto.estoque,
+            quantidade: 1
+        });
+    }
+    
+    atualizarCarrinhoSobras();
+}
+
+function removerProdutoSobra(produtoId) {
+    carrinhoSobrasAtual = carrinhoSobrasAtual.filter(item => item.produto_id !== produtoId);
+    atualizarCarrinhoSobras();
+}
+
+function alterarQuantidadeSobra(produtoId, novaQuantidade) {
+    const item = carrinhoSobrasAtual.find(i => i.produto_id === produtoId);
+    if (!item) return;
+    
+    const quantidade = parseInt(novaQuantidade);
+    
+    if (quantidade <= 0) {
+        removerProdutoSobra(produtoId);
+        return;
+    }
+    
+    if (quantidade > item.estoque) {
+        alert('Quantidade não pode ser maior que o estoque disponível!');
+        return;
+    }
+    
+    item.quantidade = quantidade;
+    atualizarCarrinhoSobras();
+}
+
+function atualizarCarrinhoSobras() {
+    const container = document.getElementById('carrinhoSobras');
+    
+    if (carrinhoSobrasAtual.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="bi bi-inbox"></i>
+                <p class="mb-0 small">Nenhum produto selecionado</p>
+            </div>
+        `;
+        document.getElementById('totalProdutosSobras').textContent = '0';
+        document.getElementById('quantidadeTotalSobras').textContent = '0';
+        document.getElementById('valorTotalSobras').textContent = '0,00';
+        return;
+    }
+    
+    let totalProdutos = carrinhoSobrasAtual.length;
+    let quantidadeTotal = 0;
+    let valorTotal = 0;
+    
+    container.innerHTML = carrinhoSobrasAtual.map(item => {
+        const subtotal = item.quantidade * item.preco;
+        quantidadeTotal += item.quantidade;
+        valorTotal += subtotal;
+        
+        return `
+            <div class="d-flex justify-content-between align-items-center mb-2 p-2 border-bottom">
+                <div class="flex-grow-1">
+                    <strong>${escapeHtml(item.nome)}</strong><br>
+                    <small class="text-muted">R$ ${item.preco.toFixed(2).replace('.', ',')} cada</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="number" class="form-control form-control-sm" 
+                           style="width: 80px;" min="1" max="${item.estoque}"
+                           value="${item.quantidade}"
+                           onchange="alterarQuantidadeSobra(${item.produto_id}, this.value)">
+                    <span class="text-nowrap" style="min-width: 80px;">
+                        R$ ${subtotal.toFixed(2).replace('.', ',')}
+                    </span>
+                    <button class="btn btn-sm btn-outline-danger" 
+                            onclick="removerProdutoSobra(${item.produto_id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('totalProdutosSobras').textContent = totalProdutos;
+    document.getElementById('quantidadeTotalSobras').textContent = quantidadeTotal;
+    document.getElementById('valorTotalSobras').textContent = valorTotal.toFixed(2).replace('.', ',');
+}
+
+function confirmarSobras() {
+    if (carrinhoSobrasAtual.length === 0) {
+        alert('Adicione ao menos um produto!');
+        return;
+    }
+    
+    if (!confirm(`Confirmar registro de ${carrinhoSobrasAtual.length} produto(s) como sobra?`)) {
+        return;
+    }
+    
+    const caixaId = <?= $caixaAberto ? $caixaAberto['id'] : 'null' ?>;
+    
+    const dados = {
+        caixa_id: caixaId,
+        sobras: carrinhoSobrasAtual.map(item => ({
+            produto_id: item.produto_id,
+            quantidade: item.quantidade
+        }))
+    };
+    
+    fetch('api/sobras_adicionar.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+    })
+    .then(response => {
+        // Verificar se a resposta é JSON
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            return response.text().then(text => {
+                throw new Error('Resposta não é JSON: ' + text.substring(0, 200));
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.sucesso) {
+            alert(data.mensagem);
+            
+            // Atualizar lista de sobras no modal de fechamento
+            atualizarListaSobras();
+            
+            // Fechar modal de seleção
+            bootstrap.Modal.getInstance(document.getElementById('modalSobras')).hide();
+        } else {
+            alert('Erro: ' + data.mensagem);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao processar sobras: ' + error.message);
+    });
+}
+
+function atualizarListaSobras() {
+    const caixaId = <?= $caixaAberto ? $caixaAberto['id'] : 'null' ?>;
+    if (!caixaId) return;
+    
+    fetch(`api/sobras_listar.php?caixa_id=${caixaId}`)
+        .then(response => {
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                return response.text().then(text => {
+                    throw new Error('Resposta não é JSON: ' + text.substring(0, 200));
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.sucesso) {
+                renderizarListaSobras(data.sobras, data.resumo);
+            } else {
+                console.error('Erro ao carregar sobras:', data.mensagem);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar sobras:', error);
+            // Não mostrar erro ao usuário, apenas logar
+        });
+}
+
+function renderizarListaSobras(sobras, resumo) {
+    const container = document.getElementById('listaSobras');
+    
+    if (sobras.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="bi bi-inbox"></i>
+                <p class="mb-0 small">Nenhuma sobra registrada</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unit.</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sobras.map(sobra => `
+                        <tr>
+                            <td>${escapeHtml(sobra.produto_nome)}</td>
+                            <td>${sobra.quantidade}</td>
+                            <td>R$ ${parseFloat(sobra.produto_valor_unitario).toFixed(2).replace('.', ',')}</td>
+                            <td class="text-danger">
+                                <strong>R$ ${parseFloat(sobra.valor_total_perdido).toFixed(2).replace('.', ',')}</strong>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td>TOTAL</td>
+                        <td>${resumo.total_quantidade}</td>
+                        <td>-</td>
+                        <td class="text-danger">R$ ${parseFloat(resumo.total_valor_perdido).toFixed(2).replace('.', ',')}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+}
+
+function carregarSobrasDetalhes(caixaId) {
+    fetch(`api/sobras_listar.php?caixa_id=${caixaId}`)
+        .then(response => {
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                return response.text().then(text => {
+                    throw new Error('Resposta não é JSON: ' + text.substring(0, 200));
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.sucesso && data.sobras.length > 0) {
+                const container = document.getElementById('detalhesCaixaSobrasContent');
+                const containerDiv = document.getElementById('detalhesCaixaSobrasContainer');
+                
+                container.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-warning">
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Valor Unit.</th>
+                                    <th>Valor Total Perdido</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.sobras.map(sobra => `
+                                    <tr>
+                                        <td>${escapeHtml(sobra.produto_nome)}</td>
+                                        <td>${sobra.quantidade}</td>
+                                        <td>R$ ${parseFloat(sobra.produto_valor_unitario).toFixed(2).replace('.', ',')}</td>
+                                        <td class="text-danger">
+                                            <strong>R$ ${parseFloat(sobra.valor_total_perdido).toFixed(2).replace('.', ',')}</strong>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot class="table-secondary">
+                                <tr class="fw-bold">
+                                    <td>TOTAL</td>
+                                    <td>${data.resumo.total_quantidade}</td>
+                                    <td>-</td>
+                                    <td class="text-danger">
+                                        R$ ${parseFloat(data.resumo.total_valor_perdido).toFixed(2).replace('.', ',')}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                `;
+                
+                containerDiv.style.display = 'block';
+            } else {
+                document.getElementById('detalhesCaixaSobrasContainer').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar sobras:', error);
+            document.getElementById('detalhesCaixaSobrasContainer').style.display = 'none';
+        });
 }
 </script>
 

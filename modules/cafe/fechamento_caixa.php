@@ -57,6 +57,29 @@ include 'includes/header.php';
         $totalDebitoCaixas = array_sum(array_column($caixasFechados, 'total_debito'));
         $totalTrocoInicialCaixas = array_sum(array_column($caixasFechados, 'valor_troco_inicial'));
         $totalTrocoFinalCaixas = array_sum(array_column($caixasFechados, 'valor_troco_final'));
+        
+        // Buscar resumo de sobras do período
+        $idsCaixas = array_column($caixasFechados, 'id');
+        $totalSobrasProdutos = 0;
+        $totalSobrasQuantidade = 0;
+        $totalSobrasValorPerdido = 0;
+        
+        if (!empty($idsCaixas)) {
+            $placeholders = str_repeat('?,', count($idsCaixas) - 1) . '?';
+            $stmt = $pdo->prepare("
+                SELECT 
+                    COUNT(*) as total_produtos_sobras,
+                    SUM(quantidade) as total_quantidade_sobras,
+                    SUM(valor_total_perdido) as total_valor_perdido_sobras
+                FROM vw_cafe_caixas_sobras
+                WHERE caixa_id IN ($placeholders)
+            ");
+            $stmt->execute($idsCaixas);
+            $resumoSobras = $stmt->fetch(PDO::FETCH_ASSOC);
+            $totalSobrasProdutos = $resumoSobras['total_produtos_sobras'] ?? 0;
+            $totalSobrasQuantidade = $resumoSobras['total_quantidade_sobras'] ?? 0;
+            $totalSobrasValorPerdido = $resumoSobras['total_valor_perdido_sobras'] ?? 0;
+        }
     ?>
     <div class="card mt-4 mb-4">
         <div class="card-header bg-info text-white">
@@ -131,6 +154,34 @@ include 'includes/header.php';
                     </div>
                 </div>
             </div>
+            <div class="row mt-2">
+                <div class="col-md-4">
+                    <div class="card bg-warning text-dark">
+                        <div class="card-body">
+                            <p class="text-muted mb-1 small"><i class="bi bi-box-seam"></i> Sobras Registradas</p>
+                            <h5 class="mb-0"><?= $totalSobrasProdutos ?> produto(s)</h5>
+                            <small><?= number_format($totalSobrasQuantidade, 0, ',', '.') ?> unidade(s)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <p class="mb-1 small"><i class="bi bi-exclamation-triangle"></i> Valor Total Perdido</p>
+                            <h4 class="mb-0">R$ <?= number_format($totalSobrasValorPerdido, 2, ',', '.') ?></h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <p class="mb-1 small"><i class="bi bi-calculator"></i> Receita Líquida</p>
+                            <h4 class="mb-0">R$ <?= number_format($totalGeralCaixas - $totalSobrasValorPerdido, 2, ',', '.') ?></h4>
+                            <small>Total - Perdas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -142,11 +193,11 @@ include 'includes/header.php';
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-success" onclick="exportarHistoricoExcel()">
                         <i class="bi bi-file-earmark-excel"></i> Excel
-                    </button>
+        </button>
                     <button class="btn btn-sm btn-danger" onclick="exportarHistoricoPDF()">
                         <i class="bi bi-file-earmark-pdf"></i> PDF
-                    </button>
-                </div>
+        </button>
+    </div>
             </div>
         </div>
         <div class="card-body">
@@ -162,9 +213,9 @@ include 'includes/header.php';
                             <th>Troco Inicial</th>
                             <th>Troco Final</th>
                             <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                </tr>
+            </thead>
+            <tbody>
                         <?php foreach ($caixasFechados as $caixa): ?>
                         <tr>
                             <td><?= $caixa['id'] ?></td>
@@ -180,8 +231,8 @@ include 'includes/header.php';
                                     <i class="bi bi-eye"></i> Ver
                                 </button>
                             </td>
-                        </tr>
-                        <?php endforeach; ?>
+                    </tr>
+                <?php endforeach; ?>
                     </tbody>
                 </table>
         </div>
@@ -284,8 +335,14 @@ include 'includes/header.php';
                         <span id="detalhesCaixaObsFechamento"></span>
                     </div>
                     
+                    <!-- Sobras -->
+                    <div id="detalhesCaixaSobrasContainer" style="display: none;">
+                        <h6 class="mb-3"><i class="bi bi-box-seam"></i> Sobras Registradas</h6>
+                        <div id="detalhesCaixaSobrasContent"></div>
+                    </div>
+                    
                     <!-- Lista de Vendas -->
-                    <h6 class="mb-3"><i class="bi bi-list-ul"></i> Vendas Realizadas</h6>
+                    <h6 class="mb-3 mt-4"><i class="bi bi-list-ul"></i> Vendas Realizadas</h6>
                     <div class="table-responsive">
                         <table class="table table-hover table-sm">
                             <thead>
@@ -343,11 +400,11 @@ include 'includes/header.php';
                         <tbody id="itensVendaBody">
                             <tr>
                                 <td colspan="4" class="text-center text-muted">Carregando...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
             </div>
@@ -388,6 +445,11 @@ function verDetalhesCaixa(id) {
             if (data.success) {
                 mostrarDetalhesCaixa(data.caixa, data.vendas);
                 document.getElementById('detalhesCaixaContent').style.display = 'block';
+                
+                // Carregar sobras se existirem
+                if (data.sobras && data.sobras.length > 0) {
+                    mostrarSobrasDetalhes(data.sobras, data.resumo_sobras);
+                }
             } else {
                 document.getElementById('detalhesCaixaError').textContent = data.message;
                 document.getElementById('detalhesCaixaError').style.display = 'block';
@@ -554,6 +616,71 @@ function escapeHtml(text) {
         "'": '&#039;'
     };
     return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
+}
+
+function mostrarSobrasDetalhes(sobras, resumo) {
+    const container = document.getElementById('detalhesCaixaSobrasContent');
+    const containerDiv = document.getElementById('detalhesCaixaSobrasContainer');
+    
+    if (!sobras || sobras.length === 0) {
+        containerDiv.style.display = 'none';
+        return;
+    }
+    
+    container.innerHTML = `
+        <div class="alert alert-warning mb-3">
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Total de Produtos:</strong> ${resumo.total_produtos}
+                </div>
+                <div class="col-md-4">
+                    <strong>Quantidade Total:</strong> ${resumo.total_quantidade}
+                </div>
+                <div class="col-md-4">
+                    <strong>Valor Perdido:</strong> <span class="text-danger">R$ ${parseFloat(resumo.total_valor_perdido).toFixed(2).replace('.', ',')}</span>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-warning">
+                    <tr>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unit.</th>
+                        <th>Valor Total Perdido</th>
+                        <th>Data Registro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sobras.map(sobra => `
+                        <tr>
+                            <td>${escapeHtml(sobra.produto_nome)}</td>
+                            <td>${sobra.quantidade}</td>
+                            <td>R$ ${parseFloat(sobra.produto_valor_unitario).toFixed(2).replace('.', ',')}</td>
+                            <td class="text-danger">
+                                <strong>R$ ${parseFloat(sobra.valor_total_perdido).toFixed(2).replace('.', ',')}</strong>
+                            </td>
+                            <td>${sobra.data_registro_formatada || '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+                <tfoot class="table-secondary">
+                    <tr class="fw-bold">
+                        <td>TOTAL</td>
+                        <td>${resumo.total_quantidade}</td>
+                        <td>-</td>
+                        <td class="text-danger">
+                            R$ ${parseFloat(resumo.total_valor_perdido).toFixed(2).replace('.', ',')}
+                        </td>
+                        <td>-</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+    
+    containerDiv.style.display = 'block';
 }
 
 // Funções de exportação do histórico de caixas

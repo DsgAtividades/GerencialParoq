@@ -69,10 +69,44 @@ try {
         $venda['itens'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
+    // Buscar sobras do caixa
+    $stmt = $pdo->prepare("
+        SELECT 
+            id,
+            produto_nome,
+            produto_valor_unitario,
+            quantidade,
+            valor_total_perdido,
+            DATE_FORMAT(data_registro, '%d/%m/%Y %H:%i') as data_registro_formatada,
+            usuario_nome,
+            observacao
+        FROM vw_cafe_caixas_sobras
+        WHERE caixa_id = ?
+        ORDER BY data_registro ASC
+    ");
+    $stmt->execute([$caixa_id]);
+    $sobras = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Calcular resumo de sobras
+    $total_sobras_produtos = count($sobras);
+    $total_sobras_quantidade = 0;
+    $total_sobras_valor_perdido = 0;
+    
+    foreach ($sobras as $sobra) {
+        $total_sobras_quantidade += $sobra['quantidade'];
+        $total_sobras_valor_perdido += $sobra['valor_total_perdido'];
+    }
+    
     echo json_encode([
         'success' => true,
         'caixa' => $caixa,
-        'vendas' => $vendas
+        'vendas' => $vendas,
+        'sobras' => $sobras,
+        'resumo_sobras' => [
+            'total_produtos' => $total_sobras_produtos,
+            'total_quantidade' => $total_sobras_quantidade,
+            'total_valor_perdido' => $total_sobras_valor_perdido
+        ]
     ]);
     
 } catch (Exception $e) {
