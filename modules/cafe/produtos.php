@@ -57,10 +57,139 @@ $produtos = $stmt->fetchAll();
 include 'includes/header.php';
 ?>
 
+<style>
+    /* Garantir que os botões de ação sejam visíveis */
+    .table-responsive {
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+    
+    table th:last-child,
+    table td:last-child {
+        white-space: nowrap;
+        min-width: 150px;
+        width: 150px;
+    }
+    
+    .btn-group {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-wrap: nowrap !important;
+        gap: 2px;
+    }
+    
+    .btn-group .btn {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex-shrink: 0;
+        min-width: auto;
+    }
+    
+    .btn-sm {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    table td .btn-group {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start;
+    }
+    
+    /* Garantir que a coluna de ações não seja cortada */
+    table td:last-child {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Estilos específicos para botões outline */
+    .btn-outline-primary,
+    .btn-outline-secondary,
+    .btn-outline-danger,
+    .btn-outline-success {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        border-width: 1px !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    .btn-outline-primary i,
+    .btn-outline-secondary i,
+    .btn-outline-danger i,
+    .btn-outline-success i {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Garantir que botões dentro de tabelas não sejam afetados pelo overflow */
+    table .btn {
+        overflow: visible !important;
+    }
+    
+    table .btn-group {
+        overflow: visible !important;
+    }
+    
+    /* Garantir visibilidade em todas as resoluções */
+    @media (max-width: 768px) {
+        table th:last-child,
+        table td:last-child {
+            min-width: 120px;
+            width: 120px;
+        }
+        
+        .btn-group .btn {
+            padding: 0.2rem 0.4rem !important;
+        }
+    }
+    
+    /* Garantir que os botões sejam sempre visíveis na última coluna */
+    table tbody tr td:last-child {
+        display: table-cell !important;
+    }
+    
+    table tbody tr td:last-child .btn-group {
+        display: flex !important;
+    }
+    
+    table tbody tr td:last-child .btn {
+        display: inline-flex !important;
+    }
+    
+    /* Forçar visibilidade máxima - sobrescrever qualquer CSS que possa estar escondendo */
+    .table-responsive table tbody tr td:last-child,
+    .table-responsive table thead tr th:last-child {
+        display: table-cell !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 150px !important;
+        min-width: 150px !important;
+        max-width: none !important;
+    }
+    
+    .table-responsive table tbody tr td:last-child .btn-group,
+    .table-responsive table tbody tr td:last-child .btn {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        width: auto !important;
+    }
+    
+    .table-responsive table tbody tr td:last-child .btn-group .btn {
+        display: inline-flex !important;
+    }
+</style>
+
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Produtos</h1>
-        <?php if(temPermissao('produtos_incluir')): ?>
+        <?php if(temPermissaoProduto('produtos_incluir')): ?>
         <a href="produtos_novo.php" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> Novo Produto
         </a>
@@ -142,19 +271,19 @@ include 'includes/header.php';
                         </td>
                         <td>
                             <div class="btn-group">
-                                <?php if(temPermissao('produtos_estoque')): ?>
+                                <?php if(temPermissaoProduto('produtos_estoque')): ?>
                                 <a href="produtos_estoque.php?id=<?= $produto['id'] ?>" 
                                    class="btn btn-sm btn-outline-primary" title="Ajustar Estoque">
                                     <i class="bi bi-box-seam"></i>
                                 </a>
                                 <?php endif ; ?>
-                                <?php if(temPermissao('produtos_editar')): ?>
+                                <?php if(temPermissaoProduto('produtos_editar')): ?>
                                     <a href="produtos_editar.php?id=<?= $produto['id'] ?>" 
                                     class="btn btn-sm btn-outline-secondary" title="Editar">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                 <?php endif; ?>
-                                <?php if(temPermissao('produtos_bloquear')): ?>
+                                <?php if(temPermissaoProduto('produtos_bloquear')): ?>
                                     <?php if ($produto['bloqueado']): ?>
                                         <button type="button" class="btn btn-sm btn-outline-success" onclick="alterarStatus(<?= $produto['id'] ?>, 0)" title="Desbloquear produto">
                                             <i class="bi bi-unlock"></i>
@@ -165,7 +294,7 @@ include 'includes/header.php';
                                         </button>
                                     <?php endif; ?>
                                 <?php endif; ?>
-                                <?php if(temPermissao('produtos_excluir')): ?>
+                                <?php if(temPermissaoProduto('produtos_excluir')): ?>
                                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarExclusao(<?= $produto['id'] ?>)" title="Excluir">
                                     <i class="bi bi-trash"></i>
                                 </button>

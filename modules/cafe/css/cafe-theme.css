@@ -147,17 +147,31 @@ body {
     font-size: 1.8rem;
 }
 
+/* Remover ícone de café no mobile */
+@media (max-width: 768px) {
+    .navbar-brand::before {
+        content: '' !important;
+        display: none !important;
+    }
+}
+
 @media (max-width: 768px) {
     .navbar.navbar-dark.bg-primary {
         min-height: 56px !important;
     }
     
     .navbar-brand {
-        font-size: 1.2rem !important;
+        font-size: 1rem !important;
+        padding-right: 0.25rem !important;
+        padding-left: 0.25rem !important;
+        margin-right: 10px !important;
+        margin-left: 2px !important;
     }
     
+    /* Remover ícone de café no mobile */
     .navbar-brand::before {
-        font-size: 1.5rem;
+        content: '' !important;
+        display: none !important;
     }
 }
 

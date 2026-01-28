@@ -3,6 +3,7 @@
    ============================================ */
 
 /* Container de Categorias em Grid - Sempre cabe na largura */
+
 .categorias-container {
     display: grid !important;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -122,7 +123,7 @@
     gap: 8px; /* Reduzido de 12px para 8px */
     flex: 1;
     overflow-y: auto;
-    overflow-x: visible; /* Permite que conteúdo não seja cortado */
+    overflow-x: hidden; /* Previne scroll horizontal */
     padding: 12px 8px 12px 8px; /* Reduzido de 16px para 12px */
     visibility: visible !important;
     opacity: 1 !important;
@@ -132,6 +133,8 @@
     scrollbar-width: thin;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    width: 100%;
+    max-width: 100%; /* Garante que não ultrapasse o container */
 }
 
 /* Card de Produto - Tema Café - Reduzido */
@@ -152,7 +155,8 @@
     opacity: 1 !important;
     box-sizing: border-box;
     width: 100%;
-    overflow: visible; /* Garante que conteúdo não seja cortado */
+    max-width: 100%; /* Garante que não ultrapasse o container */
+    overflow: hidden; /* Previne overflow horizontal */
 }
 
 .produto-card:hover {
@@ -206,6 +210,7 @@
     gap: 8px;
     margin-top: auto;
     width: 100%;
+    max-width: 100%; /* Garante que não ultrapasse o card */
     padding-top: 6px;
     flex-shrink: 0; /* Evita que seja comprimido */
     box-sizing: border-box;
@@ -566,6 +571,7 @@
     .produto-card {
         min-height: 110px; /* Reduzido de 140px */
         padding: 8px 6px; /* Reduzido de 12px 10px */
+        overflow: hidden; /* Garante que conteúdo não ultrapasse */
     }
 
     .produto-nome {
@@ -576,18 +582,34 @@
         font-size: 0.95rem; /* Reduzido de 1.05rem */
     }
 
+    /* Correção: Controles de quantidade no mobile */
+    .quantidade-controls {
+        width: 100%;
+        max-width: 100%;
+        gap: 3px; /* Reduzido ainda mais para economizar espaço */
+        padding: 0; /* Remove padding extra */
+        box-sizing: border-box;
+        justify-content: center; /* Centraliza os controles */
+    }
+
     .btn-quantidade {
-        width: 30px; /* Reduzido de 36px */
-        height: 30px; /* Reduzido de 36px */
-        font-size: 1rem; /* Reduzido de 1.2rem */
+        width: 26px; /* Reduzido de 28px para caber melhor */
+        height: 26px; /* Reduzido de 28px para caber melhor */
+        min-width: 26px; /* Garante largura mínima */
+        font-size: 0.9rem; /* Reduzido de 0.95rem */
         flex-shrink: 0;
+        box-sizing: border-box;
+        padding: 0;
     }
 
     .quantidade-input {
-        width: 44px; /* Reduzido de 52px */
-        min-width: 44px;
-        font-size: 0.9rem; /* Reduzido de 1rem */
+        width: 38px; /* Reduzido de 40px para caber melhor */
+        min-width: 38px;
+        max-width: 38px; /* Garante que não ultrapasse */
+        font-size: 0.8rem; /* Reduzido de 0.85rem */
         flex-shrink: 0;
+        box-sizing: border-box;
+        padding: 3px 2px; /* Padding interno reduzido */
     }
 }
 
@@ -692,5 +714,165 @@
 
 .loading {
     animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Linha de categoria */
+.categoria-linha {
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+/* Wrapper para alinhar header com produtos */
+.categoria-linha > .categoria-header-horizontal {
+    margin-left: 12px; /* Alinha com padding dos produtos */
+}
+
+/* Cabeçalho da categoria horizontal */
+.categoria-header-horizontal {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, var(--cafe-brown) 0%, var(--cafe-brown-dark) 100%);
+    color: var(--cafe-white);
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    font-size: 1rem;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    width: fit-content;
+    max-width: 100%;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+.categoria-header-horizontal i {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.categoria-header-horizontal span:not(.badge) {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.categoria-header-horizontal .badge {
+    flex-shrink: 0;
+}
+
+/* Container horizontal de produtos */
+.produtos-horizontal-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 12px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    box-sizing: border-box;
+}
+
+.produtos-horizontal-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.produtos-horizontal-container::-webkit-scrollbar-track {
+    background: rgba(248, 240, 175, 0.1);
+    border-radius: 10px;
+}
+
+.produtos-horizontal-container::-webkit-scrollbar-thumb {
+    background: var(--cafe-brown);
+    border-radius: 10px;
+}
+
+.produtos-horizontal-container::-webkit-scrollbar-thumb:hover {
+    background: var(--cafe-brown-dark);
+}
+
+.produtos-horizontal-scroll {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    padding: 0 12px;
+    width: max-content;
+    box-sizing: border-box;
+}
+
+.produto-card-horizontal {
+    border-radius: var(--radius-md);
+    background: var(--cafe-white);
+    box-shadow: var(--shadow-sm);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 160px;
+    max-width: 160px;
+    width: 160px;
+    min-height: 180px;
+    position: relative;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    border: 1px solid rgba(172, 74, 0, 0.1);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.produto-card-horizontal:hover {
+    box-shadow: var(--shadow-brown);
+    transform: translateY(-2px);
+}
+
+.produto-card-horizontal:active {
+    box-shadow: var(--shadow-md);
+    background: var(--cafe-cream);
+    border-color: var(--cafe-brown);
+}
+
+.produto-card-horizontal .quantidade-controls, 
+.produto-card-horizontal .quantidade-input, 
+.produto-card-horizontal button {
+    cursor: auto;
+}
+
+@media (max-width: 600px) {
+    .categoria-linha > .categoria-header-horizontal {
+        margin-left: 8px; /* Alinha com padding dos produtos no mobile */
+    }
+    
+    .categoria-header-horizontal {
+        padding: 8px 12px;
+        font-size: 0.95rem;
+        max-width: calc(100% - 16px); /* Considera margin-left + padding do container */
+    }
+    
+    .categoria-header-horizontal i {
+        font-size: 1.2rem;
+    }
+    
+    .categoria-header-horizontal span:not(.badge) {
+        white-space: normal; /* Permite quebra de linha em mobile se necessário */
+        word-break: break-word;
+    }
+    
+    .produto-card-horizontal {
+        min-width: 150px;
+        max-width: 150px;
+        width: 150px;
+        padding: 10px;
+        min-height: 170px;
+    }
+    
+    .produtos-horizontal-scroll {
+        gap: 8px;
+        padding: 0 8px;
+    }
+    
+    .produtos-horizontal-container {
+        padding: 8px 0;
+    }
 }
 

@@ -55,3 +55,54 @@ function normalizarIcone($icone) {
     // Se já está no formato correto (apenas o nome), retorna como está
     return $icone;
 }
+
+/**
+ * Verifica se o usuário tem uma permissão específica de produtos OU a permissão geral gerenciar_produtos
+ * Isso permite que administradores com gerenciar_produtos tenham acesso a todas as ações
+ */
+function temPermissaoProduto($permissaoEspecifica) {
+    require_once __DIR__ . '/verifica_permissao.php';
+    
+    // Se tem a permissão específica, retorna true
+    if (temPermissao($permissaoEspecifica)) {
+        return true;
+    }
+    
+    // Se tem a permissão geral gerenciar_produtos, também retorna true
+    if (temPermissao('gerenciar_produtos')) {
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Verifica permissão de produto com redirect se não tiver acesso
+ * Aceita permissão específica OU gerenciar_produtos
+ */
+function verificarPermissaoProduto($permissaoEspecifica) {
+    require_once __DIR__ . '/verifica_permissao.php';
+    
+    // Verificar login primeiro
+    if (!isset($_SESSION['usuario_id'])) {
+        $_SESSION['alerta'] = [
+            'tipo' => 'warning',
+            'mensagem' => 'Por favor, faça login para continuar.'
+        ];
+        header("Location: login.php");
+        exit;
+    }
+    
+    // Se tem a permissão específica OU gerenciar_produtos, permite acesso
+    if (temPermissao($permissaoEspecifica) || temPermissao('gerenciar_produtos')) {
+        return;
+    }
+    
+    // Se não tem nenhuma das permissões, redireciona
+    $_SESSION['alerta'] = [
+        'tipo' => 'danger',
+        'mensagem' => 'Você não tem permissão para acessar esta página.'
+    ];
+    header("Location: produtos.php");
+    exit;
+}

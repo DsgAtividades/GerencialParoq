@@ -4,6 +4,13 @@ require_once 'includes/conexao.php';
 require_once 'includes/verifica_permissao.php';
 require_once 'includes/funcoes.php';
 
+// Verificar permissão (aceita produtos_bloquear OU gerenciar_produtos)
+if (!temPermissao('produtos_bloquear') && !temPermissao('gerenciar_produtos')) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Você não tem permissão para realizar esta ação']);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Método não permitido']);

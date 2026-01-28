@@ -6,7 +6,7 @@ require_once 'includes/funcoes.php';
 
 $message = '';
 $error = '';
-verificarPermissao('produtos_incluir');
+verificarPermissaoProduto('produtos_incluir');
 
 // Buscar categorias para o select
 $stmt = $pdo->query("SELECT id, nome, icone, ordem FROM cafe_categorias ORDER BY ordem, nome");

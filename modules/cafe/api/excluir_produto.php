@@ -1,7 +1,16 @@
 <?php
 require_once '../config/database.php';
+require_once '../includes/verifica_permissao.php';
+require_once '../includes/funcoes.php';
 
 header('Content-Type: application/json');
+
+// Verificar permissão (aceita produtos_excluir OU gerenciar_produtos)
+if (!temPermissao('produtos_excluir') && !temPermissao('gerenciar_produtos')) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Você não tem permissão para realizar esta ação']);
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

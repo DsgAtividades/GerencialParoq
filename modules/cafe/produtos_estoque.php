@@ -5,7 +5,7 @@ require_once 'includes/funcoes.php';
 
 //$message = '';
 //$error = '';
-verificarPermissao('produtos_estoque');
+verificarPermissaoProduto('produtos_estoque');
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
