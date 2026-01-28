@@ -455,20 +455,6 @@ verificarLogin();
             </a>
             <?php endif; ?>
             
-            <?php if (temPermissao('gerenciar_cartoes')): ?>
-            <a href="alocar_cartao_mobile.php" class="nav-tab-item" data-tooltip="Cadastrar Cliente">
-                <i class="bi bi-credit-card"></i>
-                <span class="nav-label">Cadastrar</span>
-            </a>
-            <?php endif; ?>
-            
-            <?php if (temPermissao('gerenciar_pessoas')): ?>
-            <a href="pessoas.php" class="nav-tab-item" data-tooltip="Pessoas">
-                <i class="bi bi-people"></i>
-                <span class="nav-label">Pessoas</span>
-            </a>
-            <?php endif; ?>
-
             <?php if (temPermissao('gerenciar_produtos')): ?>
             <a href="produtos.php" class="nav-tab-item" data-tooltip="Produtos">
                 <i class="bi bi-box"></i>
@@ -483,29 +469,10 @@ verificarLogin();
             </a>
             <?php endif; ?>
 
-            <?php if (temPermissao('gerenciar_transacoes')): ?>
-            <a href="consulta_saldo.php" class="nav-tab-item" data-tooltip="Consulta Saldos">
-                <i class="bi bi-wallet2"></i>
-                <span class="nav-label">Consulta</span>
-            </a>
-            
-            <a href="saldos_mobile.php" class="nav-tab-item" data-tooltip="Incluir Crédito">
-                <i class="bi bi-cash-coin"></i>
-                <span class="nav-label">Incluir</span>
-            </a>
-            <?php endif; ?>
-            
             <?php if (temPermissao('gerenciar_geracao_cartoes')): ?>
             <a href="gerar_cartoes.php" class="nav-tab-item" data-tooltip="Gerar Cartões">
                 <i class="bi bi-upc-scan"></i>
                 <span class="nav-label">Gerar</span>
-            </a>
-            <?php endif; ?>
-            
-            <?php if (temPermissao('gerenciar_pessoas')): ?>
-            <a href="pessoas_troca.php" class="nav-tab-item" data-tooltip="Trocar Cartão">
-                <i class="bi bi-arrow-left-right"></i>
-                <span class="nav-label">Trocar</span>
             </a>
             <?php endif; ?>
             
