@@ -61,17 +61,8 @@ $permissoes = $stmt->fetchAll();
 
 include 'includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Permissões</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-4">
+
+<div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2>Gerenciar Permissões</h2>
@@ -225,5 +216,5 @@ include 'includes/header.php';
         new bootstrap.Modal(document.getElementById('editarPermissao')).show();
     }
     </script>
-</body>
-</html>
+
+<?php include 'includes/footer.php'; ?>

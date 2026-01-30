@@ -57,12 +57,69 @@ function verificarPermissao($permissaoNecessaria) {
 function verificarPermissaoApi($permissaoNecessaria) {
     global $pdo;
     
+    // #region agent log
+    $logFile = __DIR__ . '/../../../.cursor/debug.log';
+    $logEntry = json_encode([
+        'id' => 'log_' . time() . '_' . uniqid(),
+        'timestamp' => time() * 1000,
+        'location' => 'verifica_permissao.php:60',
+        'message' => 'verificarPermissaoApi entrada',
+        'data' => [
+            'permissao_necessaria' => $permissaoNecessaria,
+            'usuario_id' => $_SESSION['usuario_id'] ?? 'N/A',
+            'projeto' => $_SESSION['projeto'] ?? 'N/A',
+            'pdo_exists' => isset($pdo)
+        ],
+        'sessionId' => 'debug-session',
+        'runId' => 'run1',
+        'hypothesisId' => 'A,D,E'
+    ]) . "\n";
+    file_put_contents($logFile, $logEntry, FILE_APPEND);
+    // #endregion
+    
     // Verificar login sem fazer redirect (apenas retornar false se não estiver logado)
     if (!isset($_SESSION['usuario_id'])) {
         return ['tem_permissao' => 0];
     }
 
+    // Verificar se o projeto está configurado na sessão
+    if (!isset($_SESSION['projeto']) || $_SESSION['projeto'] != 'paroquianspraga') {
+        // #region agent log
+        $logEntry = json_encode([
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => 'verifica_permissao.php:75',
+            'message' => 'Projeto não configurado',
+            'data' => ['projeto' => $_SESSION['projeto'] ?? 'não definido'],
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'A'
+        ]) . "\n";
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+        // #endregion
+        
+        error_log("Projeto não configurado na sessão. Projeto: " . ($_SESSION['projeto'] ?? 'não definido'));
+        return ['tem_permissao' => 0, 'erro' => 'Projeto não configurado'];
+    }
+
     try {
+        // #region agent log
+        $logEntry = json_encode([
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => 'verifica_permissao.php:85',
+            'message' => 'Antes de executar query de permissão',
+            'data' => [
+                'usuario_id' => $_SESSION['usuario_id'],
+                'permissao' => $permissaoNecessaria
+            ],
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'A,E'
+        ]) . "\n";
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+        // #endregion
+        
         $stmt = $pdo->prepare("
             SELECT COUNT(*) as tem_permissao 
             FROM cafe_usuarios u
@@ -72,9 +129,46 @@ function verificarPermissaoApi($permissaoNecessaria) {
         ");
         
         $stmt->execute([$_SESSION['usuario_id'], $permissaoNecessaria]);
-        $resultado = $stmt->fetch();
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // #region agent log
+        $logEntry = json_encode([
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => 'verifica_permissao.php:105',
+            'message' => 'Depois de executar query de permissão',
+            'data' => ['resultado' => $resultado],
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'A'
+        ]) . "\n";
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+        // #endregion
+        
+        if (!$resultado) {
+            return ['tem_permissao' => 0];
+        }
+        
         return $resultado;
     } catch(PDOException $e) {
+        // #region agent log
+        $logEntry = json_encode([
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => 'verifica_permissao.php:120',
+            'message' => 'PDOException em verificarPermissaoApi',
+            'data' => [
+                'exception_message' => $e->getMessage(),
+                'error_info' => $e->errorInfo ?? 'N/A'
+            ],
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'A,E'
+        ]) . "\n";
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+        // #endregion
+        
+        error_log("Erro ao verificar permissão API: " . $e->getMessage());
         // Retornar erro em formato que não quebre o JSON
         return ['tem_permissao' => 0, 'erro' => $e->getMessage()];
     }
@@ -110,30 +204,91 @@ function temPermissao($permissao) {
 function verificaGrupoPermissao() {
     global $pdo;
     
+    // #region agent log
+    $logFile = __DIR__ . '/../../../.cursor/debug.log';
+    $logEntry = json_encode([
+        'id' => 'log_' . time() . '_' . uniqid(),
+        'timestamp' => time() * 1000,
+        'location' => 'verifica_permissao.php:115',
+        'message' => 'verificaGrupoPermissao entrada',
+        'data' => [
+            'usuario_id' => $_SESSION['usuario_id'] ?? 'N/A',
+            'pdo_exists' => isset($pdo)
+        ],
+        'sessionId' => 'debug-session',
+        'runId' => 'run1',
+        'hypothesisId' => 'B,E'
+    ]) . "\n";
+    file_put_contents($logFile, $logEntry, FILE_APPEND);
+    // #endregion
+    
     if (!isset($_SESSION['usuario_id'])) {
         return false;
     }
 
     try {
+        // #region agent log
+        $logEntry = json_encode([
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => 'verifica_permissao.php:130',
+            'message' => 'Antes de executar query de grupo',
+            'data' => ['usuario_id' => $_SESSION['usuario_id']],
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'B'
+        ]) . "\n";
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+        // #endregion
+        
         $stmt = $pdo->prepare("
-            SELECT distinct g.nome as nome
+            SELECT g.nome
             FROM cafe_usuarios u
-            JOIN cafe_grupos_permissoes gp ON u.grupo_id = gp.grupo_id
-            JOIN cafe_permissoes p ON gp.permissao_id = p.id
-            JOIN cafe_grupos g on g.id = gp.grupo_id
+            JOIN cafe_grupos g ON u.grupo_id = g.id
             WHERE u.id = ? AND u.ativo = 1
+            LIMIT 1
         ");
         $stmt->execute([$_SESSION['usuario_id']]);
-        $resultado = $stmt->fetch();
-        $lista = '';
-        foreach($resultado as $grupos){
-            if($lista == '')
-                $lista = $grupos;
-            else
-                $lista += ', '. $grupos; 
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // #region agent log
+        $logEntry = json_encode([
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => 'verifica_permissao.php:150',
+            'message' => 'Depois de executar query de grupo',
+            'data' => ['resultado' => $resultado],
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'B'
+        ]) . "\n";
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+        // #endregion
+        
+        if ($resultado && isset($resultado['nome'])) {
+            return $resultado['nome'];
         }
-        return $lista;
+        
+        return false;
     } catch(PDOException $e) {
+        // #region agent log
+        $logEntry = json_encode([
+            'id' => 'log_' . time() . '_' . uniqid(),
+            'timestamp' => time() * 1000,
+            'location' => 'verifica_permissao.php:165',
+            'message' => 'PDOException em verificaGrupoPermissao',
+            'data' => [
+                'exception_message' => $e->getMessage(),
+                'error_info' => $e->errorInfo ?? 'N/A'
+            ],
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'B,E'
+        ]) . "\n";
+        file_put_contents($logFile, $logEntry, FILE_APPEND);
+        // #endregion
+        
+        error_log("Erro ao verificar grupo: " . $e->getMessage());
         return false;
     }
 }

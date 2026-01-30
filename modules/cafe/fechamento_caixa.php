@@ -22,6 +22,90 @@ $caixasFechados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 include 'includes/header.php';
 ?>
+
+<style>
+    /* Responsividade da tabela de histórico */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #tabelaHistoricoCaixas {
+        min-width: 700px;
+    }
+    
+    #tabelaHistoricoCaixas th,
+    #tabelaHistoricoCaixas td {
+        vertical-align: middle;
+    }
+    
+    /* Colunas de data podem quebrar linha em mobile */
+    #tabelaHistoricoCaixas td:nth-child(2),
+    #tabelaHistoricoCaixas td:nth-child(3) {
+        white-space: normal;
+        min-width: 100px;
+    }
+    
+    /* Colunas de valores não quebram */
+    #tabelaHistoricoCaixas th:last-child,
+    #tabelaHistoricoCaixas td:last-child {
+        position: sticky;
+        right: 0;
+        background-color: white;
+        z-index: 10;
+        box-shadow: -2px 0 4px rgba(0,0,0,0.1);
+        white-space: nowrap;
+    }
+    
+    #tabelaHistoricoCaixas tbody tr:hover td:last-child {
+        background-color: #f8f9fa;
+    }
+    
+    /* Ajustes para telas pequenas */
+    @media (max-width: 768px) {
+        .card-header .d-flex {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 1rem;
+        }
+        
+        .card-header .d-flex .d-flex {
+            width: 100%;
+            justify-content: flex-start;
+        }
+        
+        #tabelaHistoricoCaixas {
+            min-width: 500px;
+        }
+        
+        /* Ajustar tamanho das colunas em mobile */
+        #tabelaHistoricoCaixas th:nth-child(1),
+        #tabelaHistoricoCaixas td:nth-child(1) {
+            min-width: 50px;
+            width: 50px;
+        }
+        
+        #tabelaHistoricoCaixas th:nth-child(2),
+        #tabelaHistoricoCaixas td:nth-child(2),
+        #tabelaHistoricoCaixas th:nth-child(3),
+        #tabelaHistoricoCaixas td:nth-child(3) {
+            min-width: 90px;
+            font-size: 0.875rem;
+        }
+        
+        #tabelaHistoricoCaixas th:nth-child(6),
+        #tabelaHistoricoCaixas td:nth-child(6) {
+            min-width: 100px;
+            font-size: 0.9rem;
+        }
+    }
+    
+    /* Garantir que a coluna de ações seja sempre visível */
+    #tabelaHistoricoCaixas td:last-child .btn {
+        white-space: nowrap;
+    }
+</style>
+
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1><i class="bi bi-clock-history"></i> Histórico de Caixas</h1>
@@ -188,53 +272,61 @@ include 'includes/header.php';
     <!-- Histórico de Caixas -->
     <div class="card">
         <div class="card-header bg-secondary text-white">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
                 <h5 class="mb-0"><i class="bi bi-clock-history"></i> Histórico de Caixas do Período</h5>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
                     <button class="btn btn-sm btn-success" onclick="exportarHistoricoExcel()">
-                        <i class="bi bi-file-earmark-excel"></i> Excel
-        </button>
+                        <i class="bi bi-file-earmark-excel"></i> <span class="d-none d-sm-inline">Excel</span>
+                    </button>
                     <button class="btn btn-sm btn-danger" onclick="exportarHistoricoPDF()">
-                        <i class="bi bi-file-earmark-pdf"></i> PDF
-        </button>
-    </div>
+                        <i class="bi bi-file-earmark-pdf"></i> <span class="d-none d-sm-inline">PDF</span>
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="card-body">
-            <table class="table table-hover" id="tabelaHistoricoCaixas">
+        <div class="card-body p-0">
+    <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tabelaHistoricoCaixas">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Abertura</th>
                             <th>Fechamento</th>
-                            <th>Usuário</th>
-                            <th>Vendas</th>
-                            <th>Total</th>
-                            <th>Troco Inicial</th>
-                            <th>Troco Final</th>
-                            <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
+                            <th class="d-none d-md-table-cell">Usuário</th>
+                            <th class="text-center d-none d-sm-table-cell">Vendas</th>
+                            <th class="text-end">Total</th>
+                            <th class="d-none d-lg-table-cell text-end">Troco Inicial</th>
+                            <th class="d-none d-lg-table-cell text-end">Troco Final</th>
+                            <th class="text-center" style="min-width: 80px;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         <?php foreach ($caixasFechados as $caixa): ?>
                         <tr>
                             <td><?= $caixa['id'] ?></td>
-                            <td><?= date('d/m/Y H:i', strtotime($caixa['data_abertura'])) ?></td>
-                            <td><?= date('d/m/Y H:i', strtotime($caixa['data_fechamento'])) ?></td>
-                            <td><?= htmlspecialchars($caixa['usuario_abertura_nome']) ?></td>
-                            <td><?= $caixa['total_vendas'] ?></td>
-                            <td><strong>R$ <?= number_format($caixa['total_geral'], 2, ',', '.') ?></strong></td>
-                            <td>R$ <?= number_format($caixa['valor_troco_inicial'], 2, ',', '.') ?></td>
-                            <td>R$ <?= number_format($caixa['valor_troco_final'], 2, ',', '.') ?></td>
                             <td>
+                                <div><?= date('d/m/Y', strtotime($caixa['data_abertura'])) ?></div>
+                                <small class="text-muted d-md-none"><?= date('H:i', strtotime($caixa['data_abertura'])) ?></small>
+                            </td>
+                            <td>
+                                <div><?= date('d/m/Y', strtotime($caixa['data_fechamento'])) ?></div>
+                                <small class="text-muted d-md-none"><?= date('H:i', strtotime($caixa['data_fechamento'])) ?></small>
+                            </td>
+                            <td class="d-none d-md-table-cell"><?= htmlspecialchars($caixa['usuario_abertura_nome']) ?></td>
+                            <td class="text-center d-none d-sm-table-cell"><?= $caixa['total_vendas'] ?></td>
+                            <td class="text-end"><strong>R$ <?= number_format($caixa['total_geral'], 2, ',', '.') ?></strong></td>
+                            <td class="d-none d-lg-table-cell text-end">R$ <?= number_format($caixa['valor_troco_inicial'], 2, ',', '.') ?></td>
+                            <td class="d-none d-lg-table-cell text-end">R$ <?= number_format($caixa['valor_troco_final'], 2, ',', '.') ?></td>
+                            <td class="text-center">
                                 <button class="btn btn-sm btn-info" onclick="verDetalhesCaixa(<?= $caixa['id'] ?>)">
-                                    <i class="bi bi-eye"></i> Ver
+                                    <i class="bi bi-eye"></i> <span class="d-none d-sm-inline">Ver</span>
                                 </button>
                             </td>
-                    </tr>
-                <?php endforeach; ?>
+                        </tr>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
         </div>
     </div>
     <?php endif; ?>
