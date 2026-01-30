@@ -280,6 +280,8 @@ SELECT
     COALESCE((SELECT SUM(cv.valor_total) FROM cafe_vendas cv WHERE cv.caixa_id = c.id AND (cv.estornada IS NULL OR cv.estornada = 0) AND cv.Tipo_venda = 'dinheiro'), 0) AS total_dinheiro,
     COALESCE((SELECT SUM(cv.valor_total) FROM cafe_vendas cv WHERE cv.caixa_id = c.id AND (cv.estornada IS NULL OR cv.estornada = 0) AND cv.Tipo_venda = 'credito'), 0) AS total_credito,
     COALESCE((SELECT SUM(cv.valor_total) FROM cafe_vendas cv WHERE cv.caixa_id = c.id AND (cv.estornada IS NULL OR cv.estornada = 0) AND cv.Tipo_venda = 'debito'), 0) AS total_debito,
+    COALESCE((SELECT SUM(cv.valor_total) FROM cafe_vendas cv WHERE cv.caixa_id = c.id AND (cv.estornada IS NULL OR cv.estornada = 0) AND cv.Tipo_venda = 'pix'), 0) AS total_pix,
+    COALESCE((SELECT SUM(cv.valor_total) FROM cafe_vendas cv WHERE cv.caixa_id = c.id AND (cv.estornada IS NULL OR cv.estornada = 0) AND LOWER(TRIM(cv.Tipo_venda)) = 'cortesia'), 0) AS total_cortesia,
     COALESCE((SELECT COUNT(cv.id_venda) FROM cafe_vendas cv WHERE cv.caixa_id = c.id AND (cv.estornada IS NULL OR cv.estornada = 0)), 0) AS total_vendas,
     COALESCE((SELECT SUM(cv.valor_total) FROM cafe_vendas cv WHERE cv.caixa_id = c.id AND (cv.estornada IS NULL OR cv.estornada = 0)), 0) AS total_geral
 FROM

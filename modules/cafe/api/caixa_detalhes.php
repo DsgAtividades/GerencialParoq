@@ -1,15 +1,54 @@
 <?php
+// Iniciar buffer de saída para capturar qualquer output inesperado
+ob_start();
+
+// Desabilitar exibição de erros para não quebrar JSON
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// Limpar qualquer output anterior
+ob_clean();
+
+// Definir header JSON primeiro
+header('Content-Type: application/json; charset=utf-8');
+
 require_once '../includes/conexao.php';
 require_once '../includes/verifica_permissao.php';
 
-header('Content-Type: application/json');
-
-verificarPermissaoApi('visualizar_caixa');
+try {
+    $permissao = verificarPermissaoApi('visualizar_caixa');
+    if (!isset($permissao['tem_permissao']) || $permissao['tem_permissao'] == 0) {
+        ob_clean();
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Sem permissão para acessar esta funcionalidade'
+        ], JSON_UNESCAPED_UNICODE);
+        ob_end_flush();
+        exit;
+    }
+} catch (Exception $e) {
+    ob_clean();
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Erro ao verificar permissão: ' . $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
+    ob_end_flush();
+    exit;
+}
 
 $caixa_id = $_GET['id'] ?? null;
 
 if (!$caixa_id) {
-    echo json_encode(['success' => false, 'message' => 'ID do caixa não fornecido']);
+    ob_clean();
+    http_response_code(400);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'ID do caixa não fornecido'
+    ], JSON_UNESCAPED_UNICODE);
+    ob_end_flush();
     exit;
 }
 
@@ -97,6 +136,36 @@ try {
         $total_sobras_valor_perdido += $sobra['valor_total_perdido'];
     }
     
+    // Garantir que total_pix e total_cortesia existam no array
+    // Se a view não tiver essas colunas, calcular diretamente do banco
+    if (!isset($caixa['total_pix'])) {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(valor_total), 0) as total_pix
+            FROM cafe_vendas 
+            WHERE caixa_id = ? 
+              AND (estornada IS NULL OR estornada = 0)
+              AND LOWER(TRIM(Tipo_venda)) = 'pix'
+        ");
+        $stmt->execute([$caixa_id]);
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        $caixa['total_pix'] = $resultado['total_pix'] ?? 0;
+    }
+    if (!isset($caixa['total_cortesia'])) {
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(valor_total), 0) as total_cortesia
+            FROM cafe_vendas 
+            WHERE caixa_id = ? 
+              AND (estornada IS NULL OR estornada = 0)
+              AND LOWER(TRIM(Tipo_venda)) = 'cortesia'
+        ");
+        $stmt->execute([$caixa_id]);
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        $caixa['total_cortesia'] = $resultado['total_cortesia'] ?? 0;
+    }
+    
+    // Limpar buffer antes de enviar JSON
+    ob_clean();
+    
     echo json_encode([
         'success' => true,
         'caixa' => $caixa,
@@ -107,13 +176,28 @@ try {
             'total_quantidade' => $total_sobras_quantidade,
             'total_valor_perdido' => $total_sobras_valor_perdido
         ]
-    ]);
+    ], JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK);
     
+    // Enviar output e desabilitar buffer
+    ob_end_flush();
+    
+} catch (PDOException $e) {
+    ob_clean();
+    error_log("Erro PDO ao buscar detalhes do caixa: " . $e->getMessage());
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Erro ao buscar detalhes do caixa: ' . $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
+    ob_end_flush();
 } catch (Exception $e) {
+    ob_clean();
     error_log("Erro ao buscar detalhes do caixa: " . $e->getMessage());
+    http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => 'Erro ao buscar detalhes: ' . $e->getMessage()
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
+    ob_end_flush();
 }
 

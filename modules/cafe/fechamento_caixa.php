@@ -139,6 +139,55 @@ include 'includes/header.php';
         $totalDinheiroCaixas = array_sum(array_column($caixasFechados, 'total_dinheiro'));
         $totalCreditoCaixas = array_sum(array_column($caixasFechados, 'total_credito'));
         $totalDebitoCaixas = array_sum(array_column($caixasFechados, 'total_debito'));
+        
+        // Verificar se a view tem as colunas total_pix e total_cortesia
+        $viewTemPix = isset($caixasFechados[0]['total_pix']);
+        $viewTemCortesia = isset($caixasFechados[0]['total_cortesia']);
+        
+        if ($viewTemPix && $viewTemCortesia) {
+            // View atualizada: usar valores da view
+            $totalPixCaixas = array_sum(array_column($caixasFechados, 'total_pix'));
+            $totalCortesiaCaixas = array_sum(array_column($caixasFechados, 'total_cortesia'));
+        } else {
+            // View não atualizada: calcular diretamente do banco
+            $idsCaixas = array_column($caixasFechados, 'id');
+            if (!empty($idsCaixas)) {
+                $placeholders = str_repeat('?,', count($idsCaixas) - 1) . '?';
+                
+                if (!$viewTemPix) {
+                    $stmt = $pdo->prepare("
+                        SELECT SUM(valor_total) as total_pix
+                        FROM cafe_vendas 
+                        WHERE caixa_id IN ($placeholders) 
+                          AND (estornada IS NULL OR estornada = 0)
+                          AND LOWER(TRIM(Tipo_venda)) = 'pix'
+                    ");
+                    $stmt->execute($idsCaixas);
+                    $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $totalPixCaixas = $resultado['total_pix'] ?? 0;
+                } else {
+                    $totalPixCaixas = array_sum(array_column($caixasFechados, 'total_pix'));
+                }
+                
+                if (!$viewTemCortesia) {
+                    $stmt = $pdo->prepare("
+                        SELECT SUM(valor_total) as total_cortesia
+                        FROM cafe_vendas 
+                        WHERE caixa_id IN ($placeholders) 
+                          AND (estornada IS NULL OR estornada = 0)
+                          AND LOWER(TRIM(Tipo_venda)) = 'cortesia'
+                    ");
+                    $stmt->execute($idsCaixas);
+                    $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+                    $totalCortesiaCaixas = $resultado['total_cortesia'] ?? 0;
+                } else {
+                    $totalCortesiaCaixas = array_sum(array_column($caixasFechados, 'total_cortesia'));
+                }
+            } else {
+                $totalPixCaixas = 0;
+                $totalCortesiaCaixas = 0;
+            }
+        }
         $totalTrocoInicialCaixas = array_sum(array_column($caixasFechados, 'valor_troco_inicial'));
         $totalTrocoFinalCaixas = array_sum(array_column($caixasFechados, 'valor_troco_final'));
         
@@ -165,12 +214,14 @@ include 'includes/header.php';
             $totalSobrasValorPerdido = $resumoSobras['total_valor_perdido_sobras'] ?? 0;
         }
     ?>
+    <!-- Resumo de Caixas do Período (Com Receita) -->
     <div class="card mt-4 mb-4">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Resumo de Caixas do Período</h5>
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-bar-chart-fill"></i> Resumo de Caixas do Período (Com Receita)</h5>
         </div>
         <div class="card-body">
-            <div class="row">
+            <!-- Estatísticas Gerais -->
+            <div class="row mb-4">
                 <div class="col-md-3 mb-3">
                     <div class="card bg-light">
                         <div class="card-body text-center">
@@ -196,76 +247,119 @@ include 'includes/header.php';
                     </div>
                 </div>
                 <div class="col-md-3 mb-3">
-                    <div class="card bg-success text-white">
+                <div class="card bg-success text-white">
                         <div class="card-body text-center">
-                            <h6 class="mb-2"><strong>Total Geral</strong></h6>
-                            <h3 class="mb-0"><strong>R$ <?= number_format($totalGeralCaixas, 2, ',', '.') ?></strong></h3>
+                            <p class="mb-1"><strong> Receita Líquida</strong></p>
+                            <h3 class="mb-0">R$ <?= number_format($totalGeralCaixas - $totalCortesiaCaixas - $totalSobrasValorPerdido, 2, ',', '.') ?></h3>
+                            <small>Total Geral - (Cortesias + Sobras)</small>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row mt-2">
-                <div class="col-md-3">
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <p class="text-muted mb-1 small">Dinheiro</p>
-                            <h5 class="mb-0 text-success">R$ <?= number_format($totalDinheiroCaixas, 2, ',', '.') ?></h5>
+ 
+            
+            <!-- Formas de Pagamento que Geram Receita -->
+            <div class="border-top pt-4 mb-3">
+                <h6 class="text-success mb-3"><i class="bi bi-cash-coin"></i> Formas de Pagamento</h6>
+                <div class="row">
+                    <div class="col-6 col-md-3 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <p class="text-muted mb-1 small"><i class="bi bi-cash-stack"></i> Dinheiro</p>
+                                <h4 class="mb-0 text-success">R$ <?= number_format($totalDinheiroCaixas, 2, ',', '.') ?></h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-3">
+                        <div class="card border-info">
+                            <div class="card-body text-center">
+                                <p class="text-muted mb-1 small"><i class="bi bi-credit-card"></i> Crédito</p>
+                                <h4 class="mb-0 text-info">R$ <?= number_format($totalCreditoCaixas, 2, ',', '.') ?></h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <p class="text-muted mb-1 small"><i class="bi bi-credit-card-2-front"></i> Débito</p>
+                                <h4 class="mb-0 text-warning">R$ <?= number_format($totalDebitoCaixas, 2, ',', '.') ?></h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <p class="text-muted mb-1 small"><i class="bi bi-qr-code"></i> Pix</p>
+                                <h4 class="mb-0 text-primary">R$ <?= number_format($totalPixCaixas, 2, ',', '.') ?></h4>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <p class="text-muted mb-1 small">Crédito</p>
-                            <h5 class="mb-0 text-info">R$ <?= number_format($totalCreditoCaixas, 2, ',', '.') ?></h5>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <p class="text-muted mb-1 small">Débito</p>
-                            <h5 class="mb-0 text-warning">R$ <?= number_format($totalDebitoCaixas, 2, ',', '.') ?></h5>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <p class="text-muted mb-1 small">Troco (Inicial → Final)</p>
-                            <h5 class="mb-0">R$ <?= number_format($totalTrocoInicialCaixas, 2, ',', '.') ?> → R$ <?= number_format($totalTrocoFinalCaixas, 2, ',', '.') ?></h5>
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <p class="mb-1"><strong>Total de Receita</strong></p>
+                                <h3 class="mb-0">R$ <?= number_format($totalDinheiroCaixas + $totalCreditoCaixas + $totalDebitoCaixas + $totalPixCaixas, 2, ',', '.') ?></h3>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row mt-2">
-                <div class="col-md-4">
-                    <div class="card bg-warning text-dark">
-                        <div class="card-body">
-                            <p class="text-muted mb-1 small"><i class="bi bi-box-seam"></i> Sobras Registradas</p>
-                            <h5 class="mb-0"><?= $totalSobrasProdutos ?> produto(s)</h5>
-                            <small><?= number_format($totalSobrasQuantidade, 0, ',', '.') ?> unidade(s)</small>
+            
+            <!-- Troco -->
+            <div class="border-top pt-3">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <p class="text-muted mb-1 small">Troco (Inicial → Final)</p>
+                                <h5 class="mb-0">R$ <?= number_format($totalTrocoInicialCaixas, 2, ',', '.') ?> → R$ <?= number_format($totalTrocoFinalCaixas, 2, ',', '.') ?></h5>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+            </div>
+        </div>
+    </div>
+
+    <!-- Itens que Não Geram Receita -->
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Itens que Não Geram Receita</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card border-danger">
+                        <div class="card-body">
+                            <p class="text-muted mb-2"><i class="bi bi-gift"></i> <strong>Cortesias</strong></p>
+                            <h3 class="mb-0 text-danger">R$ <?= number_format($totalCortesiaCaixas, 2, ',', '.') ?></h3>
+                            <small class="text-muted">Vendas sem pagamento</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-body">
+                            <p class="text-muted mb-2"><i class="bi bi-box-seam"></i> <strong>Sobras Registradas</strong></p>
+                            <h3 class="mb-0 text-warning">R$ <?= number_format($totalSobrasValorPerdido, 2, ',', '.') ?></h3>
+                            <small class="text-muted"><?= $totalSobrasProdutos ?> produto(s) - <?= number_format($totalSobrasQuantidade, 0, ',', '.') ?> unidade(s)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-12">
                     <div class="card bg-danger text-white">
-                        <div class="card-body">
-                            <p class="mb-1 small"><i class="bi bi-exclamation-triangle"></i> Valor Total Perdido</p>
-                            <h4 class="mb-0">R$ <?= number_format($totalSobrasValorPerdido, 2, ',', '.') ?></h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card bg-success text-white">
-                        <div class="card-body">
-                            <p class="mb-1 small"><i class="bi bi-calculator"></i> Receita Líquida</p>
-                            <h4 class="mb-0">R$ <?= number_format($totalGeralCaixas - $totalSobrasValorPerdido, 2, ',', '.') ?></h4>
-                            <small>Total - Perdas</small>
+                        <div class="card-body text-center">
+                            <p class="mb-1"><strong>Total que Não Gera Receita</strong></p>
+                            <h3 class="mb-0">R$ <?= number_format($totalCortesiaCaixas + $totalSobrasValorPerdido, 2, ',', '.') ?></h3>
                         </div>
                     </div>
                 </div>
             </div>
+         
         </div>
     </div>
 
@@ -277,11 +371,11 @@ include 'includes/header.php';
                 <div class="d-flex gap-2 flex-wrap">
                     <button class="btn btn-sm btn-success" onclick="exportarHistoricoExcel()">
                         <i class="bi bi-file-earmark-excel"></i> <span class="d-none d-sm-inline">Excel</span>
-                    </button>
+        </button>
                     <button class="btn btn-sm btn-danger" onclick="exportarHistoricoPDF()">
                         <i class="bi bi-file-earmark-pdf"></i> <span class="d-none d-sm-inline">PDF</span>
-                    </button>
-                </div>
+        </button>
+    </div>
             </div>
         </div>
         <div class="card-body p-0">
@@ -298,9 +392,9 @@ include 'includes/header.php';
                             <th class="d-none d-lg-table-cell text-end">Troco Inicial</th>
                             <th class="d-none d-lg-table-cell text-end">Troco Final</th>
                             <th class="text-center" style="min-width: 80px;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                </tr>
+            </thead>
+            <tbody>
                         <?php foreach ($caixasFechados as $caixa): ?>
                         <tr>
                             <td><?= $caixa['id'] ?></td>
@@ -322,8 +416,8 @@ include 'includes/header.php';
                                     <i class="bi bi-eye"></i> <span class="d-none d-sm-inline">Ver</span>
                                 </button>
                             </td>
-                        </tr>
-                        <?php endforeach; ?>
+                    </tr>
+                <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
@@ -387,21 +481,29 @@ include 'includes/header.php';
                                 <div class="card-body">
                                     <h6 class="card-title mb-3"><i class="bi bi-graph-up"></i> Resumo Financeiro</h6>
                                     <div class="row">
-                                        <div class="col-md-3">
+                                        <div class="col-6 col-md-4 col-lg-2 mb-2">
                                             <p class="mb-1"><small>Total de Vendas</small></p>
                                             <h4 class="mb-0"><span id="detalhesCaixaTotalVendas">0</span></h4>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-6 col-md-4 col-lg-2 mb-2">
                                             <p class="mb-1"><small>Dinheiro</small></p>
                                             <h4 class="mb-0">R$ <span id="detalhesCaixaTotalDinheiro">0,00</span></h4>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-6 col-md-4 col-lg-2 mb-2">
                                             <p class="mb-1"><small>Crédito</small></p>
                                             <h4 class="mb-0">R$ <span id="detalhesCaixaTotalCredito">0,00</span></h4>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-6 col-md-4 col-lg-2 mb-2">
                                             <p class="mb-1"><small>Débito</small></p>
                                             <h4 class="mb-0">R$ <span id="detalhesCaixaTotalDebito">0,00</span></h4>
+                                        </div>
+                                        <div class="col-6 col-md-4 col-lg-2 mb-2">
+                                            <p class="mb-1"><small>Pix</small></p>
+                                            <h4 class="mb-0">R$ <span id="detalhesCaixaTotalPix">0,00</span></h4>
+                                        </div>
+                                        <div class="col-6 col-md-4 col-lg-2 mb-2">
+                                            <p class="mb-1"><small>Cortesia</small></p>
+                                            <h4 class="mb-0">R$ <span id="detalhesCaixaTotalCortesia">0,00</span></h4>
                                         </div>
                                     </div>
                                     <hr class="bg-white">
@@ -530,7 +632,16 @@ function verDetalhesCaixa(id) {
     
     // Buscar detalhes
     fetch(`api/caixa_detalhes.php?id=${id}`)
-        .then(response => response.json())
+        .then(response => {
+            // Verificar se o Content-Type é JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                return response.text().then(text => {
+                    throw new Error('Resposta não é JSON. Resposta: ' + text.substring(0, 200));
+                });
+            }
+            return response.json();
+        })
         .then(data => {
             document.getElementById('detalhesCaixaLoading').style.display = 'none';
             
@@ -545,14 +656,14 @@ function verDetalhesCaixa(id) {
                     document.getElementById('detalhesCaixaSobrasContainer').style.display = 'none';
                 }
             } else {
-                document.getElementById('detalhesCaixaError').textContent = data.message;
+                document.getElementById('detalhesCaixaError').textContent = data.message || 'Erro desconhecido';
                 document.getElementById('detalhesCaixaError').style.display = 'block';
             }
         })
         .catch(error => {
             console.error('Erro:', error);
             document.getElementById('detalhesCaixaLoading').style.display = 'none';
-            document.getElementById('detalhesCaixaError').textContent = 'Erro ao carregar detalhes do caixa';
+            document.getElementById('detalhesCaixaError').textContent = 'Erro ao carregar detalhes do caixa: ' + error.message;
             document.getElementById('detalhesCaixaError').style.display = 'block';
         });
 }
@@ -592,13 +703,17 @@ function mostrarDetalhesCaixa(caixa, vendas) {
     // Resumo
     document.getElementById('detalhesCaixaTotalVendas').textContent = caixa.total_vendas;
     document.getElementById('detalhesCaixaTotalDinheiro').textContent = 
-        parseFloat(caixa.total_dinheiro).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        parseFloat(caixa.total_dinheiro || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     document.getElementById('detalhesCaixaTotalCredito').textContent = 
-        parseFloat(caixa.total_credito).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        parseFloat(caixa.total_credito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     document.getElementById('detalhesCaixaTotalDebito').textContent = 
-        parseFloat(caixa.total_debito).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        parseFloat(caixa.total_debito || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('detalhesCaixaTotalPix').textContent = 
+        parseFloat(caixa.total_pix || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById('detalhesCaixaTotalCortesia').textContent = 
+        parseFloat(caixa.total_cortesia || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     document.getElementById('detalhesCaixaTotalGeral').textContent = 
-        parseFloat(caixa.total_geral).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        parseFloat(caixa.total_geral || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
     // Observações
     if (caixa.observacao_abertura) {
@@ -628,7 +743,9 @@ function mostrarDetalhesCaixa(caixa, vendas) {
         const tipoBadge = {
             'dinheiro': 'success',
             'credito': 'info',
-            'debito': 'warning'
+            'debito': 'warning',
+            'pix': 'primary',
+            'cortesia': 'danger'
         }[venda.tipo_venda] || 'secondary';
         
         const row = document.createElement('tr');
@@ -780,10 +897,28 @@ function mostrarSobrasDetalhes(sobras, resumo) {
 // Funções de exportação do histórico de caixas
 function exportarHistoricoExcel() {
     const table = document.getElementById('tabelaHistoricoCaixas');
-    const ws = XLSX.utils.table_to_sheet(table);
+    
+    // Criar uma cópia da tabela sem a coluna de ações
+    const clonedTable = table.cloneNode(true);
+    const rows = clonedTable.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        // Remover a última célula (coluna Ações) de cada linha
+        const lastCell = row.querySelector('th:last-child, td:last-child');
+        if (lastCell) {
+            lastCell.remove();
+        }
+    });
+    
+    const ws = XLSX.utils.table_to_sheet(clonedTable);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Histórico Caixas');
     XLSX.writeFile(wb, 'historico_caixas.xlsx');
+    
+    // Remover a tabela clonada do DOM (se foi adicionada)
+    if (clonedTable.parentNode) {
+        clonedTable.parentNode.removeChild(clonedTable);
+    }
 }
 
 function exportarHistoricoPDF() {
@@ -794,6 +929,23 @@ function exportarHistoricoPDF() {
     const agora = new Date();
     const dataExport = agora.toLocaleDateString('pt-BR');
     const horaExport = agora.toLocaleTimeString('pt-BR');
+    
+    // Criar uma cópia da tabela sem a coluna de ações
+    const table = document.getElementById('tabelaHistoricoCaixas');
+    const clonedTable = table.cloneNode(true);
+    const rows = clonedTable.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        // Remover a última célula (coluna Ações) de cada linha
+        const lastCell = row.querySelector('th:last-child, td:last-child');
+        if (lastCell) {
+            lastCell.remove();
+        }
+    });
+    
+    // Adicionar a tabela clonada temporariamente ao DOM para o autoTable funcionar
+    clonedTable.style.display = 'none';
+    document.body.appendChild(clonedTable);
     
     let y = 30;
     doc.setFontSize(16);
@@ -808,12 +960,16 @@ function exportarHistoricoPDF() {
     y += 10;
     
     doc.autoTable({
-        html: '#tabelaHistoricoCaixas',
+        html: clonedTable,
         startY: y + 10,
         styles: { fontSize: 8 },
         headStyles: { fillColor: [108, 117, 125] },
         theme: 'grid'
     });
+    
+    // Remover a tabela clonada do DOM
+    document.body.removeChild(clonedTable);
+    
     doc.save('historico_caixas.pdf');
 }
 </script>
