@@ -539,10 +539,19 @@ function atualizarDados() {
 
             data.produtos.forEach(produto => {
                 const tr = document.createElement('tr');
+                const isSobrasCortesia = produto.nome_produto.includes(' - Sobras') || produto.nome_produto.includes(' - Cortesia');
+                const rowClass = isSobrasCortesia ? 'table-warning' : '';
+                const tipoBadge = produto.nome_produto.includes(' - Sobras') ? 
+                    '<span class="badge bg-warning text-dark ms-2">Sobras</span>' : 
+                    produto.nome_produto.includes(' - Cortesia') ? 
+                    '<span class="badge bg-danger ms-2">Cortesia</span>' : '';
+                
+                tr.className = rowClass;
                 tr.innerHTML = `
                     <td>
                         <a href="#" onclick="mostrarDetalhes(${produto.id})" class="text-decoration-none">
-                            ${produto.nome_produto}
+                            ${produto.nome_produto.replace(' - Sobras', '').replace(' - Cortesia', '')}
+                            ${tipoBadge}
                         </a>
                     </td>
                     <td>${produto.categoria}</td>
@@ -552,18 +561,19 @@ function atualizarDados() {
                         </span>
                     </td>
                     <td><strong>${produto.quantidade_vendida}</strong></td>
-                    <td><strong style="color: #198754;">${formatMoney(produto.valor_vendido)}</strong></td>
+                    <td><strong style="color: ${isSobrasCortesia ? '#dc3545' : '#198754'};">${formatMoney(produto.valor_vendido)}</strong></td>
                     <td>
+                        ${isSobrasCortesia ? '<span class="text-muted">-</span>' : `
                         <div class="progress-modern">
                             <div class="progress-bar" role="progressbar" style="width: ${parseFloat(produto.percentual || 0)}%">
                                 ${parseFloat(produto.percentual || 0).toFixed(1)}%
                             </div>
                         </div>
+                        `}
                     </td>
                     <td>
-                        <span class="badge bg-${produto.tendencia > 0 ? 'success' : produto.tendencia < 0 ? 'danger' : 'secondary'}" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
-                            ${produto.tendencia > 0 ? '↑' : produto.tendencia < 0 ? '↓' : '→'} 
-                            ${Math.abs(parseFloat(produto.tendencia || 0)).toFixed(1)}%
+                        <span class="badge bg-secondary" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
+                            -
                         </span>
                     </td>
                 `;
