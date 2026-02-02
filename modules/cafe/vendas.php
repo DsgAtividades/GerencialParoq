@@ -31,6 +31,7 @@ $stmt = $pdo->prepare("
         v.data_venda,
         v.valor_total,
         v.estornada,
+        v.Tipo_venda,
         COALESCE(v.Atendente, 'N/A') as atendente,
         p.nome as cliente_nome,
         p.cpf as cliente_cpf,
@@ -41,7 +42,7 @@ $stmt = $pdo->prepare("
     JOIN cafe_produtos pr ON vi.id_produto = pr.id
     WHERE (v.estornada IS NULL OR v.estornada = 0) AND DATE(v.data_venda) BETWEEN ? AND ?
     $filtro
-    GROUP BY v.id_venda, v.data_venda, v.valor_total, v.estornada, v.Atendente, p.nome, p.cpf
+    GROUP BY v.id_venda, v.data_venda, v.valor_total, v.estornada, v.Tipo_venda, v.Atendente, p.nome, p.cpf
     ORDER BY v.data_venda DESC LIMIT 100
 ");
 $stmt->execute([$data_inicio, $data_fim]);
@@ -54,6 +55,7 @@ $stmt = $pdo->prepare("
         v.data_venda,
         v.valor_total,
         v.estornada,
+        v.Tipo_venda,
         COALESCE(v.Atendente, 'N/A') as atendente,
         p.nome as cliente_nome,
         p.cpf as cliente_cpf,
@@ -64,7 +66,7 @@ $stmt = $pdo->prepare("
     JOIN cafe_produtos pr ON vi.id_produto = pr.id
     WHERE DATE(v.data_venda) BETWEEN ? AND ?
     $filtro
-    GROUP BY v.id_venda, v.data_venda, v.valor_total, v.estornada, v.Atendente, p.nome, p.cpf
+    GROUP BY v.id_venda, v.data_venda, v.valor_total, v.estornada, v.Tipo_venda, v.Atendente, p.nome, p.cpf
     ORDER BY v.data_venda DESC LIMIT 100
 ");
 $stmt->execute([$data_inicio, $data_fim]);
@@ -265,7 +267,7 @@ include 'includes/header.php';
                             <th>#</th>
                             <th>Data</th>
                             <th>Atendente</th>
-                            <th>Produtos</th>
+                            <th>Tipo da Venda</th>
                             <th class="text-end">Valor</th>
                             <th></th>
                             <th></th>
@@ -285,8 +287,20 @@ include 'includes/header.php';
                                     <td><?= date('d/m/Y H:i', strtotime($venda['data_venda'])) ?></td>
                                     <td><?= htmlspecialchars($venda['atendente'] ?? 'N/A') ?></td>
                                     <td>
-                                        <span class="text-muted" style="font-size: 0.875em;">
-                                            <?= htmlspecialchars($venda['produtos']) ?>
+                                        <?php
+                                        $tipo_venda = strtolower(trim($venda['Tipo_venda'] ?? ''));
+                                        $tipo_labels = [
+                                            'dinheiro' => ['label' => 'Dinheiro', 'badge' => 'success'],
+                                            'credito' => ['label' => 'Crédito', 'badge' => 'info'],
+                                            'debito' => ['label' => 'Débito', 'badge' => 'warning'],
+                                            'pix' => ['label' => 'Pix', 'badge' => 'primary'],
+                                            'cortesia' => ['label' => 'Cortesia', 'badge' => 'danger'],
+                                            'sobras' => ['label' => 'Sobras', 'badge' => 'secondary']
+                                        ];
+                                        $tipo_info = $tipo_labels[$tipo_venda] ?? ['label' => ucfirst($tipo_venda), 'badge' => 'secondary'];
+                                        ?>
+                                        <span class="badge bg-<?= $tipo_info['badge'] ?>">
+                                            <?= $tipo_info['label'] ?>
                                         </span>
                                     </td>
                                     <td class="text-end">
@@ -302,10 +316,12 @@ include 'includes/header.php';
                                     <td class="text-end">
                                         <div class="btn-group">
                                         <a href="vendas_detalhes.php?id=<?= $venda['id_venda'] ?>" 
-                                           class="btn btn-sm btn-outline-primary">
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Ver Detalhes"
+                                           onclick="event.stopPropagation();">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmarExstorno(<?= $venda['id_venda'] ?>)" title="Estorno">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); confirmarExstorno(<?= $venda['id_venda'] ?>)" title="Estorno">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                         </div>
