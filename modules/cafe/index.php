@@ -8,17 +8,17 @@ verificarLogin();
 
 // Buscar algumas estatísticas básicas
 $stats = [
-    'total_pessoas' => 0,
+    'total_usuarios' => 0,
     'total_produtos' => 0,
     'total_vendas' => 0,
     'saldo_total' => 0
 ];
 
 try {
-    // Total de pessoas
-    if (temPermissao('gerenciar_pessoas')) {
-        $stmt = $pdo->query("SELECT COUNT(*) as total FROM cafe_pessoas");
-        $stats['total_pessoas'] = $stmt->fetch()['total'];
+    // Total de usuários
+    if (temPermissao('gerenciar_usuarios')) {
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM cafe_usuarios WHERE ativo = 1");
+        $stats['total_usuarios'] = $stmt->fetch()['total'];
     }
 
     // Total de produtos
@@ -355,15 +355,15 @@ include 'includes/header.php';
     
     <!-- Estatísticas -->
     <div class="row g-4 mb-4">
-        <?php if (temPermissao('gerenciar_pessoas')): ?>
+        <?php if (temPermissao('gerenciar_usuarios')): ?>
         <div class="col-md-6 col-xl-3 col-sm-12">
             <div class="stat-card stat-card-primary">
                 <div class="stat-icon">
-                    <i class="bi bi-people-fill"></i>
+                    <i class="bi bi-person-badge-fill"></i>
                 </div>
-                <div class="stat-label">Total de Pessoas</div>
-                <div class="stat-value"><?= number_format($stats['total_pessoas'], 0, ',', '.') ?></div>
-                <a href="pessoas.php" class="stat-link stat-link-primary w-100 text-center">
+                <div class="stat-label">Total de Usuários</div>
+                <div class="stat-value"><?= number_format($stats['total_usuarios'], 0, ',', '.') ?></div>
+                <a href="usuarios_lista.php" class="stat-link stat-link-primary w-100 text-center">
                     <span>Ver Detalhes</span>
                     <i class="bi bi-arrow-right"></i>
                 </a>
@@ -427,18 +427,27 @@ include 'includes/header.php';
             <h5>Ações Rápidas</h5>
         </div>
         <div class="row g-3">
-            <?php if (temPermissao('gerenciar_pessoas')): ?>
+            <?php if (temPermissao('gerenciar_usuarios')): ?>
             <div class="col-md-4 col-sm-6">
-                <a href="alocar_cartao_mobile.php" class="action-btn action-btn-primary">
+                <a href="usuarios_lista.php" class="action-btn action-btn-primary">
                     <i class="bi bi-person-plus-fill"></i>
-                    <span>Cadastrar Cliente</span>
+                    <span>Cadastrar Usuário</span>
+                </a>
+            </div>
+            <?php endif; ?>
+
+            <?php if (temPermissao('gerenciar_grupos')): ?>
+            <div class="col-md-4 col-sm-6">
+                <a href="gerenciar_grupos.php" class="action-btn action-btn-success">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Grupos</span>
                 </a>
             </div>
             <?php endif; ?>
 
             <?php if (temPermissao('gerenciar_produtos')): ?>
             <div class="col-md-4 col-sm-6">
-                <a href="produtos_novo.php" class="action-btn action-btn-success">
+                <a href="produtos_novo.php" class="action-btn action-btn-warning">
                     <i class="bi bi-plus-square-fill"></i>
                     <span>Novo Produto</span>
                 </a>
@@ -447,18 +456,9 @@ include 'includes/header.php';
 
             <?php if (temPermissao('gerenciar_vendas')): ?>
             <div class="col-md-4 col-sm-6">
-                <a href="vendas_mobile.php" class="action-btn action-btn-warning">
+                <a href="vendas_mobile.php" class="action-btn action-btn-info">
                     <i class="bi bi-cart-plus-fill"></i>
                     <span>Nova Venda</span>
-                </a>
-            </div>
-            <?php endif; ?>
-
-            <?php if (temPermissao('gerenciar_transacoes')): ?>
-            <div class="col-md-4 col-sm-6">
-                <a href="saldos_mobile.php" class="action-btn action-btn-info">
-                    <i class="bi bi-cash-coin"></i>
-                    <span>Adicionar Crédito</span>
                 </a>
             </div>
             <?php endif; ?>
@@ -468,15 +468,6 @@ include 'includes/header.php';
                 <a href="gerar_cartoes.php" class="action-btn action-btn-secondary">
                     <i class="bi bi-upc-scan"></i>
                     <span>Gerar Cartões</span>
-                </a>
-            </div>
-            <?php endif; ?>
-            
-            <?php if (temPermissao('gerenciar_cartoes')): ?>
-            <div class="col-md-4 col-sm-6">
-                <a href="alocar_cartao_mobile.php" class="action-btn action-btn-secondary">
-                    <i class="bi bi-credit-card-fill"></i>
-                    <span>Alocar Cartão</span>
                 </a>
             </div>
             <?php endif; ?>

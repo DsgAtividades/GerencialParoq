@@ -1,18 +1,10 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-require_once 'config/database.php';
+require_once 'includes/conexao.php';
 require_once 'includes/verifica_permissao.php';
+require_once 'includes/funcoes.php';
 
 // Verificar permissão antes de qualquer output
-if (!temPermissao('visualizar_dashboard')) {
-    header('Location: index.php');
-    exit;
-}
-
-$database = new Database();
-$db = $database->getConnection();
+verificarPermissao('visualizar_dashboard');
 
 // Filtros
 $data_inicial = isset($_POST['data_inicial']) ? $_POST['data_inicial'] : date('Y-m-d');
@@ -327,9 +319,9 @@ require_once 'includes/header.php';
                 <select class="form-select" id="categoria" name="categoria">
                     <option value="">Todas</option>
                     <?php
-                    $stmt = $db->query("SELECT id, nome FROM cafe_categorias ORDER BY nome");
-                    while ($cat = $stmt->fetch()) {
-                        echo "<option value='{$cat['id']}'>{$cat['nome']}</option>";
+                    $stmt = $pdo->query("SELECT id, nome FROM cafe_categorias ORDER BY nome");
+                    while ($cat = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        echo "<option value='{$cat['id']}'>" . htmlspecialchars($cat['nome']) . "</option>";
                     }
                     ?>
                 </select>

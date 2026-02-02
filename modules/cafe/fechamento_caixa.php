@@ -191,8 +191,24 @@ include 'includes/header.php';
         $totalTrocoInicialCaixas = array_sum(array_column($caixasFechados, 'valor_troco_inicial'));
         $totalTrocoFinalCaixas = array_sum(array_column($caixasFechados, 'valor_troco_final'));
         
-        // Buscar resumo de sobras do período
+        // Buscar resumo de sobras do período e contar vendas com troco
         $idsCaixas = array_column($caixasFechados, 'id');
+        
+        // Contar vendas com troco (vendas em dinheiro do período)
+        $totalVendasComTroco = 0;
+        if (!empty($idsCaixas)) {
+            $placeholdersTroco = str_repeat('?,', count($idsCaixas) - 1) . '?';
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as total_vendas_troco
+                FROM cafe_vendas 
+                WHERE caixa_id IN ($placeholdersTroco) 
+                  AND (estornada IS NULL OR estornada = 0)
+                  AND LOWER(TRIM(Tipo_venda)) = 'dinheiro'
+            ");
+            $stmt->execute($idsCaixas);
+            $resultadoTroco = $stmt->fetch(PDO::FETCH_ASSOC);
+            $totalVendasComTroco = $resultadoTroco['total_vendas_troco'] ?? 0;
+        }
         $totalSobrasProdutos = 0;
         $totalSobrasQuantidade = 0;
         $totalSobrasValorPerdido = 0;
@@ -222,7 +238,7 @@ include 'includes/header.php';
         <div class="card-body">
             <!-- Estatísticas Gerais -->
             <div class="row mb-4">
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-3">
                     <div class="card bg-light">
                         <div class="card-body text-center">
                             <h6 class="text-muted mb-2">Total de Caixas</h6>
@@ -230,7 +246,7 @@ include 'includes/header.php';
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-3">
                     <div class="card bg-light">
                         <div class="card-body text-center">
                             <h6 class="text-muted mb-2">Total de Vendas</h6>
@@ -238,20 +254,11 @@ include 'includes/header.php';
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-3">
                     <div class="card bg-light">
                         <div class="card-body text-center">
                             <h6 class="text-muted mb-2">Média por Caixa</h6>
                             <h3 class="mb-0"><?= $totalCaixas > 0 ? number_format($totalVendasCaixas / $totalCaixas, 1) : '0' ?></h3>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-3">
-                <div class="card bg-success text-white">
-                        <div class="card-body text-center">
-                            <p class="mb-1"><strong> Receita Líquida</strong></p>
-                            <h3 class="mb-0">R$ <?= number_format($totalGeralCaixas - $totalCortesiaCaixas - $totalSobrasValorPerdido, 2, ',', '.') ?></h3>
-                            <small>Total Geral - (Cortesias + Sobras)</small>
                         </div>
                     </div>
                 </div>
@@ -299,8 +306,9 @@ include 'includes/header.php';
                     <div class="col-md-12">
                         <div class="card bg-success text-white">
                             <div class="card-body text-center">
-                                <p class="mb-1"><strong>Total de Receita</strong></p>
+                                <p class="mb-1"><strong><i class="bi bi-cash-coin"></i> Total de Receita</strong></p>
                                 <h3 class="mb-0">R$ <?= number_format($totalDinheiroCaixas + $totalCreditoCaixas + $totalDebitoCaixas + $totalPixCaixas, 2, ',', '.') ?></h3>
+                                <small class="text-white-50">Soma de todas as formas de pagamento recebidas</small>
                             </div>
                         </div>
                     </div>
@@ -310,11 +318,20 @@ include 'includes/header.php';
             <!-- Troco -->
             <div class="border-top pt-3">
                 <div class="row">
-                    <div class="col-md-12">
+                    <div class="col-md-6 mb-3">
                         <div class="card bg-light">
                             <div class="card-body">
-                                <p class="text-muted mb-1 small">Troco (Inicial → Final)</p>
+                                <p class="text-muted mb-1 small"><i class="bi bi-cash-stack"></i> Troco (Inicial → Final)</p>
                                 <h5 class="mb-0">R$ <?= number_format($totalTrocoInicialCaixas, 2, ',', '.') ?> → R$ <?= number_format($totalTrocoFinalCaixas, 2, ',', '.') ?></h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <p class="text-muted mb-1 small"><i class="bi bi-receipt"></i> Vendas com Troco</p>
+                                <h5 class="mb-0"><?= $totalVendasComTroco ?> venda(s)</h5>
+    
                             </div>
                         </div>
                     </div>
@@ -349,17 +366,6 @@ include 'includes/header.php';
                     </div>
                 </div>
             </div>
-            <div class="row mt-3">
-                <div class="col-md-12">
-                    <div class="card bg-danger text-white">
-                        <div class="card-body text-center">
-                            <p class="mb-1"><strong>Total que Não Gera Receita</strong></p>
-                            <h3 class="mb-0">R$ <?= number_format($totalCortesiaCaixas + $totalSobrasValorPerdido, 2, ',', '.') ?></h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-         
         </div>
     </div>
 
