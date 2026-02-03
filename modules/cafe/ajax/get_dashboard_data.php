@@ -72,15 +72,13 @@ if ($data_inicio == ''){
     $data_fim_anterior = $hoje;
     $data_inicio_anterior = $hoje;
 }
-// Construir query base (excluindo sobras e cortesia dos cálculos de receita)
+// Construir query base
 $query_base = "
     FROM cafe_itens_venda vi
     JOIN cafe_produtos p ON vi.id_produto = p.id
     JOIN cafe_vendas v ON vi.id_venda = v.id_venda
     LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
-    WHERE (v.estornada IS NULL OR v.estornada = 0) 
-      AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim
-      AND LOWER(TRIM(v.Tipo_venda)) NOT IN ('sobras', 'cortesia')
+    WHERE (v.estornada IS NULL OR v.estornada = 0) AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim
 ";
 
 $params = [
@@ -179,9 +177,7 @@ $query = "
         SELECT SUM(vi2.quantidade * vi2.valor_unitario)
         FROM cafe_itens_venda vi2
         JOIN cafe_vendas v2 ON vi2.id_venda = v2.id_venda
-        WHERE (v2.estornada IS NULL OR v2.estornada = 0) 
-          AND date(v2.data_venda) BETWEEN :data_inicio_sub AND :data_fim_sub
-          AND LOWER(TRIM(v2.Tipo_venda)) NOT IN ('sobras', 'cortesia')
+        WHERE (v2.estornada IS NULL OR v2.estornada = 0) AND date(v2.data_venda) BETWEEN :data_inicio_sub AND :data_fim_sub
         )) * 100, 1) as percentual
     " . $query_base . "
     GROUP BY p.id, p.nome_produto, c.nome, p.estoque
@@ -197,70 +193,6 @@ if (!is_array($produtos)) {
     $produtos = [];
 }
 
-// Buscar produtos de sobras e cortesia separadamente
-$params_sobras_cortesia = [
-    ':data_inicio' => $data_inicio,
-    ':data_fim' => $data_fim
-];
-
-if ($categoria) {
-    $params_sobras_cortesia[':categoria_id'] = $categoria;
-}
-
-if ($busca) {
-    $params_sobras_cortesia[':busca'] = "%{$busca}%";
-}
-
-$query_sobras_cortesia = "
-    SELECT 
-        p.id,
-        CONCAT(p.nome_produto, ' - ', 
-            CASE 
-                WHEN LOWER(TRIM(v.Tipo_venda)) = 'sobras' THEN 'Sobras'
-                WHEN LOWER(TRIM(v.Tipo_venda)) = 'cortesia' THEN 'Cortesia'
-                ELSE LOWER(TRIM(v.Tipo_venda))
-            END
-        ) as nome_produto,
-        c.nome as categoria,
-        p.estoque,
-        SUM(vi.quantidade) as quantidade_vendida,
-        SUM(vi.quantidade * vi.valor_unitario) as valor_vendido,
-        0 as percentual,
-        LOWER(TRIM(v.Tipo_venda)) as tipo_venda
-    FROM cafe_itens_venda vi
-    JOIN cafe_produtos p ON vi.id_produto = p.id
-    JOIN cafe_vendas v ON vi.id_venda = v.id_venda
-    LEFT JOIN cafe_categorias c ON p.categoria_id = c.id
-    WHERE (v.estornada IS NULL OR v.estornada = 0) 
-      AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim
-      AND LOWER(TRIM(v.Tipo_venda)) IN ('sobras', 'cortesia')
-";
-
-if ($categoria) {
-    $query_sobras_cortesia .= " AND p.categoria_id = :categoria_id";
-}
-
-if ($busca) {
-    $query_sobras_cortesia .= " AND p.nome_produto LIKE :busca";
-}
-
-$query_sobras_cortesia .= "
-    GROUP BY p.id, p.nome_produto, c.nome, p.estoque, v.Tipo_venda
-    ORDER BY v.Tipo_venda, p.nome_produto
-";
-
-$stmt = $pdo->prepare($query_sobras_cortesia);
-$stmt->execute($params_sobras_cortesia);
-$produtos_sobras_cortesia = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Adicionar tendência zero para produtos de sobras/cortesia
-foreach ($produtos_sobras_cortesia as $key => $produto) {
-    $produtos_sobras_cortesia[$key]['tendencia'] = 0;
-}
-
-// Combinar produtos: primeiro os normais, depois sobras/cortesia no final
-$produtos = array_merge($produtos, $produtos_sobras_cortesia);
-
 // Calcular tendência para cada produto
 foreach ($produtos as $key => $produto) {
     $params_tendencia = [
@@ -273,10 +205,8 @@ foreach ($produtos as $key => $produto) {
         SELECT SUM(vi.quantidade * vi.valor_unitario) as valor_anterior
         FROM cafe_itens_venda vi
         JOIN cafe_vendas v ON vi.id_venda = v.id_venda
-        WHERE (v.estornada IS NULL OR v.estornada = 0) 
-          AND vi.id_produto = :produto_id
-          AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim
-          AND LOWER(TRIM(v.Tipo_venda)) NOT IN ('sobras', 'cortesia')
+        WHERE (v.estornada IS NULL OR v.estornada = 0) AND vi.id_produto = :produto_id
+        AND date(v.data_venda) BETWEEN :data_inicio AND :data_fim
     ";
     
     $stmt = $pdo->prepare($query);

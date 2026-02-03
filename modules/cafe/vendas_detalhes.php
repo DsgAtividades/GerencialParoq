@@ -4,7 +4,7 @@ require_once 'includes/verifica_permissao.php';
 require_once 'includes/funcoes.php';
 
 
-verificarPermissao('gerenciar_vendas');
+verificarPermissao('vendas_detalhes');
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
@@ -19,12 +19,10 @@ $stmt = $pdo->prepare("
         v.*,
         p.nome as cliente_nome,
         p.cpf as cliente_cpf,
-        c.codigo as cartao_codigo,
-        cx.total_trocos_dados
+        c.codigo as cartao_codigo
     FROM cafe_vendas v
     JOIN cafe_pessoas p ON v.id_pessoa = p.id_pessoa
     LEFT JOIN cafe_cartoes c ON p.id_pessoa = c.id_pessoa
-    LEFT JOIN cafe_caixas cx ON v.caixa_id = cx.id
     WHERE v.id_venda = ?
 ");
 $stmt->execute([$id]);
@@ -60,7 +58,7 @@ include 'includes/header.php';
     </div>
 
     <div class="row g-4">
-        <!-- Informações da Venda -->
+        <!-- Dados da Venda -->
         <div class="col-12 col-md-6">
             <div class="card h-100">
                 <div class="card-header py-2">
@@ -72,36 +70,21 @@ include 'includes/header.php';
                             <td class="text-muted">Data/Hora:</td>
                             <td><?= date('d/m/Y H:i', strtotime($venda['data_venda'])) ?></td>
                         </tr>
-                        <tr>
-                            <td class="text-muted">Tipo de Pagamento:</td>
+                        <!-- <tr>
+                            <td class="text-muted">Status:</td>
                             <td>
-                                <?php
-                                $tipo_venda = strtolower(trim($venda['Tipo_venda'] ?? ''));
-                                $tipo_labels = [
-                                    'dinheiro' => ['label' => 'Dinheiro', 'badge' => 'success'],
-                                    'credito' => ['label' => 'Crédito', 'badge' => 'info'],
-                                    'debito' => ['label' => 'Débito', 'badge' => 'warning'],
-                                    'pix' => ['label' => 'Pix', 'badge' => 'primary'],
-                                    'cortesia' => ['label' => 'Cortesia', 'badge' => 'danger'],
-                                    'sobras' => ['label' => 'Sobras', 'badge' => 'secondary']
-                                ];
-                                $tipo_info = $tipo_labels[$tipo_venda] ?? ['label' => ucfirst($tipo_venda), 'badge' => 'secondary'];
+                                <
+                                $status_class = [
+                                    'pendente' => 'warning',
+                                    'concluida' => 'success',
+                                    'cancelada' => 'danger'
+                                ][$venda['status']] ?? 'secondary';
                                 ?>
-                                <span class="badge bg-<?= $tipo_info['badge'] ?>">
-                                    <?= $tipo_info['label'] ?>
+                                <span class="badge bg-< $status_class ?>">
+                                    < ucfirst($venda['status']) ?>
                                 </span>
                             </td>
-                        </tr>
-                        <?php if ($tipo_venda === 'dinheiro'): ?>
-                            <tr>
-                                <td class="text-muted">Troco:</td>
-                                <td>
-                                    <span class="text-muted">
-                                        <i class="bi bi-info-circle"></i> Informação não disponível por venda
-                                    </span>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
+                        </tr> -->
                         <tr>
                             <td class="text-muted">Valor Total:</td>
                             <td class="text-success fw-bold">
@@ -113,35 +96,32 @@ include 'includes/header.php';
             </div>
         </div>
 
-        <!-- Informações Adicionais -->
+        <!-- Dados do Cliente -->
         <div class="col-12 col-md-6">
             <div class="card h-100">
                 <div class="card-header py-2">
-                    <h5 class="card-title h6 mb-0">Informações Adicionais</h5>
+                    <h5 class="card-title h6 mb-0">Dados do Cliente</h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-sm">
                         <tr>
-                            <td class="text-muted">Atendente:</td>
-                            <td><?= htmlspecialchars($venda['Atendente'] ?? 'N/A') ?></td>
+                            <td class="text-muted">Nome:</td>
+                            <td><?= htmlspecialchars($venda['cliente_nome']) ?></td>
                         </tr>
                         <tr>
-                            <td class="text-muted">ID da Venda:</td>
-                            <td>#<?= $venda['id_venda'] ?></td>
+                            <td class="text-muted">CPF:</td>
+                            <td><?= $venda['cliente_cpf'] ?></td>
                         </tr>
-                        <?php if ($venda['estornada'] == 1): ?>
+                        <?php if ($venda['cartao_codigo']): ?>
                             <tr>
-                                <td class="text-muted">Status:</td>
-                                <td>
-                                    <span class="badge bg-danger">Estornada</span>
-                                </td>
+                                <td class="text-muted">Cartão:</td>
+                                <td><?= $venda['cartao_codigo'] ?></td>
                             </tr>
                         <?php endif; ?>
                     </table>
                 </div>
             </div>
         </div>
-
 
         <!-- Itens da Venda -->
         <div class="col-12">

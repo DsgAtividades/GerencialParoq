@@ -1,10 +1,18 @@
 <?php
-require_once 'includes/conexao.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once 'config/database.php';
 require_once 'includes/verifica_permissao.php';
-require_once 'includes/funcoes.php';
 
 // Verificar permissão antes de qualquer output
-verificarPermissao('visualizar_dashboard');
+if (!temPermissao('visualizar_dashboard')) {
+    header('Location: index.php');
+    exit;
+}
+
+$database = new Database();
+$db = $database->getConnection();
 
 // Filtros
 $data_inicial = isset($_POST['data_inicial']) ? $_POST['data_inicial'] : date('Y-m-d');
@@ -319,9 +327,9 @@ require_once 'includes/header.php';
                 <select class="form-select" id="categoria" name="categoria">
                     <option value="">Todas</option>
                     <?php
-                    $stmt = $pdo->query("SELECT id, nome FROM cafe_categorias ORDER BY nome");
-                    while ($cat = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                        echo "<option value='{$cat['id']}'>" . htmlspecialchars($cat['nome']) . "</option>";
+                    $stmt = $db->query("SELECT id, nome FROM cafe_categorias ORDER BY nome");
+                    while ($cat = $stmt->fetch()) {
+                        echo "<option value='{$cat['id']}'>{$cat['nome']}</option>";
                     }
                     ?>
                 </select>
@@ -539,19 +547,10 @@ function atualizarDados() {
 
             data.produtos.forEach(produto => {
                 const tr = document.createElement('tr');
-                const isSobrasCortesia = produto.nome_produto.includes(' - Sobras') || produto.nome_produto.includes(' - Cortesia');
-                const rowClass = isSobrasCortesia ? 'table-warning' : '';
-                const tipoBadge = produto.nome_produto.includes(' - Sobras') ? 
-                    '<span class="badge bg-warning text-dark ms-2">Sobras</span>' : 
-                    produto.nome_produto.includes(' - Cortesia') ? 
-                    '<span class="badge bg-danger ms-2">Cortesia</span>' : '';
-                
-                tr.className = rowClass;
                 tr.innerHTML = `
                     <td>
                         <a href="#" onclick="mostrarDetalhes(${produto.id})" class="text-decoration-none">
-                            ${produto.nome_produto.replace(' - Sobras', '').replace(' - Cortesia', '')}
-                            ${tipoBadge}
+                            ${produto.nome_produto}
                         </a>
                     </td>
                     <td>${produto.categoria}</td>
@@ -561,19 +560,18 @@ function atualizarDados() {
                         </span>
                     </td>
                     <td><strong>${produto.quantidade_vendida}</strong></td>
-                    <td><strong style="color: ${isSobrasCortesia ? '#dc3545' : '#198754'};">${formatMoney(produto.valor_vendido)}</strong></td>
+                    <td><strong style="color: #198754;">${formatMoney(produto.valor_vendido)}</strong></td>
                     <td>
-                        ${isSobrasCortesia ? '<span class="text-muted">-</span>' : `
                         <div class="progress-modern">
                             <div class="progress-bar" role="progressbar" style="width: ${parseFloat(produto.percentual || 0)}%">
                                 ${parseFloat(produto.percentual || 0).toFixed(1)}%
                             </div>
                         </div>
-                        `}
                     </td>
                     <td>
-                        <span class="badge bg-secondary" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
-                            -
+                        <span class="badge bg-${produto.tendencia > 0 ? 'success' : produto.tendencia < 0 ? 'danger' : 'secondary'}" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">
+                            ${produto.tendencia > 0 ? '↑' : produto.tendencia < 0 ? '↓' : '→'} 
+                            ${Math.abs(parseFloat(produto.tendencia || 0)).toFixed(1)}%
                         </span>
                     </td>
                 `;

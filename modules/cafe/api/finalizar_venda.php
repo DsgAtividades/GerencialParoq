@@ -4,7 +4,7 @@ require_once '../includes/conexao.php';
 require_once '../includes/verifica_permissao.php';
 require_once '../includes/funcoes.php';
 
-$permissao = verificarPermissaoApi('api_finalizar_venda');
+$permissao = verificarPermissaoApi('finalizar_venda');
 
 if(!isset($permissao['tem_permissao']) || $permissao['tem_permissao'] == 0){
     echo json_encode([
@@ -34,19 +34,6 @@ try {
     if (empty($tipo_venda)) {
         throw new Exception('Tipo de pagamento não informado');
     }
-    
-    // VERIFICAR SE HÁ CAIXA ABERTO
-    $stmt = $pdo->query("SELECT id, valor_troco_inicial FROM cafe_caixas WHERE status = 'aberto' LIMIT 1");
-    $caixaAberto = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$caixaAberto) {
-        throw new Exception('Não há caixa aberto. Por favor, abra um caixa antes de realizar vendas.');
-    }
-    
-    $caixa_id = $caixaAberto['id'];
-    
-    // Se for venda em dinheiro, pode ter valor de troco
-    $valor_troco_dado = isset($data['troco_dado']) ? floatval($data['troco_dado']) : 0;
     
     // Iniciar transação
     $pdo->beginTransaction();
@@ -80,24 +67,14 @@ try {
         $total_venda = str_replace(',', '',$total_venda);
     }
         
-    // Registrar venda com tipo de pagamento, nome do atendente e caixa_id
+    // Registrar venda com tipo de pagamento e nome do atendente
     $nome_atendente = $_SESSION['usuario_nome'] ?? 'Sistema';
     $stmt = $pdo->prepare("
-        INSERT INTO cafe_vendas (id_pessoa, valor_total, Tipo_venda, Atendente, caixa_id, data_venda)
-        VALUES (?, ?, ?, ?, ?, NOW())
+        INSERT INTO cafe_vendas (id_pessoa, valor_total, Tipo_venda, Atendente, data_venda)
+        VALUES (?, ?, ?, ?, NOW())
     ");
-    $stmt->execute([$data['pessoa_id'], $total_venda, $tipo_venda, $nome_atendente, $caixa_id]);
+    $stmt->execute([$data['pessoa_id'], $total_venda, $tipo_venda, $nome_atendente]);
     $id_venda = $pdo->lastInsertId();
-    
-    // Se for venda em dinheiro e houve troco, registrar o troco dado
-    if ($tipo_venda === 'dinheiro' && $valor_troco_dado > 0) {
-        $stmt = $pdo->prepare("
-            UPDATE cafe_caixas 
-            SET total_trocos_dados = total_trocos_dados + ? 
-            WHERE id = ?
-        ");
-        $stmt->execute([$valor_troco_dado, $caixa_id]);
-    }
     
     // Registrar itens da venda e atualizar estoque
     $stmt_item = $pdo->prepare("
